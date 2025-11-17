@@ -1,0 +1,55 @@
+version: "3.9"
+
+services:
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_estudiantes
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: estudiantesbd
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin_estudiantes
+    restart: always
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+    ports:
+      - "8080:80"
+
+  backend:
+    image: python:3.11
+    container_name: flask_backend
+    working_dir: /app
+    command: sh -c "pip install -r requirements.txt && python app.py"
+    volumes:
+      - ./backend:/app
+    environment:
+      DB_HOST: mysql
+      DB_USER: root
+      DB_PASSWORD: root123
+      DB_NAME: estudiantesbd
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mysql
+
+  frontend:
+    image: node:18
+    container_name: react_frontend
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host"
+    volumes:
+      - ./proyectofinal-frontend:/app
+    ports:
+      - "5173:5173"
+
+volumes:
+  db_data:

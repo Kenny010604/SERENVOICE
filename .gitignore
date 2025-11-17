@@ -1,0 +1,23 @@
+# Python
+venv/
+__pycache__/
+
+# Node.js
+node_modules/
+*.log
+
+# React / Expo
+dist/
+.expo/
+.expo-shared/
+
+# Docker
+db_data/
+*.sql
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
