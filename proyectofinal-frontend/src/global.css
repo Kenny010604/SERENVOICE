@@ -1,0 +1,889 @@
+/* ======================================
+   SerenVoice - Estilos globales (optimizado)
+   - Este archivo centraliza variables, utilidades y componentes
+     compartidos (navbar, tarjetas, formularios, reveal, spinners).
+   - Comentarios en español para facilitar mantenimiento.
+   - Mantén reglas puramente visuales aquí; reglas específicas
+     de componente pueden ir en módulos CSS/inline cuando sea necesario.
+   ====================================== */
+
+/* ==================
+   Variables de color
+   ------------------
+   Define paleta y variables reutilizables para tema claro/oscuro.
+   Modifica aquí colores globales para que se propaguen automáticamente.
+*/
+:root {
+  --color-bg-gradient-start: #a1c4fd;
+  --color-bg-gradient-end: #c2e9fb;
+  --color-primary: #5ad0d2;
+  --color-primary-hover: #1e88e5;
+  --color-text-main: #0c3c78;
+  --color-text-secondary: #2e2e2e;
+  --color-panel: rgba(255, 255, 255, 0.7);
+  --color-shadow: rgba(0, 0, 0, 0.1);
+  --color-error: #ff3333;
+}
+
+.dark-mode {
+  --color-bg-gradient-start: #20556b;
+  --color-bg-gradient-end: #203a43;
+  --color-primary: #5ad0d2;
+  --color-primary-hover: #8be8ea;
+  --color-text-main: #e0f7fa;
+  --color-text-secondary: #d1d1d1;
+  --color-panel: rgba(30, 30, 30, 0.8);
+  --color-shadow: rgba(0, 0, 0, 0.4);
+  --color-error: #ff6b6b;
+}
+
+/* Reset general */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+body {
+  background: linear-gradient(
+    135deg,
+    var(--color-bg-gradient-start),
+    var(--color-bg-gradient-end)
+  );
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  color: var(--color-text-secondary);
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+}
+
+/* Barra de navegación */
+.navbar {
+  background: var(--color-panel);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px var(--color-shadow);
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.navbar h1 {
+  color: var(--color-text-main);
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.navbar a {
+  color: var(--color-text-main);
+  text-decoration: none;
+  margin-left: 1.5rem;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.navbar a:hover {
+  color: var(--color-primary-hover);
+}
+/* Contenedor principal */
+.container {
+  /* Tarjeta ancha para secciones que requieren más espacio horizontal */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 4rem;
+  margin-bottom: 10px;
+  gap: 1.5rem;
+}
+
+/* Tarjetas */
+.card {
+  background: var(--color-panel);
+  backdrop-filter: blur(8px);
+  border-radius: 20px;
+  box-shadow: 0 4px 20px var(--color-shadow);
+  padding: 2rem;
+  max-width: 800px;
+  width: 100%;
+  text-align: center;
+  margin: 0 auto;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  /* Animación gestionada por IntersectionObserver: los elementos recibirán
+     las clases `.reveal` y `.reveal-visible` cuando entren en el viewport */
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 25px var(--color-shadow);
+}
+
+/* Tarjetas de características usadas en la página de inicio */
+.feature-card {
+  max-width: 1600px !important;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+}
+
+@media (max-width: 760px) {
+  .feature-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 0 1 100% !important;
+  }
+}
+
+/* Tarjeta ancha para secciones que requieren más espacio horizontal */
+.wide-card {
+  max-width: 1300px !important;
+  padding-left: 2.5rem;
+  padding-right: 2.5rem;
+}
+
+@media (max-width: 1024px) {
+  .feature-card {
+    flex: 0 1 45% !important;
+  }
+  .wide-card {
+    max-width: 1600px !important;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .wide-card {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+.card h2 {
+  color: var(--color-text-main);
+  font-size: 1.6rem;
+  margin-bottom: 1rem;
+}
+
+.card p {
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.card p a {
+  display: inline-block;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Panel del administrador */
+.admin-dashboard .card {
+  background: #ffffff !important;
+  color: var(--color-text-secondary) !important;
+  box-shadow: 0 4px 20px var(--color-shadow) !important;
+}
+
+.admin-dashboard .card h2,
+.admin-dashboard .card h3,
+.admin-dashboard .card p,
+.admin-dashboard .card a {
+  color: var(--color-text-secondary) !important;
+}
+
+.dark-mode .admin-dashboard .card {
+  background: var(--color-panel) !important;
+}
+
+.dark-mode .admin-dashboard .card h2,
+.dark-mode .admin-dashboard .card h3,
+.dark-mode .admin-dashboard .card p,
+.dark-mode .admin-dashboard .card a {
+  color: var(--color-text-main) !important;
+}
+
+/* Botones */
+button {
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 0.8rem 2rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px var(--color-shadow);
+}
+
+button:hover {
+  background-color: var(--color-primary-hover);
+  transform: translateY(-2px);
+}
+
+/* ======================
+  Navbar de administrador
+  ----------------------
+  Estilos para los enlaces y menú del navbar de admin.
+  Se usan clases CSS (no mutaciones inline) para evitar estados
+  inconsistentes al pasar rápidamente el cursor.
+*/
+.admin-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: var(--color-text-main);
+  transition: color 0.18s ease, transform 0.18s ease;
+}
+.admin-link:hover {
+  color: #ff6b6b;
+}
+
+.navbar .admin-link:hover,
+.navbar .admin-link:focus {
+  color: #ff6b6b !important;
+}
+.navbar .admin-link:hover svg,
+.navbar .admin-link:focus svg {
+  color: #ff6b6b !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+.admin-user-button:hover,
+.admin-user-button:focus {
+  color: #ff6b6b !important;
+}
+.admin-user-button:hover svg,
+.admin-user-button:focus svg {
+  color: #ff6b6b !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+.admin-user-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-text-main);
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+.admin-user-button:hover {
+  background: rgba(255, 107, 107, 0.08);
+  color: #ff6b6b;
+}
+
+.admin-menu-item {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--color-text-main);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.admin-menu-item:hover {
+  background: rgba(255, 107, 107, 0.08);
+  color: #ff6b6b;
+}
+.admin-menu-item.admin-logout:hover {
+  background: rgba(255, 107, 107, 0.12);
+}
+
+/* Forzar herencia de color en iconos SVG para que el icono y
+  el texto cambien al mismo color (hover/focus)
+*/
+.admin-link svg,
+.admin-user-button svg,
+.admin-menu-item svg {
+  color: inherit;
+  transition: color 0.18s ease;
+  width: 1.2em;
+  height: 1.2em;
+}
+
+/* Pie de página */
+.footer {
+  background: var(--color-panel);
+  backdrop-filter: blur(6px);
+  text-align: center;
+  padding: 1rem;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  box-shadow: 0 -2px 8px var(--color-shadow);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+}
+
+/* Autenticación */
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 140px);
+  padding: 2rem;
+  padding-bottom: 4rem;
+  margin-bottom: 10px;
+}
+
+.auth-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.auth-icon {
+  color: var(--color-primary);
+  margin-bottom: 1rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.input-labels,
+.dark-mode .input-labels,
+.input-labels label,
+.dark-mode .input-labels label {
+  text-align: left;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.input-labels {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.input-labels label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+  color: var(--color-text-main);
+}
+
+.input-labels label svg {
+  color: var(--color-text-main);
+  transition: color 0.3s ease;
+}
+
+.dark-mode .input-labels,
+.dark-mode .input-labels label {
+  color: var(--color-text-main);
+}
+
+.auth-card {
+  background: var(--color-panel);
+  backdrop-filter: blur(8px);
+  border-radius: 20px;
+  box-shadow: 0 4px 20px var(--color-shadow);
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 1000px;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.auth-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 25px var(--color-shadow);
+}
+
+.auth-card h2 {
+  color: var(--color-text-main);
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+}
+
+.login-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  height: 100%;
+}
+
+.login-hero.centered {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.auth-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.form-group {
+  text-align: left;
+}
+
+/* Inputs */
+.input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease;
+  background: var(--color-panel);
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+}
+
+.dark-mode .input-group {
+  background: #2a2a2a;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.input-group input,
+.input-group select,
+.input-group .input-textarea {
+  width: 100%;
+  padding: 0.8rem;
+  padding-left: 2.5rem;
+  border: none;
+  font-size: 1rem;
+  background: var(--color-panel);
+  color: var(--color-text-main);
+  outline: none;
+  border-radius: 12px;
+}
+
+.input-group .input-textarea {
+  padding: 0.8rem;
+  font-family: Poppins, sans-serif;
+  resize: none;
+  min-height: 120px;
+  box-sizing: border-box;
+}
+
+.dark-mode .input-group input,
+.dark-mode .input-group select,
+.dark-mode .input-group .input-textarea {
+  background: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+.input-group input[type="password"],
+.input-group input[type="date"],
+.input-group input[type="email"] {
+  padding-right: 2.5rem;
+}
+
+/* Autocompletado */
+.input-group input:-webkit-autofill,
+.input-group input:-webkit-autofill:hover,
+.input-group input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--color-panel) inset !important;
+  -webkit-text-fill-color: var(--color-text-main) !important;
+  caret-color: var(--color-text-main) !important;
+}
+
+.dark-mode .input-group input:-webkit-autofill,
+.dark-mode .input-group input:-webkit-autofill:hover,
+.dark-mode .input-group input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #2a2a2a inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
+}
+
+.input-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+  z-index: 1;
+  pointer-events: none;
+  transition: color 0.3s ease;
+}
+
+.dark-mode .input-icon {
+  color: #999999;
+}
+
+.input-group:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(90, 208, 210, 0.2);
+  transform: translateY(-1px);
+}
+
+.input-group:focus-within .input-icon {
+  color: var(--color-primary);
+}
+
+.dark-mode .input-group:focus-within .input-icon {
+  color: #5ad0d2;
+}
+
+.input-group:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(90, 208, 210, 0.1);
+  background: rgba(90, 208, 210, 0.05);
+  transition: all 0.3s ease;
+}
+
+.dark-mode .input-group:hover {
+  border-color: rgba(90, 208, 210, 0.5);
+  box-shadow: 0 0 0 2px rgba(90, 208, 210, 0.15);
+  background: rgba(90, 208, 210, 0.05);
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  background: none !important;
+  border: none;
+  color: #2e2e2e;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  box-shadow: none !important;
+  z-index: 2;
+  transition: color 0.3s ease;
+}
+
+.dark-mode .password-toggle {
+  color: #999999;
+}
+
+.password-toggle:hover {
+  color: var(--color-primary);
+  background: none !important;
+}
+
+.dark-mode .password-toggle:hover {
+  color: #5ad0d2;
+}
+
+/* Opciones de género */
+.gender-options {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.5rem;
+}
+
+.gender-option {
+  flex: 1;
+  text-align: center;
+  padding: 1rem;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #ffffff !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-text-secondary);
+}
+
+.dark-mode .gender-option {
+  background: #2a2a2a !important;
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.gender-option:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+}
+
+.gender-option.selected {
+  border-color: var(--color-primary);
+  background: rgba(90, 208, 210, 0.1) !important;
+}
+
+.dark-mode .gender-option.selected {
+  background: rgba(90, 208, 210, 0.2) !important;
+}
+
+.gender-option svg {
+  font-size: 1.5rem;
+  color: var(--color-text-main);
+}
+
+.dark-mode .gender-option svg {
+  color: #5ad0d2;
+}
+
+/* Selector de fecha */
+.input-group input[type="date"] {
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.input-group input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0.7;
+  cursor: pointer;
+  position: absolute;
+  right: 10px;
+  width: 20px;
+  height: 20px;
+  background-color: var(--color-primary);
+  border-radius: 50%;
+  padding: 3px;
+}
+
+.input-group input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.styled-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 2.5rem !important;
+}
+
+.auth-button {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.google-button {
+  width: 100%;
+  background-color: #ffffff !important;
+  color: var(--color-text-secondary);
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.dark-mode .google-button {
+  background-color: #2a2a2a !important;
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.google-button:hover {
+  background-color: #f5f5f5 !important;
+  border-color: var(--color-primary);
+}
+
+.dark-mode .google-button:hover {
+  background-color: #333333 !important;
+  border-color: var(--color-primary);
+}
+
+.google-icon {
+  font-size: 1.2rem;
+  color: #db4437;
+}
+
+.divider {
+  margin: 1rem 0;
+  text-align: center;
+  position: relative;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 45%;
+  height: 1px;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.divider::before {
+  left: 0;
+}
+
+.divider::after {
+  right: 0;
+}
+
+.auth-link {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.auth-link a {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.auth-link a:hover {
+  color: var(--color-primary-hover);
+}
+
+.error-message {
+  color: var(--color-error);
+  background-color: rgba(255, 51, 51, 0.1);
+  padding: 0.5rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+/* Responsividad */
+@media (max-width: 768px) {
+  .navbar h1 {
+    font-size: 1.5rem;
+  }
+
+  .card,
+  .auth-card {
+    padding: 1.5rem;
+  }
+
+  .auth-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .gender-options {
+    flex-direction: column;
+  }
+}
+
+/* Ocultar botones de visualización de contraseña del navegador */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-clear-button {
+  display: none !important;
+}
+
+/* Utilidades para 'reveal' al hacer scroll */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px) scale(0.995);
+  transition: opacity 600ms cubic-bezier(0.22, 0.9, 0.36, 1),
+    transform 600ms cubic-bezier(0.22, 0.9, 0.36, 1);
+  will-change: opacity, transform;
+}
+
+.reveal-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* Ayudantes pequeños para escalonar (stagger) usando el atributo data-delay */
+.reveal[data-delay="1"] {
+  transition-delay: 80ms;
+}
+.reveal[data-delay="2"] {
+  transition-delay: 160ms;
+}
+.reveal[data-delay="3"] {
+  transition-delay: 240ms;
+}
+.reveal[data-delay="4"] {
+  transition-delay: 320ms;
+}
+.reveal[data-delay="5"] {
+  transition-delay: 400ms;
+}
+
+/* Opcional: hacer que botones y elementos pequeños aparezcan con un ligero pop */
+.reveal-small {
+  transform: translateY(10px) scale(0.995);
+}
+.reveal-small.reveal-visible {
+  transform: translateY(0) scale(1);
+}
+
+/* Spinner - overlay y en línea */
+.spinner-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.18);
+  z-index: 2000;
+  gap: 12px;
+  flex-direction: column;
+  padding: 1rem;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 5px solid rgba(255, 255, 255, 0.2);
+  border-top-color: var(--color-primary);
+  animation: spin 900ms linear infinite;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.spinner-message {
+  color: white;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.spinner-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.spinner-message-inline {
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
