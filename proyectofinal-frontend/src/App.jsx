@@ -20,7 +20,6 @@ import ConfiguracionAdmin from "./PaginasAdministradores/ConfiguracionAdmin.jsx"
 import Usuarios from "./PaginasAdministradores/Usuarios.jsx";
 import Alertas from "./PaginasAdministradores/Alertas.jsx";
 import Reportes from "./PaginasAdministradores/Reportes.jsx";
-import BaseDatos from "./PaginasAdministradores/BaseDatos.jsx";
 import Historial from "./PaginasUsuarios/Historial.jsx";
 import Recomendaciones from "./PaginasUsuarios/Recomendaciones.jsx";
 import ReportesUsuario from "./PaginasUsuarios/ReportesUsuario.jsx";
@@ -180,16 +179,6 @@ function App() {
                 <ProtectedRoute requiredRole={"ADMINISTRADOR"}>
                   <PageWithTitle title="Alertas">
                     <Alertas />
-                  </PageWithTitle>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/base-datos"
-              element={
-                <ProtectedRoute requiredRole={"ADMINISTRADOR"}>
-                  <PageWithTitle title="Base de Datos">
-                    <BaseDatos />
                   </PageWithTitle>
                 </ProtectedRoute>
               }
