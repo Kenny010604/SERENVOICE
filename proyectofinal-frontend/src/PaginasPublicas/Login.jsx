@@ -11,7 +11,7 @@ import {
 import logo from "../assets/Logo.svg";
 import "../global.css";
 import NavbarPublic from "../components/NavbarPublic";
-import heroImg from "../assets/ImagenCalma.jpg";
+import heroImg from "../assets/ImagenFondoClaro.png";
 import ModalSeleccionRol from "../components/ModalSeleccionRol";
 import { useAuth } from "../context/useAuth";
 

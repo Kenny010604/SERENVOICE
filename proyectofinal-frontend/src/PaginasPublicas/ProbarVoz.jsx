@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import NavbarPublic from "../components/NavbarPublic";
 import "../global.css";
 import Spinner from "../components/Spinner";
-import heroImg from "../assets/ImagenCalma.jpg";
+import heroImg from "../assets/ImagenFondoClaro.png";
 import {
   FaMicrophone,
   FaStop,

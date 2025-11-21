@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import "../global.css";
-import heroImg from "../assets/ImagenCalma.jpg";
+import heroImg from "../assets/ImagenFondoClaro.png";
 import {
   FaHeart,
   FaShieldAlt,
