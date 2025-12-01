@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../../global.css";
 import NavbarPublic from "../../components/Publico/NavbarPublic";
-import heroImg from "../../assets/ImagenCalma.jpg";
+import heroImg from "../../assets/ImagenFondoClaro.png";
+
 import {
   FaEye,
   FaEyeSlash,

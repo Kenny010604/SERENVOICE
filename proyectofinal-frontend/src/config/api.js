@@ -1,12 +1,12 @@
 // src/config/api.js
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = ''; // ✅ DEBE ESTAR VACÍO
 
 const api = {
   baseURL: API_BASE_URL,
   endpoints: {
     auth: {
       login: '/api/auth/login',
-      register: '/api/auth/register',  // ✅ Asegúrate de tenerlo
+      register: '/api/auth/register',
       logout: '/api/auth/logout'
     },
     usuarios: {

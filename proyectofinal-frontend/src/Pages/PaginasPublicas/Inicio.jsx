@@ -10,8 +10,9 @@ import {
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../../global.css";
-import heroImg from "../../assets/ImagenCalma.jpg";
+import heroImg from "../../assets/ImagenFondoClaro.png";
 import NavbarPublic from "../../components/Publico/NavbarPublic";
+
 
 const Inicio = () => {
   const navigate = useNavigate();

@@ -9,7 +9,7 @@ import os
 
 def create_app():
     """Factory para crear la aplicación Flask"""
-    
+
     app = Flask(__name__)
 
     # ===============================
@@ -21,26 +21,30 @@ def create_app():
     Config.init_app(app)
 
     # ===============================
-    # CORS - CONFIGURACIÓN CORREGIDA ✅
+    # CORS — CONFIGURACIÓN COMPLETA
     # ===============================
-    CORS(app, 
-         resources={r"/api/*": {
-             "origins": [
-                 "http://localhost:5173",
-                 "http://127.0.0.1:5173",
-                 "http://192.168.56.1:5173",  # ✅ Agregar esta IP
-                 "http://localhost:3000",
-                 "http://127.0.0.1:3000"
-             ],
-             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-             "allow_headers": ["Content-Type", "Authorization"],
-             "supports_credentials": True,
-             "expose_headers": ["Content-Type", "Authorization"]
-         }})
+  # ===============================
+## ===============================
+# CORS — CONFIGURACIÓN COMPLETA
+# ===============================
+    CORS(
+    app,
+    origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://192.168.56.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000"
+    ],
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
+    supports_credentials=True,
+    expose_headers=["Content-Type", "Authorization"]
+)
 
     # ===============================
     # JWT
-    # ===============================   
+    # ===============================
     jwt = JWTManager(app)
 
     # ===============================
@@ -74,9 +78,11 @@ def create_app():
     # ===============================
     from routes.auth_routes import bp as auth_bp
     from routes.usuario_routes import bp as usuarios_bp
-    
+    from routes.admin_routes import bp as admin_bp  # ✅ IMPORTANTE
+
     app.register_blueprint(auth_bp)
     app.register_blueprint(usuarios_bp)
+    app.register_blueprint(admin_bp)  # ✅ REGISTRA RUTAS ADMIN
 
     # ===============================
     # ENDPOINTS INTERNOS
@@ -99,17 +105,16 @@ def create_app():
                 'health': '/api/health',
                 'docs': '/api/docs',
                 'auth': '/api/auth',
-                'usuario': '/api/usuario'
+                'usuario': '/api/usuario',
+                'admin': '/api/admin'
             }
         }
 
     return app
 
-
 # ===============================
 # RUN SERVER
 # ===============================
-# backend/app.py - Solo la parte del print
 if __name__ == '__main__':
     app = create_app()
     port = int(os.getenv('PORT', 5000))

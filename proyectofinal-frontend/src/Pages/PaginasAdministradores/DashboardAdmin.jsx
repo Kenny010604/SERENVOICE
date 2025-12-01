@@ -23,6 +23,7 @@ const DashboardAdmin = () => {
   const [statistics, setStatistics] = useState(null);
   const [adminData, setAdminData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // -----------------------------
   // FETCH DE DATOS DEL BACKEND
@@ -30,14 +31,28 @@ const DashboardAdmin = () => {
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const statsRes = await apiClient.get("/admin/statistics");
-        const adminRes = await apiClient.get("/admin/profile");
+        // Usar las rutas de /api/usuarios
+        const [statsRes, profileRes] = await Promise.all([
+          apiClient.get("/api/usuarios/statistics"),
+          apiClient.get("/api/usuarios/me")
+        ]);
 
-        setStatistics(statsRes.data);
-        setAdminData(adminRes.data);
+        // Verificar estructura de respuesta
+        if (statsRes.data.success) {
+          setStatistics(statsRes.data.data);
+        } else {
+          throw new Error(statsRes.data.message || "Error al cargar estadísticas");
+        }
+
+        if (profileRes.data.success) {
+          setAdminData(profileRes.data.data);
+        } else {
+          throw new Error(profileRes.data.message || "Error al cargar perfil");
+        }
 
       } catch (error) {
         console.error("Error cargando datos del dashboard:", error);
+        setError(error.response?.data?.message || error.message || "Error al cargar datos");
       } finally {
         setLoading(false);
       }
@@ -49,8 +64,30 @@ const DashboardAdmin = () => {
   // -----------------------------
   // PROTECCIÓN ANTES DE RENDERIZAR
   // -----------------------------
-  if (loading) return <p style={{ padding: "40px" }}>Cargando panel...</p>;
-  if (!statistics) return <p>No se pudieron cargar las estadísticas.</p>;
+  if (loading) {
+    return (
+      <div style={{ padding: "40px", textAlign: "center" }}>
+        <p>Cargando panel de administración...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ padding: "40px", textAlign: "center" }}>
+        <p style={{ color: "red" }}>Error: {error}</p>
+        <button onClick={() => window.location.reload()}>Reintentar</button>
+      </div>
+    );
+  }
+
+  if (!statistics) {
+    return (
+      <div style={{ padding: "40px", textAlign: "center" }}>
+        <p>No se pudieron cargar las estadísticas.</p>
+      </div>
+    );
+  }
 
   // -----------------------------
   // TARJETAS DINÁMICAS
@@ -59,7 +96,7 @@ const DashboardAdmin = () => {
     {
       variant: "stat",
       title: "Total de Usuarios",
-      value: statistics.totalUsuarios,
+      value: statistics.totalUsuarios || 0,
       icon: FaUsers,
       color: "#5ad0d2",
       gradient:
@@ -68,17 +105,17 @@ const DashboardAdmin = () => {
     {
       variant: "stat",
       title: "Usuarios Activos",
-      value: statistics.usuariosActivos,
+      value: statistics.usuariosActivos || 0,
       icon: FaUserCheck,
       color: "#4caf50",
       gradient:
         "linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.05))",
-      subtitle: `${statistics.tasaActividad}% actividad`,
+      subtitle: `${statistics.tasaActividad || 0}% actividad`,
     },
     {
       variant: "stat",
       title: "Alertas Activas",
-      value: statistics.alertasActivas,
+      value: statistics.alertasActivas || 0,
       icon: FaExclamationTriangle,
       color: "#ff9800",
       gradient:
@@ -87,7 +124,7 @@ const DashboardAdmin = () => {
     {
       variant: "stat",
       title: "Reportes a Responder",
-      value: statistics.reportesRespuesta,
+      value: statistics.reportesRespuesta || 0,
       icon: FaFlag,
       color: "#f44336",
       gradient:

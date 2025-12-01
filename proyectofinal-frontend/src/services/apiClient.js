@@ -3,11 +3,11 @@ import axios from 'axios';
 import api from '../config/api';
 
 const apiClient = axios.create({
-  baseURL: api.baseURL,
+  baseURL: api.baseURL,  // ✅ Usar el valor de config (vacío para proxy)
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
-  timeout: 10000
+  withCredentials: true,
 });
 
 // Interceptor para agregar token

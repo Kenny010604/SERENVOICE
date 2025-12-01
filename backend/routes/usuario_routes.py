@@ -4,6 +4,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from services.usuario_service import UsuarioService
 from utils.helpers import Helpers
 from utils.seguridad import role_required
+from database.connection import DatabaseConnection
 
 bp = Blueprint('usuarios', __name__, url_prefix='/api/usuarios')
 
@@ -23,12 +24,89 @@ def get_current_user():
     
     # Ocultar contraseña
     usuario.pop('contraseña', None)
+    usuario.pop('contrasena', None)
     
     return Helpers.format_response(
         success=True,
         data=usuario,
         status=200
     )
+
+@bp.route('/statistics', methods=['GET'])
+@jwt_required()
+@role_required('admin')
+def get_statistics():
+    """Obtener estadísticas del sistema (solo admin)"""
+    try:
+        # Usar context manager correctamente
+        with DatabaseConnection.get_connection() as conn:
+            cursor = conn.cursor(dictionary=True)
+
+            # Total usuarios
+            cursor.execute("SELECT COUNT(*) AS total FROM usuario")
+            total_usuarios = cursor.fetchone()["total"]
+
+            # Usuarios activos
+            try:
+                cursor.execute("""
+                    SELECT COUNT(*) AS total 
+                    FROM usuario 
+                    WHERE fecha_registro >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+                """)
+                usuarios_activos = cursor.fetchone()["total"]
+            except:
+                usuarios_activos = total_usuarios
+
+            # Total usuarios que usan medicamentos
+            try:
+                cursor.execute("SELECT COUNT(*) AS total FROM usuario WHERE usa_medicamentos = TRUE")
+                total_medicamentos = cursor.fetchone()["total"]
+            except:
+                total_medicamentos = 0
+
+            # Alertas activas
+            try:
+                cursor.execute("SELECT COUNT(*) AS total FROM alertas WHERE estado = 'activa'")
+                alertas_activas = cursor.fetchone()["total"]
+            except:
+                alertas_activas = 0
+
+            # Reportes pendientes
+            try:
+                cursor.execute("SELECT COUNT(*) AS total FROM reportes WHERE estado = 'pendiente'")
+                reportes_respuesta = cursor.fetchone()["total"]
+            except:
+                reportes_respuesta = 0
+
+            cursor.close()
+
+        # Calcular tasa de actividad
+        tasa_actividad = 0
+        if total_usuarios > 0:
+            tasa_actividad = round((usuarios_activos / total_usuarios) * 100, 1)
+
+        return Helpers.format_response(
+            success=True,
+            data={
+                'totalUsuarios': total_usuarios,
+                'usuariosActivos': usuarios_activos,
+                'usuariosUsan_medicamentos': total_medicamentos,
+                'alertasActivas': alertas_activas,
+                'reportesRespuesta': reportes_respuesta,
+                'tasaActividad': tasa_actividad
+            },
+            status=200
+        )
+
+    except Exception as e:
+        print(f"❌ Error en statistics: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return Helpers.format_response(
+            success=False,
+            message=str(e),
+            status=500
+        )
 
 @bp.route('/<int:id_usuario>', methods=['GET'])
 @jwt_required()
@@ -56,6 +134,7 @@ def get_usuario(id_usuario):
         )
     
     usuario.pop('contraseña', None)
+    usuario.pop('contrasena', None)
     
     return Helpers.format_response(
         success=True,
@@ -128,4 +207,4 @@ def delete_usuario(id_usuario):
         success=False,
         message=result['error'],
         status=400
-    )
+        )
