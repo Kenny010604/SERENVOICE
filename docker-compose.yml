@@ -1,55 +1,89 @@
-version: "3.9"
-
 services:
-
-  mysql:
+  # Base de datos MySQL
+  mysql_estudiantes:
     image: mysql:8.0
     container_name: mysql_estudiantes
-    restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root123
-      MYSQL_DATABASE: estudiantesbd
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: estudiantes_db
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin123
     ports:
       - "3307:3306"
     volumes:
-      - db_data:/var/lib/mysql
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
 
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
+  # phpMyAdmin
+  phpmyadmin_estudiantes:
+    image: phpmyadmin:latest
     container_name: phpmyadmin_estudiantes
-    restart: always
     environment:
-      PMA_HOST: mysql
+      PMA_HOST: mysql_estudiantes
       PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root
     ports:
       - "8080:80"
+    depends_on:
+      - mysql_estudiantes
+    networks:
+      - app_network
 
-  backend:
-    image: python:3.11
+  # Backend Flask
+  flask_backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: flask_backend
-    working_dir: /app
-    command: sh -c "pip install -r requirements.txt && python app.py"
-    volumes:
-      - ./backend:/app
     environment:
-      DB_HOST: mysql
-      DB_USER: root
-      DB_PASSWORD: root123
-      DB_NAME: estudiantesbd
+      - FLASK_ENV=development
+      - DATABASE_HOST=mysql_estudiantes
+      - DATABASE_PORT=3306
+      - DATABASE_USER=admin
+      - DATABASE_PASSWORD=admin123
+      - DATABASE_NAME=estudiantes_db
     ports:
       - "5000:5000"
-    depends_on:
-      - mysql
-
-  frontend:
-    image: node:18
-    container_name: react_frontend
-    working_dir: /app
-    command: sh -c "npm install && npm run dev -- --host"
     volumes:
-      - ./proyectofinal-frontend:/app
+      - ./backend:/app
+      - backend_uploads:/app/uploads
+    depends_on:
+      mysql_estudiantes:
+        condition: service_healthy
+    networks:
+      - app_network
+    command: python app.py
+
+  # Frontend React
+  react_frontend:
+    build: ./proyectofinal-frontend
+    container_name: react_frontend
+    environment:
+      - VITE_API_URL=http://localhost:5000
+      - VITE_BACKEND_URL=http://localhost:5000
     ports:
       - "5173:5173"
+    volumes:
+      - ./proyectofinal-frontend:/app
+      # ❗ QUITADO: NO sobreescribimos node_modules
+      # - /app/node_modules
+    depends_on:
+      - flask_backend
+    networks:
+      - app_network
+    stdin_open: true
+    tty: true
+
+networks:
+  app_network:
+    driver: bridge
 
 volumes:
-  db_data:
+  mysql_data:
+  backend_uploads:

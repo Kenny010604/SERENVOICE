@@ -1,23 +1,19 @@
-import React from "react";
-import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "../context/useAuth";
+import { Navigate } from "react-router-dom";
+import authService from "../services/authService";
 
 const ProtectedRoute = ({ children, requiredRole = null }) => {
-  const auth = useAuth();
-  const location = useLocation();
+  const user = authService.getUser();
 
-  // If no token, redirect to login
-  if (!auth || !auth.token) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  // No logueado
+  if (!authService.isAuthenticated() || !user) {
+    return <Navigate to="/login" replace />;
   }
 
-  // If a role is required, ensure userRole matches
-  if (requiredRole) {
-    const role = auth.userRole || localStorage.getItem("userRole");
-    if (!role || role !== requiredRole) {
-      // Optionally redirect to login or to a "not authorized" page
-      return <Navigate to="/login" state={{ from: location }} replace />;
-    }
+  const role = user.rol?.toLowerCase();
+
+  // Si requiere rol pero no coincide
+  if (requiredRole && role !== requiredRole.toLowerCase()) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return children;

@@ -1,0 +1,48 @@
+# backend/models/recomendacion.py
+from database.connection import DatabaseConnection
+from datetime import date
+
+class Recomendacion:
+    """Modelo para la tabla Recomendaciones"""
+    
+    @staticmethod
+    def create(id_resultado, tipo, contenido):
+        """Crear recomendación"""
+        query = """
+            INSERT INTO Recomendaciones (id_resultado, tipo_recomendacion, contenido, fecha_generacion)
+            VALUES (%s, %s, %s, %s)
+        """
+        return DatabaseConnection.execute_query(
+            query,
+            (id_resultado, tipo, contenido, date.today()),
+            fetch=False
+        )
+    
+    @staticmethod
+    def create_multiple(recomendaciones):
+        """Crear múltiples recomendaciones"""
+        query = """
+            INSERT INTO Recomendaciones (id_resultado, tipo_recomendacion, contenido, fecha_generacion)
+            VALUES (%s, %s, %s, %s)
+        """
+        params_list = [
+            (r['id_resultado'], r['tipo'], r['contenido'], date.today())
+            for r in recomendaciones
+        ]
+        
+        with DatabaseConnection.get_cursor() as cursor:
+            cursor.executemany(query, params_list)
+            return cursor.rowcount
+    
+    @staticmethod
+    def get_by_result(id_resultado):
+        """Obtener recomendaciones de un resultado"""
+        query = "SELECT * FROM Recomendaciones WHERE id_resultado = %s"
+        return DatabaseConnection.execute_query(query, (id_resultado,))
+    
+    @staticmethod
+    def get_by_id(id_recomendacion):
+        """Obtener recomendación por ID"""
+        query = "SELECT * FROM Recomendaciones WHERE id_recomendacion = %s"
+        results = DatabaseConnection.execute_query(query, (id_recomendacion,))
+        return results[0] if results else None
