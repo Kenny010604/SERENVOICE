@@ -33,8 +33,8 @@ const authService = {
   async register(userData) {
     try {
       const response = await apiClient.post(api.endpoints.auth.register, {
-        nombres: userData.nombre,
-        apellidos: userData.apellido,
+        nombre: userData.nombres || userData.nombre,
+        apellido: userData.apellidos || userData.apellido,
         correo: userData.correo,
         contrasena: userData.contrasena,
         genero: userData.genero,

@@ -14,21 +14,17 @@ class Usuario:
         apellido,
         correo,
         contrasena,
-        genero=None,
         fecha_nacimiento=None,
-        edad=None,
         usa_medicamentos=False,
         rol='usuario'
     ):
 
         # Si no envían edad → calcular automáticamente
-        if fecha_nacimiento and not edad:
-            edad = Usuario.calcular_edad(fecha_nacimiento)
-
+        # Calcular edad no se almacena en la tabla (no existe la columna edad en DB)
         query = """
             INSERT INTO usuario 
-            (nombre, apellido, correo, contrasena, genero, fecha_nacimiento, edad, usa_medicamentos, rol)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            (nombre, apellido, correo, `contraseña`, fecha_nacimiento, usa_medicamentos, rol)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
         """
 
         return DatabaseConnection.execute_query(
@@ -38,9 +34,7 @@ class Usuario:
                 apellido,
                 correo.lower(),
                 contrasena,
-                genero,
                 fecha_nacimiento,
-                edad,
                 usa_medicamentos,
                 rol
             ),
@@ -52,7 +46,12 @@ class Usuario:
     # ---------------------------------------------------
     @staticmethod
     def get_by_id(id_usuario):
-        query = "SELECT * FROM usuario WHERE id_usuario = %s"
+        query = """
+            SELECT id_usuario, nombre, apellido, correo, `contraseña` AS contrasena,
+                   fecha_nacimiento, usa_medicamentos, rol
+            FROM usuario
+            WHERE id_usuario = %s
+        """
         results = DatabaseConnection.execute_query(query, (id_usuario,))
         return results[0] if results else None
 
@@ -61,7 +60,13 @@ class Usuario:
     # ---------------------------------------------------
     @staticmethod
     def get_by_email(correo):
-        query = "SELECT * FROM usuario WHERE correo = %s"
+        query = """
+            SELECT id_usuario, nombre, apellido, correo, `contraseña` AS contrasena,
+                   fecha_nacimiento, usa_medicamentos, rol
+            FROM usuario
+            WHERE correo = %s
+            LIMIT 1
+        """
         results = DatabaseConnection.execute_query(query, (correo.lower(),))
         return results[0] if results else None
 
@@ -70,7 +75,7 @@ class Usuario:
     # ---------------------------------------------------
     @staticmethod
     def get_all(limit=None, offset=0):
-        query = "SELECT * FROM usuario ORDER BY id_usuario DESC"
+        query = "SELECT id_usuario, nombre, apellido, correo, `contraseña` AS contrasena, fecha_nacimiento, usa_medicamentos, rol FROM usuario ORDER BY id_usuario DESC"
         if limit:
             query += f" LIMIT {limit} OFFSET {offset}"
         return DatabaseConnection.execute_query(query)
@@ -82,8 +87,7 @@ class Usuario:
     def update(id_usuario, **kwargs):
         allowed_fields = [
             'nombre', 'apellido', 'correo', 'contrasena',
-            'genero', 'fecha_nacimiento', 'edad',
-            'usa_medicamentos', 'rol'
+            'fecha_nacimiento', 'usa_medicamentos', 'rol'
         ]
 
         updates = []
@@ -101,7 +105,9 @@ class Usuario:
                     except:
                         pass
 
-                updates.append(f"{field} = %s")
+                # Map python field name to actual DB column name when necessary
+                column_name = "`contraseña`" if field == "contrasena" else field
+                updates.append(f"{column_name} = %s")
                 params.append(value)
 
         if not updates:

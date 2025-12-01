@@ -34,8 +34,6 @@ def register():
             return jsonify({'success': False, 'error': 'La contraseña es requerida'}), 400
         if len(contrasena) < 6:
             return jsonify({'success': False, 'error': 'La contraseña debe tener mínimo 6 caracteres'}), 400
-        if not genero:
-            return jsonify({'success': False, 'error': 'El género es requerido'}), 400
 
         # Si fecha viene vacía → None
         if fecha_nacimiento == '':
@@ -52,22 +50,22 @@ def register():
             cursor = connection.cursor()
 
             # Verificar si correo ya existe
-            cursor.execute("SELECT id_usuario FROM usuario WHERE correo = %s", (correo,))
+            query_check = "SELECT id_usuario FROM usuario WHERE correo = %s"
+            cursor.execute(query_check, (correo,))
             if cursor.fetchone():
                 return jsonify({'success': False, 'error': 'El correo ya está registrado'}), 400
 
             # Hash de contraseña
             password_hash = generate_password_hash(contrasena)
 
-            # Insertar usuario **sin edad**
-            cursor.execute("""
+            # Insertar usuario **sin edad y sin genero (no existe columna genero en DB)**
+            insert_query = """
                 INSERT INTO usuario 
-                (nombre, apellido, correo, contrasena, genero, fecha_nacimiento, usa_medicamentos, rol)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, 'usuario')
-            """, (
-                nombres, apellidos, correo, password_hash, genero,
-                fecha_nacimiento, usa_medicamentos
-            ))
+                (nombre, apellido, correo, `contraseña`, fecha_nacimiento, usa_medicamentos, rol)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """
+            params = (nombres, apellidos, correo, password_hash, fecha_nacimiento, usa_medicamentos, 'usuario')
+            cursor.execute(insert_query, params)
 
             connection.commit()
             user_id = cursor.lastrowid
@@ -116,8 +114,8 @@ def login():
             # Traer usuario **sin edad**
             cursor.execute("""
                 SELECT 
-                    id_usuario, nombre, apellido, correo, contrasena,
-                    rol, genero, fecha_nacimiento, usa_medicamentos
+                    id_usuario, nombre, apellido, correo, `contraseña` AS contrasena,
+                    rol, fecha_nacimiento, usa_medicamentos
                 FROM usuario
                 WHERE correo = %s
                 LIMIT 1
@@ -152,7 +150,7 @@ def login():
                 'apellido': user["apellido"],
                 'correo': user["correo"],
                 'rol': user["rol"],
-                'genero': user["genero"],
+                'genero': user.get("genero"),
                 'fecha_nacimiento': user["fecha_nacimiento"],
                 'edad': edad,
                 'usa_medicamentos': user["usa_medicamentos"]
