@@ -183,3 +183,75 @@ def get_profile():
             'success': False,
             'error': f'Error interno: {str(e)}'
         }), 500
+    # ======================================================
+# 👥 LISTA DE USUARIOS (ADMIN)
+# ======================================================
+@bp.route('/usuarios', methods=['GET'])
+@jwt_required()
+def get_usuarios():
+    """Obtener la lista de todos los usuarios (solo admin)"""
+    connection = None
+    cursor = None
+
+    try:
+        user_id = get_jwt_identity()
+        print(f"👥 [USUARIOS] Solicitud de user_id: {user_id}")
+
+        # Verificar rol admin
+        if not verificar_admin(user_id):
+            return jsonify({
+                'success': False,
+                'error': 'Acceso no autorizado. Se requiere rol administrador.'
+            }), 403
+
+        connection = DatabaseConnection.get_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        # Obtener usuarios
+        query = """
+            SELECT 
+                id_usuario,
+                nombre,
+                apellido,
+                correo,
+                rol,
+                fecha_ultimo_acceso
+            FROM usuario
+        """
+        cursor.execute(query)
+        usuarios = cursor.fetchall()
+
+        # Formatear respuesta
+        usuarios_data = []
+        for u in usuarios:
+            usuarios_data.append({
+                'id': u['id_usuario'],
+                'nombre': u['nombre'],
+                'apellido': u['apellido'],
+                'email': u['correo'],
+                'roles': [u['rol']],  # convertir rol a lista para compatibilidad frontend
+                'ultimoAcceso': str(u.get('fecha_ultimo_acceso')) if u.get('fecha_ultimo_acceso') else None
+            })
+
+        cursor.close()
+        DatabaseConnection.return_connection(connection)
+
+        return jsonify({
+            'success': True,
+            'usuarios': usuarios_data
+        }), 200
+
+    except Exception as e:
+        print(f"❌ Error en get_usuarios: {str(e)}")
+        import traceback
+        traceback.print_exc()
+
+        if cursor:
+            cursor.close()
+        if connection:
+            DatabaseConnection.return_connection(connection)
+
+        return jsonify({
+            'success': False,
+            'error': f'Error interno: {str(e)}'
+        }), 500

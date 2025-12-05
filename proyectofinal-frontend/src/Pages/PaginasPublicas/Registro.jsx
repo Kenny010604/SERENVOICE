@@ -17,18 +17,18 @@ import {
   FaVenus,
   FaTransgender,
 } from "react-icons/fa";
-import  authService  from "../../services/authService";
+import authService from "../../services/authService";
 
 const Registro = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    nombres: "",
-    apellidos: "",
+    nombre: "",
+    apellido: "",
     correo: "",
     contrasena: "",
     confirmarContrasena: "",
     genero: "",
-    fechaNacimiento: "",
+    fecha_nacimiento: "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -54,7 +54,6 @@ const Registro = () => {
     return age;
   };
 
-  // 🔥 handleSubmit completo integrado correctamente
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -65,7 +64,7 @@ const Registro = () => {
       return;
     }
 
-    const edad = calcularEdad(formData.fechaNacimiento);
+    const edad = calcularEdad(formData.fecha_nacimiento);
     if (edad < 13) {
       setError("Debes tener al menos 13 años para registrarte");
       return;
@@ -88,21 +87,17 @@ const Registro = () => {
     setLoading(true);
 
     try {
-      // Preparar datos según tu backend
       const userData = {
-        nombres: formData.nombres,
-        apellidos: formData.apellidos,
+        nombre: formData.nombre,
+        apellido: formData.apellido,
         correo: formData.correo,
-        contrasena: formData.contrasena, // ⚠️ tu backend usa Ñ
+        contrasena: formData.contrasena,
         genero: formData.genero,
-        edad: edad,
-        fechaNacimiento: formData.fechaNacimiento,
+        fecha_nacimiento: formData.fecha_nacimiento,
       };
 
-      // Enviar datos al backend → tu servicio ya hace login automático
       await authService.register(userData);
 
-      // Redirigir después del registro exitoso
       navigate("/dashboard");
     } catch (err) {
       console.error("Error en registro:", err);
@@ -119,7 +114,6 @@ const Registro = () => {
   return (
     <>
       <NavbarPublic />
-
       <main
         className="auth-container"
         style={{
@@ -153,25 +147,24 @@ const Registro = () => {
                     <FaUser className="input-icon" />
                     <input
                       type="text"
-                      name="nombres"
-                      value={formData.nombres}
+                      name="nombre"
+                      value={formData.nombre}
                       onChange={handleChange}
-                      placeholder="Nombres"
+                      placeholder="Nombre"
                       required
                       disabled={loading}
                     />
                   </div>
                 </div>
-
                 <div className="form-group">
                   <div className="input-group">
                     <FaUser className="input-icon" />
                     <input
                       type="text"
-                      name="apellidos"
-                      value={formData.apellidos}
+                      name="apellido"
+                      value={formData.apellido}
                       onChange={handleChange}
-                      placeholder="Apellidos"
+                      placeholder="Apellido"
                       required
                       disabled={loading}
                     />
@@ -260,7 +253,6 @@ const Registro = () => {
                     </button>
                   </div>
                 </div>
-
                 <div className="form-group">
                   <div
                     className="input-group"
@@ -339,9 +331,7 @@ const Registro = () => {
                       }`}
                       onClick={() =>
                         !loading &&
-                        handleChange({
-                          target: { name: "genero", value: "M" },
-                        })
+                        handleChange({ target: { name: "genero", value: "M" } })
                       }
                     >
                       <FaMars />
@@ -354,9 +344,7 @@ const Registro = () => {
                       }`}
                       onClick={() =>
                         !loading &&
-                        handleChange({
-                          target: { name: "genero", value: "F" },
-                        })
+                        handleChange({ target: { name: "genero", value: "F" } })
                       }
                     >
                       <FaVenus />
@@ -369,9 +357,7 @@ const Registro = () => {
                       }`}
                       onClick={() =>
                         !loading &&
-                        handleChange({
-                          target: { name: "genero", value: "O" },
-                        })
+                        handleChange({ target: { name: "genero", value: "O" } })
                       }
                     >
                       <FaTransgender />
@@ -398,8 +384,8 @@ const Registro = () => {
                     <FaCalendarAlt className="input-icon" />
                     <input
                       type="date"
-                      name="fechaNacimiento"
-                      value={formData.fechaNacimiento}
+                      name="fecha_nacimiento"
+                      value={formData.fecha_nacimiento}
                       onChange={handleChange}
                       required
                       max={new Date().toISOString().split("T")[0]}

@@ -36,8 +36,8 @@ class AuthService:
 
         # Crear usuario
         id_usuario = Usuario.create(
-            nombres=Seguridad.sanitize_input(data['nombre']),
-            apellidos=Seguridad.sanitize_input(data['apellido']),
+            nombre=Seguridad.sanitize_input(data['nombre']),
+            apellido=Seguridad.sanitize_input(data['apellido']),
             correo=data['correo'].lower(),
             contrasena=hashed_password,
             genero=data['genero'],
@@ -54,8 +54,8 @@ class AuthService:
                 'token': token,
                 'user': {
                     'id_usuario': id_usuario,
-                    'nombres': data['nombre'],
-                    'apellidos': data['apellido'],
+                    'nombre': data['nombre'],
+                    'apellido': data['apellido'],
                     'correo': data['correo'],
                     'genero': data['genero'],
                     'rol': 'usuario',
@@ -89,8 +89,8 @@ class AuthService:
             'token': token,
             'usuario': {
                 'id_usuario': usuario['id_usuario'],
-                'nombres': usuario['nombre'],
-                'apellidos': usuario['apellido'],
+                'nombre': usuario['nombre'],
+                'apellido': usuario['apellido'],
                 'correo': usuario['correo'],
                 'rol': usuario['rol'],
                 'genero': usuario.get('genero'),
@@ -108,8 +108,8 @@ class AuthService:
 
         # Construir diccionario limpio
         campos_actualizables = {
-            "nombres": data.get("nombre"),
-            "apellidos": data.get("apellido"),
+            "nombre": data.get("nombre"),
+            "apellido": data.get("apellido"),
             "correo": data.get("correo"),
             "genero": data.get("genero"),
             "fecha_nacimiento": data.get("fecha_nacimiento"),
