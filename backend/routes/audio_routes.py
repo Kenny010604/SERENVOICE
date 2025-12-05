@@ -1,100 +1,147 @@
-# backend/routes/audio_routes.py
-from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from services.audio_service import AudioService
-from utils.helpers import Helpers
+from flask import Blueprint, request, jsonify, current_app
+from werkzeug.utils import secure_filename
+from datetime import datetime
+import os
+import traceback
 
-bp = Blueprint('audios', __name__, url_prefix='/api/audios')
+bp = Blueprint('audio', __name__, url_prefix='/api/audio')
 
-@bp.route('/upload', methods=['POST'])
-@jwt_required()
-def upload_audio():
-    """Subir y procesar audio"""
-    user_id = get_jwt_identity()
-    
-    if 'audio' not in request.files:
-        return Helpers.format_response(
-            success=False,
-            message='No se encontró archivo de audio',
-            status=400
-        )
-    
-    file = request.files['audio']
-    
-    if file.filename == '':
-        return Helpers.format_response(
-            success=False,
-            message='Nombre de archivo vacío',
-            status=400
-        )
-    
-    result = AudioService.upload_and_process(file, user_id)
-    
-    if result['success']:
-        return Helpers.format_response(
-            success=True,
-            data=result,
-            message='Audio procesado exitosamente',
-            status=200
-        )
-    
-    return Helpers.format_response(
-        success=False,
-        message=result['error'],
-        status=400
-    )
+# Extensiones permitidas
+ALLOWED_EXTENSIONS = {'webm', 'wav', 'mp3', 'ogg', 'm4a'}
 
-@bp.route('/my-audios', methods=['GET'])
-@jwt_required()
-def get_my_audios():
-    """Obtener audios del usuario actual"""
-    user_id = get_jwt_identity()
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 20, type=int)
-    
-    audios = AudioService.get_user_audios(user_id, page, per_page)
-    
-    return Helpers.format_response(
-        success=True,
-        data=Helpers.paginate_results(audios, page, per_page),
-        status=200
-    )
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@bp.route('/<int:id_audio>', methods=['DELETE'])
-@jwt_required()
-def delete_audio(id_audio):
-    """Eliminar audio"""
-    from models.audio import Audio
-    
-    user_id = get_jwt_identity()
-    audio = Audio.get_by_id(id_audio)
-    
-    if not audio:
-        return Helpers.format_response(
-            success=False,
-            message='Audio no encontrado',
-            status=404
-        )
-    
-    # Verificar que el audio pertenece al usuario
-    if audio['id_usuario'] != user_id:
-        return Helpers.format_response(
-            success=False,
-            message='No tienes permisos para eliminar este audio',
-            status=403
-        )
-    
-    result = AudioService.delete_audio(id_audio)
-    
-    if result['success']:
-        return Helpers.format_response(
-            success=True,
-            message=result['message'],
-            status=200
-        )
-    
-    return Helpers.format_response(
-        success=False,
-        message=result['error'],
-        status=400
-    )
+
+# ======================================================================
+# 🟦 Endpoint: ANALIZAR AUDIO
+# ======================================================================
+@bp.route('/analyze', methods=['POST'])
+def analyze_voice():
+
+    filepath = None  # evitar errores si ocurre algo antes
+
+    try:
+        service = current_app.audio_service
+        if not service:
+            return jsonify({'success': False, 'error': 'Servicio de análisis no disponible'}), 500
+
+        # --------------------------------------------------------
+        # 1) Validar archivo
+        # --------------------------------------------------------
+        if 'audio' not in request.files:
+            return jsonify({'success': False, 'error': 'No se encontró el archivo de audio'}), 400
+
+        file = request.files['audio']
+
+        if file.filename == '':
+            return jsonify({'success': False, 'error': 'Nombre de archivo vacío'}), 400
+
+        if not allowed_file(file.filename):
+            return jsonify({'success': False, 'error': 'Formato no permitido'}), 400
+
+        # Duración enviada por el frontend
+        duration_raw = request.form.get('duration', '0')
+        duration = float(duration_raw) if duration_raw not in (None, "", "null") else 0.0
+
+        # ID usuario (modo autenticado o modo prueba)
+        user_id_raw = request.form.get('user_id')
+        user_id = int(user_id_raw) if user_id_raw not in (None, "", "null", "undefined") else None
+
+        # --------------------------------------------------------
+        # 2) Guardar archivo temporal
+        # --------------------------------------------------------
+        upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+        os.makedirs(upload_folder, exist_ok=True)
+
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+        filename = secure_filename(f"{timestamp}_{file.filename}")
+
+        filepath = os.path.join(upload_folder, filename)
+        file.save(filepath)
+
+        print(f"[audio_routes] Archivo guardado temporalmente en {filepath}")
+
+        # --------------------------------------------------------
+        # 3) Analizar audio con IA
+        # --------------------------------------------------------
+        results = service.analyze_audio(filepath, duration)
+
+        if not results:
+            raise Exception("El servicio de análisis devolvió una respuesta vacía.")
+
+        # --------------------------------------------------------
+        # 4) Guardar en BD (solo si hay usuario autenticado)
+        # --------------------------------------------------------
+        audio_db_id = None
+
+        try:
+            conn = current_app.db
+            cursor = conn.cursor()
+
+            insert_query = """
+                INSERT INTO audio
+                (id_usuario, nombre_archivo, ruta_archivo, duracion, fecha_grabacion)
+                VALUES (%s, %s, %s, %s, NOW())
+            """
+
+            cursor.execute(insert_query, (
+                user_id,
+                filename,
+                filepath,
+                duration
+            ))
+
+            conn.commit()
+            audio_db_id = cursor.lastrowid
+            cursor.close()
+
+            print(f"[audio_routes] Audio guardado en BD con ID {audio_db_id}")
+
+        except Exception as db_err:
+            print("[audio_routes] Error guardando en BD:", db_err)
+
+        # --------------------------------------------------------
+        # 5) Guardar features para entrenamiento continuo
+        # --------------------------------------------------------
+        try:
+            service.save_training_sample(
+                audio_db_id=audio_db_id,
+                features=results.get("features"),
+                emotions=results.get("emotions"),
+                duration=duration
+            )
+            print("[audio_routes] Sample de entrenamiento guardado.")
+        except Exception as train_err:
+            print("[audio_routes] Error guardando sample de entrenamiento:", train_err)
+
+        # --------------------------------------------------------
+        # 6) Respuesta final
+        # --------------------------------------------------------
+        return jsonify({
+            "success": True,
+            "mode": "authenticated" if user_id else "guest_test",
+            "emotions": results["emotions"],
+            "confidence": results["confidence"],
+            "duration": duration,
+            "audio_id": audio_db_id,
+            "features": results.get("features", None),
+            "timestamp": datetime.now().isoformat()
+        }), 200
+
+    except Exception as e:
+        print("[audio_routes] ERROR GENERAL:", e)
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+    finally:
+        # NO BORRAR EL AUDIO si fue guardado en BD
+        if filepath and os.path.exists(filepath):
+
+            if "audio_id" not in locals() or audio_db_id is None:
+                # solo se borra si NO se guardó en BD
+                try:
+                    os.remove(filepath)
+                    print(f"[audio_routes] Archivo temporal eliminado: {filepath}")
+                except Exception:
+                    pass

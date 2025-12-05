@@ -1,48 +1,62 @@
-// services/apiClient.js
-import axios from 'axios';
-import api from '../config/api';
+import axios from "axios";
+import api from "../config/api";
 
 const apiClient = axios.create({
-  baseURL: api.baseURL,  // ✅ Usar el valor de config (vacío para proxy)
+  baseURL: api.baseURL || "", // Si está vacío usa proxy del Vite
   headers: {
     "Content-Type": "application/json",
   },
   withCredentials: true,
 });
 
-// Interceptor para agregar token
+// Normaliza URLs para evitar dobles slashes
+const normalizeUrl = (url) => {
+    if (!url) return url;
+    return url.replace(/\/+$/, ""); // Quita / al final
+};
+
+// Interceptor REQUEST → agrega token y normaliza URL
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
+
+    // Normalización de URL para evitar errores como /api/usuarios/
+    config.url = normalizeUrl(config.url);
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    console.log(`📤 ${config.method.toUpperCase()} ${config.url}`);
+
+    console.log(`REQUEST: ${config.method.toUpperCase()} ${config.url}`);
     return config;
   },
   (error) => {
-    console.error('❌ Error en request:', error);
+    console.error("Error en request:", error);
     return Promise.reject(error);
   }
 );
 
-// Interceptor para respuestas
+// Interceptor RESPONSE → captura códigos de error
 apiClient.interceptors.response.use(
   (response) => {
-    console.log(`📥 ${response.status} ${response.config.url}`);
+    console.log(`RESPONSE ${response.status}: ${response.config.url}`);
     return response;
   },
   (error) => {
-    console.error('❌ Error en response:', error.response?.status, error.message);
-    
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login';
+    const status = error.response?.status;
+    const url = error.config?.url;
+
+    console.error(`ERROR RESPONSE ${status} en ${url}`);
+
+    if (status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
+      if (!window.location.pathname.includes("/login")) {
+        window.location.href = "/login";
       }
     }
-    
+
     return Promise.reject(error);
   }
 );

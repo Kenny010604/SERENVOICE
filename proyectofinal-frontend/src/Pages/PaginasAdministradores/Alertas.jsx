@@ -1,29 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import NavbarAdministrador from "../../components/Administrador/NavbarAdministrador";
-import "../../global.css";
-import { FaUser, FaCheck, FaBell } from "react-icons/fa";
-
-const sampleAlerts = [
-  {
-    id: 101,
-    usuario: "Juan García",
-    tipo: "estres_critico",
-    severidad: "Crítica",
-    fecha: "2025-11-15",
-    asignado: null,
-  },
-  {
-    id: 102,
-    usuario: "María Pérez",
-    tipo: "ansiedad_critica",
-    severidad: "Alta",
-    fecha: "2025-11-14",
-    asignado: 5,
-  },
-];
+import { FaBell, FaCheck } from "react-icons/fa";
+import { useAlertas } from "../../context/AlertasContext";
 
 const Alertas = () => {
-  const [alerts, setAlerts] = useState(sampleAlerts);
+  const { alerts, assignToMe, resolveAlerta } = useAlertas();
   const [msg, setMsg] = useState("");
   const cardRef = useRef(null);
 
@@ -31,32 +12,23 @@ const Alertas = () => {
     if (!cardRef.current) return;
     const els = cardRef.current.querySelectorAll(".reveal");
     els.forEach((el) => el.classList.add("reveal-visible"));
-    if (cardRef.current.classList.contains("reveal"))
-      cardRef.current.classList.add("reveal-visible");
   }, []);
 
-  const assignToMe = (id) => {
-    setAlerts((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, asignado: "Yo" } : a))
-    );
-    setMsg("Alerta asignada a ti (simulado)");
+  const handleAssign = (id) => {
+    assignToMe(id);
+    setMsg("Alerta asignada a ti");
   };
 
-  const resolve = (id) => {
-    setAlerts((prev) => prev.filter((a) => a.id !== id));
-    setMsg("Alerta marcada como resuelta (simulado)");
+  const handleResolve = (id) => {
+    resolveAlerta(id);
+    setMsg("Alerta resuelta");
   };
 
   return (
     <>
       <NavbarAdministrador />
       <main className="container" style={{ paddingBottom: "100px" }}>
-        <div
-          ref={cardRef}
-          className="card reveal"
-          data-revealdelay="60"
-          style={{ maxWidth: "1200px" }}
-        >
+        <div ref={cardRef} className="card reveal" style={{ maxWidth: "1200px" }}>
           <h2>
             <FaBell /> Gestión de Alertas
           </h2>
@@ -64,50 +36,44 @@ const Alertas = () => {
             Lista de alertas críticas y acciones rápidas.
           </p>
 
-          {msg && (
-            <div className="success-message" style={{ marginTop: "0.75rem" }}>
-              {msg}
-            </div>
-          )}
+          {msg && <div className="success-message">{msg}</div>}
 
-          <div style={{ marginTop: "1rem" }}>
-            {alerts.length === 0 ? (
-              <p>No hay alertas pendientes.</p>
-            ) : (
-              <ul style={{ listStyle: "none", padding: 0 }}>
-                {alerts.map((a) => (
-                  <li
-                    key={a.id}
-                    className="card"
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: "0.75rem",
-                    }}
-                  >
-                    <div>
-                      <strong>{a.usuario}</strong>
-                      <div style={{ color: "var(--color-text-secondary)" }}>
-                        {a.tipo} — {a.severidad} — {a.fecha}
-                      </div>
+          {alerts.length === 0 ? (
+            <p>No hay alertas pendientes.</p>
+          ) : (
+            <ul style={{ listStyle: "none", padding: 0 }}>
+              {alerts.map((a) => (
+                <li
+                  key={a.id}
+                  className="card"
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "0.75rem",
+                  }}
+                >
+                  <div>
+                    <strong>{a.usuario}</strong>
+                    <div style={{ color: "var(--color-text-secondary)" }}>
+                      {a.tipo} — {a.severidad} — {a.fecha}
+                      <br />
+                      {a.mensaje}
                     </div>
-                    <div style={{ display: "flex", gap: "0.5rem" }}>
-                      <button onClick={() => assignToMe(a.id)}>
-                        Asignar a mí
-                      </button>
-                      <button
-                        onClick={() => resolve(a.id)}
-                        style={{ background: "#4caf50", color: "#fff" }}
-                      >
-                        <FaCheck /> Resolver
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+                  </div>
+                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <button onClick={() => handleAssign(a.id)}>Asignar a mí</button>
+                    <button
+                      onClick={() => handleResolve(a.id)}
+                      style={{ background: "#4caf50", color: "#fff" }}
+                    >
+                      <FaCheck /> Resolver
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </main>
     </>

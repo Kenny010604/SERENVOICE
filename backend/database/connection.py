@@ -1,85 +1,92 @@
-# backend/database/connection.py
 import mysql.connector
-from mysql.connector import Error, pooling
-from database.config import Config
-from contextlib import contextmanager
+from mysql.connector import pooling, Error
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 class DatabaseConnection:
-    """Gestión de conexiones a la base de datos con pool"""
-    
-    _pool = None
-    
-    @classmethod
-    def initialize_pool(cls):
-        """Inicializar el pool de conexiones"""
+    """
+    Manejo global (estático) del pool de conexiones.
+    """
+    pool = None
+
+    # ------------------------------------------------------------
+    # Inicializar pool de conexiones — se llama una sola vez
+    # ------------------------------------------------------------
+    @staticmethod
+    def initialize_pool():
         try:
-            cls._pool = pooling.MySQLConnectionPool(
-                pool_name="sistema_estres_pool",
-                pool_size=5,
-                pool_reset_session=True,
-                **Config.DB_CONFIG
+            DatabaseConnection.pool = pooling.MySQLConnectionPool(
+                pool_name="mindvoice_pool",
+                pool_size=10,
+                host=os.getenv('DB_HOST', 'localhost'),
+                user=os.getenv('DB_USER', 'root'),
+                password=os.getenv('DB_PASSWORD', ''),
+                database=os.getenv('DB_NAME', 'serenvoice'),
+                port=int(os.getenv('DB_PORT', 3306)),
             )
-            print("[OK] Pool de conexiones inicializado correctamente")
+            print("[DB] Pool de conexiones inicializado correctamente")
         except Error as e:
-            print(f"[ERROR] Error al crear pool de conexiones: {e}")
+            print(f"[DB] Error al crear pool: {e}")
             raise
-    
-    @classmethod
-    @contextmanager
-    def get_connection(cls):
-        """Context manager para obtener una conexión del pool"""
-        if cls._pool is None:
-            cls.initialize_pool()
-        
-        connection = None
+
+    # ------------------------------------------------------------
+    # Obtener conexión desde el pool (estático)
+    # ------------------------------------------------------------
+    @staticmethod
+    def get_connection():
+        if DatabaseConnection.pool is None:
+            raise RuntimeError(
+                "El pool no ha sido inicializado. Llama a DatabaseConnection.initialize_pool() primero."
+            )
         try:
-            connection = cls._pool.get_connection()
-            yield connection
+            return DatabaseConnection.pool.get_connection()
         except Error as e:
-            if connection:
-                connection.rollback()
-            print(f"[ERROR] Error en la conexion: {e}")
+            print(f"[DB] Error obteniendo conexión del pool: {e}")
             raise
-        finally:
-            if connection and connection.is_connected():
-                connection.close()
-    
-    @classmethod
-    @contextmanager
-    def get_cursor(cls, dictionary=True):
-        """Context manager para obtener un cursor"""
-        with cls.get_connection() as connection:
-            cursor = connection.cursor(dictionary=dictionary)
-            try:
-                yield cursor
-                connection.commit()
-            except Error as e:
-                connection.rollback()
-                print(f"[ERROR] Error en la consulta: {e}")
-                raise
-            finally:
-                cursor.close()
-    
-    @classmethod
-    def execute_query(cls, query, params=None, fetch=True):
-        """Ejecutar una consulta de forma simplificada"""
-        with cls.get_cursor() as cursor:
-            cursor.execute(query, params or ())
-            
-            if fetch:
-                return cursor.fetchall()
-            else:
-                return cursor.lastrowid
-    
-    @classmethod
-    def test_connection(cls):
-        """Probar la conexión a la base de datos"""
+
+    # ------------------------------------------------------------
+    # Liberar conexión
+    # ------------------------------------------------------------
+    @staticmethod
+    def release_connection(conn):
+        if conn:
+            conn.close()
+
+    # ------------------------------------------------------------
+    # Probar conexión
+    # ------------------------------------------------------------
+    @staticmethod
+    def test_connection():
         try:
-            with cls.get_cursor() as cursor:
-                cursor.execute("SELECT 1")
-                result = cursor.fetchone()
-                print("[OK] Conexion a la base de datos exitosa")
-                return True
+            conn = DatabaseConnection.get_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT DATABASE()")
+            db_name = cursor.fetchone()[0]
+
+            cursor.close()
+            conn.close()
+
+            print(f"[DB] Conexión OK — Base de datos actual: {db_name}")
+            return True
         except Error as e:
-            print(f"[ERROR] Error al conectar a la base de datos: {e}")
+            print(f"[DB] Error al probar conexión: {e}")
             return False
+
+
+# ------------------------------------------------------------
+# Función global — compatibilidad con modelos antiguos
+# ------------------------------------------------------------
+def get_db_connection():
+    """Compatibilidad: devuelve una conexión normal desde el pool."""
+    return DatabaseConnection.get_connection()
+
+
+# ------------------------------------------------------------
+# Prueba manual
+# ------------------------------------------------------------
+if __name__ == "__main__":
+    DatabaseConnection.initialize_pool()
+    DatabaseConnection.test_connection()

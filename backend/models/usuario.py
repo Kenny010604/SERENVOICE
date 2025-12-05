@@ -1,12 +1,13 @@
 # backend/models/usuario.py
-from database.connection import DatabaseConnection
+
+from database.connection import DatabaseConnection, get_db_connection
 from datetime import date, datetime
 
 class Usuario:
-    """Modelo para la tabla Usuario"""
+    """Modelo para la tabla usuarios"""
 
     # ---------------------------------------------------
-    # 🟢 Crear usuario
+    # Crear usuario
     # ---------------------------------------------------
     @staticmethod
     def create(
@@ -20,11 +21,13 @@ class Usuario:
     ):
 
         # Si no envían edad → calcular automáticamente
-        # Calcular edad no se almacena en la tabla (no existe la columna edad en DB)
+        if fecha_nacimiento and not edad:
+            edad = Usuario.calcular_edad(fecha_nacimiento)
+
         query = """
             INSERT INTO usuario 
-            (nombre, apellido, correo, `contraseña`, fecha_nacimiento, usa_medicamentos, rol)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            (nombre, apellido, correo, contrasena, genero, fecha_nacimiento, edad, usa_medicamentos, rol)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
 
         return DatabaseConnection.execute_query(
@@ -42,21 +45,16 @@ class Usuario:
         )
 
     # ---------------------------------------------------
-    # 🟢 Obtener por ID
+    # Obtener usuario por ID
     # ---------------------------------------------------
     @staticmethod
     def get_by_id(id_usuario):
-        query = """
-            SELECT id_usuario, nombre, apellido, correo, `contraseña` AS contrasena,
-                   fecha_nacimiento, usa_medicamentos, rol
-            FROM usuario
-            WHERE id_usuario = %s
-        """
+        query = "SELECT * FROM usuario WHERE id_usuario = %s"
         results = DatabaseConnection.execute_query(query, (id_usuario,))
         return results[0] if results else None
 
     # ---------------------------------------------------
-    # 🟢 Obtener por correo
+    # Obtener usuario por correo
     # ---------------------------------------------------
     @staticmethod
     def get_by_email(correo):
@@ -71,23 +69,24 @@ class Usuario:
         return results[0] if results else None
 
     # ---------------------------------------------------
-    # 🟢 Obtener todos
+    # Obtener todos los usuarios
     # ---------------------------------------------------
     @staticmethod
     def get_all(limit=None, offset=0):
-        query = "SELECT id_usuario, nombre, apellido, correo, `contraseña` AS contrasena, fecha_nacimiento, usa_medicamentos, rol FROM usuario ORDER BY id_usuario DESC"
+        query = "SELECT * FROM usuario ORDER BY id_usuario DESC"
         if limit:
             query += f" LIMIT {limit} OFFSET {offset}"
         return DatabaseConnection.execute_query(query)
 
     # ---------------------------------------------------
-    # 🟢 Actualizar usuario
+    # Actualizar usuario
     # ---------------------------------------------------
     @staticmethod
     def update(id_usuario, **kwargs):
         allowed_fields = [
             'nombre', 'apellido', 'correo', 'contrasena',
-            'fecha_nacimiento', 'usa_medicamentos', 'rol'
+            'genero', 'fecha_nacimiento', 'edad',
+            'usa_medicamentos', 'rol'
         ]
 
         updates = []
@@ -105,13 +104,11 @@ class Usuario:
                     except:
                         pass
 
-                # Map python field name to actual DB column name when necessary
-                column_name = "`contraseña`" if field == "contrasena" else field
-                updates.append(f"{column_name} = %s")
+                updates.append(f"{field} = %s")
                 params.append(value)
 
         if not updates:
-            return False  # Nada para actualizar
+            return False
 
         params.append(id_usuario)
         query = f"UPDATE usuario SET {', '.join(updates)} WHERE id_usuario = %s"
@@ -120,7 +117,7 @@ class Usuario:
         return True
 
     # ---------------------------------------------------
-    # 🟢 Eliminar usuario
+    # Eliminar usuario
     # ---------------------------------------------------
     @staticmethod
     def delete(id_usuario):
@@ -129,7 +126,7 @@ class Usuario:
         return True
 
     # ---------------------------------------------------
-    # 🟢 Verificar si correo existe
+    # Verificar si correo existe
     # ---------------------------------------------------
     @staticmethod
     def exists_email(correo):
@@ -138,14 +135,13 @@ class Usuario:
         return result[0]['count'] > 0 if result else False
 
     # ---------------------------------------------------
-    # 🟢 Calcular edad automática
+    # Calcular edad
     # ---------------------------------------------------
     @staticmethod
     def calcular_edad(fecha_nacimiento):
         if not fecha_nacimiento:
             return None
 
-        # Si viene como string → convertir
         if isinstance(fecha_nacimiento, str):
             fecha_nacimiento = datetime.strptime(fecha_nacimiento, "%Y-%m-%d").date()
 

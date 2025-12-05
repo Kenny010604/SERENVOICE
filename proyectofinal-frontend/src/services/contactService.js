@@ -1,14 +1,13 @@
-import apiClient from './apiClient';
+import apiClient from "../services/apiClient";
+import api from "../config/api";
 
 export const contactService = {
-  async sendMessage(contactData) {
-    try {
-      const response = await apiClient.post('/api/contacto', contactData);
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || { message: 'Error al enviar mensaje' };
-    }
-  }
+  async sendMessage(data) {
+    const response = await apiClient.post(api.endpoints.contacto, data, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data;
+  },
 };
-
-export default contactService;

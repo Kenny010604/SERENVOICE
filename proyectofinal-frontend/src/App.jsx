@@ -26,17 +26,21 @@ import Usuarios from "./Pages/PaginasAdministradores/Usuarios.jsx";
 import Alertas from "./Pages/PaginasAdministradores/Alertas.jsx";
 import Reportes from "./Pages/PaginasAdministradores/Reportes.jsx";
 
+
 // Contextos y utilidades
 import PageWithTitle from "./utils/PageWithTitle.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import ProtectedRoute from "./utils/ProtectedRoute.jsx";
+import { AlertasProvider } from "./context/AlertasContext";
+
 
 function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <Router>
+        <AlertasProvider>
+          <Router>
           <Routes>
             {/* Páginas públicas */}
             <Route path="/Inicio" element={<PageWithTitle title="Inicio"><Inicio /></PageWithTitle>} />
@@ -160,6 +164,7 @@ function App() {
             <Route path="*" element={<Navigate to="/Inicio" />} />
           </Routes>
         </Router>
+        </AlertasProvider>
       </AuthProvider>
     </ThemeProvider>
   );

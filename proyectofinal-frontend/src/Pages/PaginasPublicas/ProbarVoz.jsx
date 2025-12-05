@@ -3,7 +3,6 @@ import NavbarPublic from "../../components/Publico/NavbarPublic";
 import "../../global.css";
 import Spinner from "../../components/Spinner";
 import heroImg from "../../assets/ImagenFondoClaro.png";
-
 import {
   FaMicrophone,
   FaStop,
@@ -19,10 +18,18 @@ import {
   FaArrowRight,
   FaHeartbeat,
   FaBrain,
+  FaMeh,
+  FaSadCry,
+  FaExclamationTriangle,
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
+// API URL
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const ProbarVoz = () => {
+  const userId = localStorage.getItem("userId"); // null si no está logueado
+  const token = localStorage.getItem("token");
   const [isRecording, setIsRecording] = useState(false);
   const [mediaSupported, setMediaSupported] = useState(true);
   const [audioURL, setAudioURL] = useState(null);
@@ -31,22 +38,46 @@ const ProbarVoz = () => {
   const [recTime, setRecTime] = useState(0);
   const [analysis, setAnalysis] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [error, setError] = useState(null);
   const mediaRecorderRef = useRef(null);
   const timerRef = useRef(null);
   const audioRef = useRef(null);
 
+  // Verificar soporte de navegador
   useEffect(() => {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setMediaSupported(false);
-    }
+    const checkMediaSupport = async () => {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setMediaSupported(false);
+        setError(
+          "Tu navegador no soporta la grabación de audio. Usa Chrome, Firefox o Edge."
+        );
+        return;
+      }
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((track) => track.stop());
+        setMediaSupported(true);
+        setError(null);
+      } catch (err) {
+        console.error("Error de permisos:", err);
+        setMediaSupported(false);
+        setError(
+          err.name === "NotAllowedError"
+            ? "Debes permitir el acceso al micrófono."
+            : "Error al acceder al micrófono: " + err.message
+        );
+      }
+    };
+
+    checkMediaSupport();
+
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (audioURL) URL.revokeObjectURL(audioURL);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // reload audio element when audioURL changes to ensure playback is available
   useEffect(() => {
     if (audioRef.current && audioURL) {
       try {
@@ -68,20 +99,43 @@ const ProbarVoz = () => {
     if (timerRef.current) clearInterval(timerRef.current);
   };
 
+  const requestMicrophonePermission = async () => {
+    try {
+      setError(null);
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((track) => track.stop());
+      setMediaSupported(true);
+      alert("Permisos concedidos. Ahora puedes grabar.");
+    } catch (err) {
+      setMediaSupported(false);
+      setError(err.name === "NotAllowedError" ? "Permisos denegados" : err.message);
+    }
+  };
+
+  // Iniciar grabación
   const handleStart = async () => {
     if (!mediaSupported) return;
+    setError(null);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // choose best supported mimeType
-      const preferType = "audio/webm;codecs=opus";
-      const mimeType = MediaRecorder.isTypeSupported(preferType)
-        ? preferType
-        : "audio/webm";
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          channelCount: 1,
+          sampleRate: 16000,
+          echoCancellation: true,
+          noiseSuppression: true,
+        },
+      });
 
-      const mr = new MediaRecorder(stream, { mimeType });
+      // Usar un formato soportado
+      let mimeType = "";
+      if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+        mimeType = "audio/webm;codecs=opus";
+      } else if (MediaRecorder.isTypeSupported("audio/webm")) {
+        mimeType = "audio/webm";
+      }
+
+      const mr = new MediaRecorder(stream, mimeType ? { mimeType } : {});
       mediaRecorderRef.current = mr;
-
-      // use a local ref to accumulate chunks reliably during recording
       mediaChunksRef.current = [];
       setChunks([]);
 
@@ -92,17 +146,12 @@ const ProbarVoz = () => {
       };
 
       mr.onstop = () => {
-        try {
-          const blob = new Blob(mediaChunksRef.current, { type: mimeType });
-          if (audioURL) URL.revokeObjectURL(audioURL);
-          const url = URL.createObjectURL(blob);
-          setAudioURL(url);
-          // keep a copy in state if needed elsewhere
-          setChunks(mediaChunksRef.current.slice());
-        } catch (err) {
-          console.error("Error creating audio blob:", err);
-        }
-        // stop all tracks
+        const recordedMimeType = mr.mimeType;
+        const blob = new Blob(mediaChunksRef.current, { type: recordedMimeType });
+        if (audioURL) URL.revokeObjectURL(audioURL);
+        const url = URL.createObjectURL(blob);
+        setAudioURL(url);
+        setChunks(mediaChunksRef.current.slice());
         stream.getTracks().forEach((t) => t.stop());
       };
 
@@ -112,28 +161,28 @@ const ProbarVoz = () => {
     } catch (err) {
       console.error("Error accessing microphone:", err);
       setMediaSupported(false);
+      setError("No se pudo acceder al micrófono. Verifica los permisos.");
     }
   };
 
+  // Detener grabación
   const handleStop = () => {
-    if (
-      mediaRecorderRef.current &&
-      mediaRecorderRef.current.state !== "inactive"
-    ) {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
     }
     setIsRecording(false);
     stopTimer();
+
+    setTimeout(() => {
+      if (audioURL) handleAnalyze();
+    }, 500);
   };
 
   const handlePlay = () => {
     if (audioRef.current) {
-      // ensure it's loaded and then play
       try {
         audioRef.current.play();
       } catch (err) {
-        // some browsers require user interaction or reloading
-        console.warn("Play attempt failed, reloading audio:", err);
         audioRef.current.load();
         audioRef.current.play().catch((e) => console.error("Play failed:", e));
       }
@@ -144,107 +193,68 @@ const ProbarVoz = () => {
     if (!audioURL) return;
     const a = document.createElement("a");
     a.href = audioURL;
-    a.download = "grabacion_serenvoice.webm";
+    a.download = `grabacion_serenvoice_${Date.now()}.webm`;
     document.body.appendChild(a);
     a.click();
     a.remove();
   };
 
-  const getRecommendations = (emotion) => {
-    const recommendationMap = {
-      Felicidad: [
-        "Mantén ese estado positivo practicando actividades que disfrutes",
-        "Comparte tu alegría con personas cercanas",
-        "Documenta estos momentos en tu perfil",
-      ],
-      Tristeza: [
-        "Considera buscar apoyo emocional si persiste",
-        "Practica actividades relajantes o meditación",
-        "Conecta con tus amigos o familia",
-      ],
-      Enojo: [
-        "Intenta técnicas de respiración para calmarte",
-        "Toma un descanso y haz algo que te relaje",
-        "Expresa tus emociones de forma constructiva",
-      ],
-      Estrés: [
-        "Practica ejercicios de relajación o yoga",
-        "Deja descansos regulares durante tu día",
-        "Establece límites en tus responsabilidades",
-      ],
-      Ansiedad: [
-        "Prueba técnicas de mindfulness o meditación",
-        "Reduce el consumo de cafeína",
-        "Habla con un profesional de salud mental",
-      ],
-    };
-    return (
-      recommendationMap[emotion] || [
-        "Mantén tu bienestar emocional",
-        "Busca apoyo cuando lo necesites",
-      ]
-    );
+  // Analizar audio en backend
+  const handleAnalyze = async () => {
+    try {
+      setIsAnalyzing(true);
+      setError(null);
+
+      if (!audioURL) {
+        setError("No hay audio para analizar.");
+        return;
+      }
+
+      const blob = new Blob(mediaChunksRef.current, { type: "audio/webm;codecs=opus" });
+      const formData = new FormData();
+      formData.append("audio", blob, "grabacion.webm");
+
+      const response = await fetch(`${API_URL}/api/audio/analyze`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
+
+      const data = await response.json();
+      setAnalysis(data);
+    } catch (error) {
+      console.error("Error analyzing audio:", error);
+      setError(error.message);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
-  const handleAnalyze = async () => {
-    const sourceChunks =
-      mediaChunksRef.current && mediaChunksRef.current.length > 0
-        ? mediaChunksRef.current
-        : chunks;
-    if (!sourceChunks || sourceChunks.length === 0)
-      return alert("No hay grabación para analizar");
-    const blobType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-      ? "audio/webm;codecs=opus"
-      : "audio/webm";
-    const blob = new Blob(sourceChunks, { type: blobType });
-    setIsAnalyzing(true);
+  const getEmotionIcon = (emotion) => {
+    const iconMap = {
+      Felicidad: FaSmile,
+      Tristeza: FaSadCry,
+      Enojo: FaAngry,
+      Estrés: FaHeartbeat,
+      Ansiedad: FaBrain,
+      Neutral: FaMeh,
+      Miedo: FaExclamationTriangle,
+    };
+    return iconMap[emotion] || FaMeh;
+  };
 
-    // Generate random analysis results immediately (no artificial delay)
-    // This keeps the UI responsive; replace with real analysis call when backend/worker is available.
-    const emotions = [
-      {
-        name: "Felicidad",
-        value: Math.floor(Math.random() * 40) + 20,
-        icon: FaSmile,
-        color: "#FFD700",
-      },
-      {
-        name: "Tristeza",
-        value: Math.floor(Math.random() * 30) + 10,
-        icon: FaFrownOpen,
-        color: "#4169E1",
-      },
-      {
-        name: "Enojo",
-        value: Math.floor(Math.random() * 25) + 5,
-        icon: FaAngry,
-        color: "#FF6347",
-      },
-      {
-        name: "Estrés",
-        value: Math.floor(Math.random() * 35) + 15,
-        icon: FaHeartbeat,
-        color: "#FF4500",
-      },
-      {
-        name: "Ansiedad",
-        value: Math.floor(Math.random() * 30) + 10,
-        icon: FaBrain,
-        color: "#9370DB",
-      },
-    ];
-    emotions.sort((a, b) => b.value - a.value);
-
-    const recommendations = getRecommendations(emotions[0].name);
-
-    setAnalysis({
-      emotions,
-      dominantEmotion: emotions[0].name,
-      recommendations,
-      audioSize: Math.round(blob.size / 1024),
-      duration: recTime,
-    });
-    setIsAnalyzing(false);
+  const getEmotionColor = (emotion) => {
+    const colorMap = {
+      Felicidad: "#FFD700",
+      Tristeza: "#4169E1",
+      Enojo: "#FF6347",
+      Estrés: "#FF4500",
+      Ansiedad: "#9370DB",
+      Neutral: "#90A4AE",
+      Miedo: "#FF6F00",
+    };
+    return colorMap[emotion] || "#90A4AE";
   };
 
   return (
@@ -263,350 +273,107 @@ const ProbarVoz = () => {
         }}
       >
         <div className="card" style={{ maxWidth: 900, width: "100%" }}>
-          <h2 style={{ marginBottom: 8 }}>Prueba de Captura de Voz</h2>
+          <h2 style={{ marginBottom: 8 }}>Análisis Emocional por Voz con IA</h2>
           <p style={{ color: "var(--color-text-secondary)", marginBottom: 16 }}>
-            Graba un fragmento de tu voz y reproducélo. Esta prueba es útil para
-            ver cómo funciona el sistema de captura y para hacer pruebas
-            locales.
+            Graba al menos 5 segundos de tu voz hablando naturalmente. Nuestra IA analizará
+            tus emociones mediante características acústicas avanzadas.
           </p>
 
-          {!mediaSupported && (
-            <div style={{ color: "var(--color-error)" }}>
-              Tu navegador no soporta la API de grabación de audio o no diste
-              permiso.
+          {!mediaSupported && error && (
+            <div style={{
+              color: "#d32f2f",
+              padding: 16,
+              background: "#ffebee",
+              borderRadius: 8,
+              marginBottom: 16,
+              border: "2px solid #ef5350"
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+                <FaExclamationTriangle size={24} />
+                <strong>Problema con el micrófono</strong>
+              </div>
+              <p style={{ margin: "8px 0", fontSize: "0.95rem" }}>{error}</p>
+              <button
+                onClick={requestMicrophonePermission}
+                style={{
+                  marginTop: 12,
+                  padding: "8px 16px",
+                  background: "#4caf50",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 6,
+                  cursor: "pointer",
+                  fontSize: "0.9rem"
+                }}
+              >
+                Solicitar permisos nuevamente
+              </button>
             </div>
           )}
 
-          <div
-            style={{
-              display: "flex",
-              gap: 16,
-              alignItems: "center",
-              marginBottom: 12,
-            }}
-          >
+          <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 12, flexWrap: "wrap" }}>
             {!isRecording ? (
-              <button className="auth-button" onClick={handleStart}>
+              <button className="auth-button" onClick={handleStart} disabled={!mediaSupported}>
                 <FaMicrophone style={{ marginRight: 8 }} /> Empezar a grabar
               </button>
             ) : (
-              <button
-                className="auth-button"
-                onClick={handleStop}
-                style={{ background: "#ff6b6b" }}
-              >
+              <button className="auth-button" onClick={handleStop} style={{ background: "#ff6b6b" }}>
                 <FaStop style={{ marginRight: 8 }} /> Detener
               </button>
             )}
 
-            <div style={{ minWidth: 120 }}>
-              <strong>Tiempo:</strong> {Math.floor(recTime / 60)}:
-              {String(recTime % 60).padStart(2, "0")}
+            <div style={{
+              minWidth: 120,
+              padding: "8px 16px",
+              background: isRecording ? "#ffebee" : "var(--color-panel)",
+              borderRadius: 8,
+              fontWeight: "bold",
+              color: isRecording ? "#d32f2f" : "var(--color-text-main)",
+            }}>
+              {Math.floor(recTime / 60)}:{String(recTime % 60).padStart(2, "0")}
             </div>
 
-            <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-              <button
-                className="auth-button"
-                onClick={handlePlay}
-                disabled={!audioURL}
-              >
+            <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button className="auth-button" onClick={handlePlay} disabled={!audioURL} style={{ opacity: audioURL ? 1 : 0.5 }}>
                 <FaPlay /> Reproducir
               </button>
-              <button
-                className="auth-button"
-                onClick={handleDownload}
-                disabled={!audioURL}
-              >
+              <button className="auth-button" onClick={handleDownload} disabled={!audioURL} style={{ opacity: audioURL ? 1 : 0.5 }}>
                 <FaDownload /> Descargar
               </button>
-              <button
-                className="auth-button"
-                onClick={handleAnalyze}
-                disabled={!audioURL}
-              >
-                <FaWaveSquare /> Analizar
+              <button className="auth-button" onClick={handleAnalyze} disabled={!audioURL || isAnalyzing} style={{ opacity: audioURL && !isAnalyzing ? 1 : 0.5, background: "var(--color-primary)" }}>
+                <FaWaveSquare /> {isAnalyzing ? "Analizando..." : "Analizar con IA"}
               </button>
             </div>
           </div>
 
-          {audioURL && (
-            <audio
-              ref={audioRef}
-              src={audioURL}
-              controls
-              style={{ width: "100%" }}
-            />
-          )}
+          {audioURL && <audio ref={audioRef} src={audioURL} controls style={{ width: "100%", marginTop: 12 }} />}
 
-          {/* Analysis Results Section */}
-          {isAnalyzing && (
-            <Spinner overlay={true} message="Analizando la grabación..." />
-          )}
+          {isAnalyzing && <Spinner overlay={true} message="Analizando emociones con IA..." />}
 
           {analysis && (
             <div style={{ marginTop: 24 }}>
-              {/* Emotions Results */}
-              <div style={{ marginBottom: 24 }}>
-                <h3 style={{ color: "var(--color-text-main)" }}>
-                  Resultados del Análisis
-                </h3>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
-                    gap: 12,
-                  }}
-                >
-                  {analysis.emotions.map((emotion, idx) => {
-                    const Icon = emotion.icon;
-                    return (
-                      <div
-                        key={idx}
-                        style={{
-                          padding: 12,
-                          borderRadius: 8,
-                          background: "var(--color-panel)",
-                          border: "2px solid " + emotion.color,
-                          textAlign: "center",
-                        }}
-                      >
-                        <Icon
-                          size={28}
-                          style={{ color: emotion.color, marginBottom: 8 }}
-                        />
-                        <p
-                          style={{
-                            margin: "0 0 4px 0",
-                            fontWeight: "600",
-                            color: emotion.color,
-                          }}
-                        >
-                          {emotion.name}
-                        </p>
-                        <p
-                          style={{
-                            margin: 0,
-                            color: "var(--color-text-secondary)",
-                          }}
-                        >
-                          {emotion.value}%
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-                <p
-                  style={{
-                    marginTop: 12,
-                    color: "var(--color-text-secondary)",
-                    textAlign: "center",
-                  }}
-                >
-                  <strong>Emoción dominante:</strong> {analysis.dominantEmotion}
-                </p>
-              </div>
-
-              {/* Recommendations Card - Full Width Below */}
-              <div
-                style={{
-                  padding: 24,
-                  borderRadius: 12,
-                  background: "var(--color-panel)",
-                  border: "2px solid var(--color-primary)",
-                  textAlign: "center",
-                }}
-              >
-                <FaHeartbeat
-                  size={40}
-                  style={{ color: "var(--color-primary)", marginBottom: 12 }}
-                />
-                <h3
-                  style={{
-                    color: "var(--color-primary)",
-                    marginTop: 0,
-                    marginBottom: 16,
-                  }}
-                >
-                  Recomendaciones
-                </h3>
-                <ul
-                  style={{
-                    listStyle: "none",
-                    padding: 0,
-                    margin: 0,
-                    textAlign: "left",
-                    maxWidth: 600,
-                    marginLeft: "auto",
-                    marginRight: "auto",
-                  }}
-                >
-                  {analysis.recommendations &&
-                    analysis.recommendations.map((rec, idx) => (
-                      <li
-                        key={idx}
-                        style={{
-                          marginBottom: 12,
-                          paddingLeft: 24,
-                          position: "relative",
-                          color: "var(--color-text-secondary)",
-                          fontSize: "0.95rem",
-                        }}
-                      >
-                        <span
-                          style={{
-                            position: "absolute",
-                            left: 0,
-                            color: "var(--color-primary)",
-                            fontWeight: "bold",
-                            fontSize: "1.2rem",
-                          }}
-                        >
-                          ✓
-                        </span>
-                        {rec}
-                      </li>
-                    ))}
-                </ul>
+              {/* Mostrar resultados */}
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+                gap: 16,
+              }}>
+                {analysis.emotions.map((emotion, idx) => {
+                  const Icon = getEmotionIcon(emotion.name);
+                  const color = getEmotionColor(emotion.name);
+                  return (
+                    <div key={idx} style={{ padding: 16, borderRadius: 12, background: "var(--color-panel)", border: `3px solid ${color}`, textAlign: "center" }}>
+                      <Icon size={36} style={{ color, marginBottom: 8 }} />
+                      <p style={{ margin: "0 0 4px 0", fontWeight: "700", color, fontSize: "1.1rem" }}>{emotion.name}</p>
+                      <p style={{ margin: "0 0 8px 0", color: "var(--color-text-main)", fontSize: "1.5rem", fontWeight: "bold" }}>{emotion.value}%</p>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
         </div>
-
-        {/* Benefits Section - Appears only after analysis */}
-        {analysis && (
-          <div
-            className="card"
-            style={{ maxWidth: 900, width: "100%", marginTop: 24 }}
-          >
-            <h2 style={{ color: "var(--color-text-main)", marginBottom: 16 }}>
-              Desbloquea el Potencial Completo
-            </h2>
-            <p
-              style={{
-                color: "var(--color-text-secondary)",
-                fontSize: "1.1rem",
-                marginBottom: 24,
-              }}
-            >
-              Regístrate ahora para acceder a análisis avanzados, historial de
-              grabaciones y reportes personalizados.
-            </p>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                gap: "1.5rem",
-                marginBottom: "2rem",
-              }}
-            >
-              <div
-                style={{
-                  padding: "1.5rem",
-                  borderRadius: "12px",
-                  background: "var(--color-panel)",
-                  boxShadow: "0 2px 8px var(--color-shadow)",
-                }}
-              >
-                <FaLock
-                  size={32}
-                  style={{ color: "var(--color-primary)", marginBottom: 8 }}
-                />
-                <h4 style={{ color: "var(--color-text-main)" }}>
-                  Privacidad Garantizada
-                </h4>
-                <p
-                  style={{
-                    color: "var(--color-text-secondary)",
-                    fontSize: "0.9rem",
-                  }}
-                >
-                  Tus grabaciones se guardan de forma segura en tu cuenta
-                  personal.
-                </p>
-              </div>
-              <div
-                style={{
-                  padding: "1.5rem",
-                  borderRadius: "12px",
-                  background: "var(--color-panel)",
-                  boxShadow: "0 2px 8px var(--color-shadow)",
-                }}
-              >
-                <FaChartLine
-                  size={32}
-                  style={{ color: "var(--color-primary)", marginBottom: 8 }}
-                />
-                <h4 style={{ color: "var(--color-text-main)" }}>
-                  Análisis Avanzado
-                </h4>
-                <p
-                  style={{
-                    color: "var(--color-text-secondary)",
-                    fontSize: "0.9rem",
-                  }}
-                >
-                  Acceso a análisis detallado y patrones emocionales en el
-                  tiempo.
-                </p>
-              </div>
-              <div
-                style={{
-                  padding: "1.5rem",
-                  borderRadius: "12px",
-                  background: "var(--color-panel)",
-                  boxShadow: "0 2px 8px var(--color-shadow)",
-                }}
-              >
-                <FaUser
-                  size={32}
-                  style={{ color: "var(--color-primary)", marginBottom: 8 }}
-                />
-                <h4 style={{ color: "var(--color-text-main)" }}>
-                  Perfil Personal
-                </h4>
-                <p
-                  style={{
-                    color: "var(--color-text-secondary)",
-                    fontSize: "0.9rem",
-                  }}
-                >
-                  Mantén tu historial y seguimiento personalizado de bienestar.
-                </p>
-              </div>
-            </div>
-
-            <Link
-              to="/registro"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                padding: "0.8rem 2rem",
-                background: "var(--color-primary)",
-                color: "white",
-                borderRadius: "50px",
-                textDecoration: "none",
-                fontSize: "1rem",
-                fontWeight: "600",
-                transition: "all 0.3s ease",
-                boxShadow: "0 4px 10px var(--color-shadow)",
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.background = "var(--color-primary-hover)";
-                e.target.style.transform = "translateY(-2px)";
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.background = "var(--color-primary)";
-                e.target.style.transform = "translateY(0)";
-              }}
-            >
-              Crear Cuenta <FaArrowRight />
-            </Link>
-          </div>
-        )}
       </main>
-      {/* ---------- Footer ---------- */}
       <footer className="footer">
         © {new Date().getFullYear()} SerenVoice — Todos los derechos reservados.
       </footer>
