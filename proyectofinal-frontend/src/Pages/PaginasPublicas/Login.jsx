@@ -181,7 +181,7 @@ if (role === "admin") {
                   <FaLock className="input-icon" />
                   <input
                     type={showPassword ? "text" : "password"}
-                    placeholder="Contraseña"
+                    placeholder="Contrasena"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required

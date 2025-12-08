@@ -33,7 +33,7 @@ class DatabaseConnection:
             raise
 
     # ------------------------------------------------------------
-    # Obtener conexión desde el pool (estático)
+    # Obtener conexión desde el pool
     # ------------------------------------------------------------
     @staticmethod
     def get_connection():
@@ -75,12 +75,42 @@ class DatabaseConnection:
             print(f"[DB] Error al probar conexión: {e}")
             return False
 
+    # ------------------------------------------------------------
+    # Ejecutar consultas (SELECT, INSERT, UPDATE, DELETE)
+    # ------------------------------------------------------------
+    @staticmethod
+    def execute_query(query, params=None, fetch=True):
+        conn = None
+        cursor = None
+
+        try:
+            conn = DatabaseConnection.get_connection()
+            cursor = conn.cursor(dictionary=True)
+
+            cursor.execute(query, params)
+
+            if fetch:
+                result = cursor.fetchall()
+                return result
+
+            conn.commit()
+            return True
+
+        except Error as e:
+            print(f"[DB] Error ejecutando query: {e}")
+            raise
+
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                DatabaseConnection.release_connection(conn)
+
 
 # ------------------------------------------------------------
-# Función global — compatibilidad con modelos antiguos
+# Compatibilidad con proyectos antiguos
 # ------------------------------------------------------------
 def get_db_connection():
-    """Compatibilidad: devuelve una conexión normal desde el pool."""
     return DatabaseConnection.get_connection()
 
 

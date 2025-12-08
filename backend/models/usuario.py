@@ -1,10 +1,8 @@
-# backend/models/usuario.py
-
 from database.connection import DatabaseConnection, get_db_connection
 from datetime import date, datetime
 
 class Usuario:
-    """Modelo para la tabla usuarios"""
+    """Modelo para la tabla usuario"""
 
     # ---------------------------------------------------
     # Crear usuario
@@ -17,17 +15,13 @@ class Usuario:
         contrasena,
         fecha_nacimiento=None,
         usa_medicamentos=False,
-        rol='usuario'
+        rol='usuario',
+        genero=None
     ):
-
-        # Si no envían edad → calcular automáticamente
-        if fecha_nacimiento and not edad:
-            edad = Usuario.calcular_edad(fecha_nacimiento)
-
         query = """
             INSERT INTO usuario 
-            (nombre, apellido, correo, contrasena, genero, fecha_nacimiento, edad, usa_medicamentos, rol)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            (nombre, apellido, correo, contrasena, genero, fecha_nacimiento, usa_medicamentos, rol)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """
 
         return DatabaseConnection.execute_query(
@@ -37,6 +31,7 @@ class Usuario:
                 apellido,
                 correo.lower(),
                 contrasena,
+                genero,
                 fecha_nacimiento,
                 usa_medicamentos,
                 rol
@@ -59,7 +54,7 @@ class Usuario:
     @staticmethod
     def get_by_email(correo):
         query = """
-            SELECT id_usuario, nombre, apellido, correo, `contraseña` AS contrasena,
+            SELECT id_usuario, nombre, apellido, correo, contrasena,
                    fecha_nacimiento, usa_medicamentos, rol
             FROM usuario
             WHERE correo = %s
@@ -82,39 +77,54 @@ class Usuario:
     # Actualizar usuario
     # ---------------------------------------------------
     @staticmethod
-    def update(id_usuario, **kwargs):
-        allowed_fields = [
-            'nombre', 'apellido', 'correo', 'contrasena',
-            'genero', 'fecha_nacimiento', 'edad',
-            'usa_medicamentos', 'rol'
-        ]
+    def update(
+        id_usuario, nombre, apellido, correo, genero,
+        fecha_nacimiento, usa_medicamentos, contrasena_actual=None,
+        contrasena_nueva=None
+    ):
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
 
-        updates = []
-        params = []
+        # Obtener contraseña actual para validar si desea cambiarla
+        cursor.execute("SELECT contrasena FROM usuarios WHERE id_usuario = %s", (id_usuario,))
+        row = cursor.fetchone()
 
-        for field, value in kwargs.items():
-            if field in allowed_fields and value is not None:
+        if not row:
+            raise Exception("Usuario no encontrado")
 
-                # Si cambió la fecha de nacimiento → recalcular edad
-                if field == "fecha_nacimiento":
-                    try:
-                        nueva_edad = Usuario.calcular_edad(value)
-                        updates.append("edad = %s")
-                        params.append(nueva_edad)
-                    except:
-                        pass
+        # Si quiere cambiar contraseña
+        if contrasena_nueva:
+            if not contrasena_actual or not check_password_hash(row["contrasena"], contrasena_actual):
+                raise Exception("La contraseña actual es incorrecta")
+            nueva_contra = generate_password_hash(contrasena_nueva)
+        else:
+            nueva_contra = row["contrasena"]
 
-                updates.append(f"{field} = %s")
-                params.append(value)
+        # Calcular edad automáticamente
+        edad = Usuario.calcular_edad(fecha_nacimiento) if fecha_nacimiento else None
 
-        if not updates:
-            return False
+        cursor.execute("""
+            UPDATE usuarios
+            SET nombre=%s,
+                apellido=%s,
+                correo=%s,
+                genero=%s,
+                fecha_nacimiento=%s,
+                edad=%s,
+                usa_medicamentos=%s,
+                contrasena=%s
+            WHERE id_usuario=%s
+        """, (
+            nombre, apellido, correo, genero,
+            fecha_nacimiento, edad, usa_medicamentos,
+            nueva_contra, id_usuario
+        ))
 
-        params.append(id_usuario)
-        query = f"UPDATE usuario SET {', '.join(updates)} WHERE id_usuario = %s"
+        conn.commit()
+        cursor.close()
+        conn.close()
 
-        DatabaseConnection.execute_query(query, tuple(params), fetch=False)
-        return True
+        return edad
 
     # ---------------------------------------------------
     # Eliminar usuario

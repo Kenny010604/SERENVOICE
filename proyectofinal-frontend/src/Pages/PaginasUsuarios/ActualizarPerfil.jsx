@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import "../../global.css";
 import Spinner from "../../components/Spinner";
 import authService from "../../services/authService";
+import apiClient from "../../services/apiClient";
 
 import {
   FaUser,
@@ -10,7 +11,6 @@ import {
   FaEnvelope,
   FaLock,
   FaCalendarAlt,
-  FaVenusMars,
   FaMars,
   FaVenus,
   FaTransgender,
@@ -18,21 +18,22 @@ import {
   FaEyeSlash,
 } from "react-icons/fa";
 
-  const ActualizarPerfil = () => {
+const ActualizarPerfil = () => {
   const navigate = useNavigate();
   const cardRef = useRef(null);
 
-  // Obtener usuario real desde localStorage
   const user = authService.getUser();
 
   const [formData, setFormData] = useState({
     nombre: user?.nombre || "",
     apellido: user?.apellido || "",
     correo: user?.correo || "",
-    genero: user?.genero || "O",
-    fechaNacimiento: user?.fechaNacimiento || "",
+    genero: user?.genero ?? "O",
+    fechaNacimiento: user?.fecha_nacimiento
+      ? new Date(user.fecha_nacimiento).toISOString().slice(0, 10)
+      : "",
     edad: user?.edad || "",
-    contraseñaActual: "",
+    contraseñaActual: "", 
     contraseñaNueva: "",
     confirmarContraseña: "",
     notificaciones: true,
@@ -47,7 +48,6 @@ import {
     confirm: false,
   });
 
-  // Mostrar tarjeta inmediatamente
   useEffect(() => {
     if (!cardRef.current) return;
     const els = cardRef.current.querySelectorAll(".reveal");
@@ -56,9 +56,11 @@ import {
   }, []);
 
   const handleChange = (e) => {
-    const { name, type } = e.target;
-    const value = type === "checkbox" ? e.target.checked : e.target.value;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, type, value, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -87,13 +89,36 @@ import {
 
     try {
       setLoading(true);
+const payload = {
+  nombre: formData.nombre,
+  apellido: formData.apellido,
+  correo: formData.correo,
+  genero: formData.genero,
+  fecha_nacimiento: formData.fechaNacimiento,
+  usa_medicamentos: formData.usa_medicamentos,
+  notificaciones: formData.notificaciones,
 
-      // Aquí conectarás el backend después
-      // await apiClient.put("/api/user/update", formData);
+  contrasenaActual: formData.contraseñaActual,
+  contrasenaNueva: formData.contraseñaNueva,
+  confirmarContrasena: formData.confirmarContraseña,
+};
 
-      setSuccess("Perfil actualizado correctamente");
 
-      setTimeout(() => navigate("/dashboard"), 1200);
+
+const response = await apiClient.put("/api/auth/update", payload);
+
+      if (response.data.success) {
+        setSuccess("Perfil actualizado correctamente");
+
+        authService.setUser({
+          ...user,
+          ...response.data.user,
+        });
+
+        setTimeout(() => navigate("/dashboard"), 1200);
+      } else {
+        setError(response.data.error || "Error al actualizar perfil");
+      }
     } catch (err) {
       console.error("Error actualizando perfil:", err);
       setError("Error de conexión con el servidor");
@@ -104,7 +129,6 @@ import {
 
   return (
     <>
-      {/* NAVBAR */}
       <nav className="navbar">
         <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
           <button
@@ -127,7 +151,6 @@ import {
         </div>
       </nav>
 
-      {/* CONTENIDO */}
       <div className="auth-container">
         <div ref={cardRef} className="auth-card reveal" style={{ maxWidth: "900px" }}>
           {loading && <Spinner overlay message="Guardando cambios..." />}
@@ -152,261 +175,205 @@ import {
               ✓ {success}
             </div>
           )}
+          <label className="checkbox-label">
+  <input
+    type="checkbox"
+    name="usa_medicamentos"
+    checked={formData.usa_medicamentos}
+    onChange={handleChange}
+  />
+  Uso medicamentos actualmente
+</label>
 
-          {/* FORMULARIO */}
+
           <form onSubmit={handleSubmit} className="auth-form">
-            {/* ------------ DATOS PERSONALES ------------ */}
-            <div className="auth-form-section">
-              <label className="input-labels">
-                <FaUser /> Datos Personales
-              </label>
-
-              <div className="auth-form-grid">
-                <div className="form-group">
-                  <div className="input-group">
-                    <FaUser className="input-icon" />
-                    <input
-                      type="text"
-                      name="nombre"
-                      value={formData.nombre}
-                      onChange={handleChange}
-                      placeholder="Nombre"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <div className="input-group">
-                    <FaUser className="input-icon" />
-                    <input
-                      type="text"
-                      name="apellido"
-                      value={formData.apellido}
-                      onChange={handleChange}
-                      placeholder="Apellido"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
+            <div className="input-group">
+              <FaUser className="input-icon" />
+              <input
+                type="text"
+                name="nombre"
+                placeholder="Nombre"
+                value={formData.nombre}
+                onChange={handleChange}
+                required
+              />
             </div>
 
-            {/* ------------ CONTACTO ------------ */}
-            <div className="auth-form-section">
-              <label className="input-labels">
-                <FaEnvelope /> Datos de Contacto
-              </label>
-
-              <div className="form-group">
-                <div className="input-group">
-                  <FaEnvelope className="input-icon" />
-                  <input
-                    type="email"
-                    name="correo"
-                    value={formData.correo}
-                    onChange={handleChange}
-                    placeholder="Correo electrónico"
-                    required
-                    autoComplete="email"
-                  />
-                </div>
-              </div>
+            <div className="input-group">
+              <FaUser className="input-icon" />
+              <input
+                type="text"
+                name="apellido"
+                placeholder="Apellido"
+                value={formData.apellido}
+                onChange={handleChange}
+                required
+              />
             </div>
 
-            {/* ------------ INFORMACIÓN ADICIONAL ------------ */}
-<div className="auth-form-section">
-  <label className="input-labels">
-    <FaVenusMars /> Información Adicional
-  </label>
-
-  <div className="auth-form-grid">
-
-    {/* GÉNERO */}
-    <div className="form-group">
-      <div className="gender-options">
-        <div
-          className={`gender-option ${formData.genero === "M" ? "selected" : ""}`}
-          onClick={() =>
-            handleChange({ target: { name: "genero", value: "M" } })
-          }
-        >
-          <FaMars />
-          <span>Masculino</span>
-        </div>
-
-        <div
-          className={`gender-option ${formData.genero === "F" ? "selected" : ""}`}
-          onClick={() =>
-            handleChange({ target: { name: "genero", value: "F" } })
-          }
-        >
-          <FaVenus />
-          <span>Femenino</span>
-        </div>
-
-        <div
-          className={`gender-option ${formData.genero === "O" ? "selected" : ""}`}
-          onClick={() =>
-            handleChange({ target: { name: "genero", value: "O" } })
-          }
-        >
-          <FaTransgender />
-          <span>Otro</span>
-        </div>
-      </div>
-    </div>
-
-    {/* FECHA DE NACIMIENTO */}
-    <div className="form-group">
-      <div className="input-group">
-        <FaCalendarAlt className="input-icon" />
-        <input
-          type="date"
-          name="fechaNacimiento"
-          value={formData.fechaNacimiento}
-          onChange={(e) => {
-            handleChange(e);
-
-            // Calcular edad automáticamente
-            const fecha = new Date(e.target.value);
-            const hoy = new Date();
-            let edad = hoy.getFullYear() - fecha.getFullYear();
-            const m = hoy.getMonth() - fecha.getMonth();
-            if (m < 0 || (m === 0 && hoy.getDate() < fecha.getDate())) edad--;
-
-            setFormData((prev) => ({ ...prev, edad }));
-          }}
-          required
-          max={new Date().toISOString().split("T")[0]}
-        />
-      </div>
-    </div>
-
-    {/* 🔥 NUEVO CAMPO DE EDAD */}
-    <div className="form-group">
-      <div className="input-group">
-        <FaUser className="input-icon" />
-        <input
-          type="number"
-          name="edad"
-          value={formData.edad}
-          readOnly
-          placeholder="Edad"
-          style={{ background: "#2a2a2a80", cursor: "not-allowed" }}
-        />
-      </div>
-    </div>
-
-  </div>
-</div>
-
-            {/* ------------ CAMBIAR CONTRASEÑA ------------ */}
-            <div className="auth-form-section">
-              <label className="input-labels">
-                <FaLock /> Cambiar Contraseña (Opcional)
-              </label>
-
-              <div className="auth-form-grid" style={{ gridTemplateColumns: "1fr" }}>
-                {/* Actual */}
-                <div className="form-group">
-                  <div className="input-group">
-                    <FaLock className="input-icon" />
-                    <input
-                      type={showPasswords.current ? "text" : "password"}
-                      name="contraseñaActual"
-                      value={formData.contraseñaActual}
-                      onChange={handleChange}
-                      placeholder="Contraseña actual"
-                      autoComplete="current-password"
-                    />
-                    <button
-                      type="button"
-                      className="password-toggle"
-                      onClick={() =>
-                        setShowPasswords({ ...showPasswords, current: !showPasswords.current })
-                      }
-                    >
-                      {showPasswords.current ? <FaEyeSlash /> : <FaEye />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Nueva */}
-                <div className="form-group">
-                  <div className="input-group">
-                    <FaLock className="input-icon" />
-                    <input
-                      type={showPasswords.new ? "text" : "password"}
-                      name="contraseñaNueva"
-                      value={formData.contraseñaNueva}
-                      onChange={handleChange}
-                      placeholder="Nueva contraseña"
-                    />
-                    <button
-                      type="button"
-                      className="password-toggle"
-                      onClick={() =>
-                        setShowPasswords({ ...showPasswords, new: !showPasswords.new })
-                      }
-                    >
-                      {showPasswords.new ? <FaEyeSlash /> : <FaEye />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Confirmar */}
-                <div className="form-group">
-                  <div className="input-group">
-                    <FaLock className="input-icon" />
-                    <input
-                      type={showPasswords.confirm ? "text" : "password"}
-                      name="confirmarContraseña"
-                      value={formData.confirmarContraseña}
-                      onChange={handleChange}
-                      placeholder="Confirmar nueva contraseña"
-                    />
-                    <button
-                      type="button"
-                      className="password-toggle"
-                      onClick={() =>
-                        setShowPasswords({ ...showPasswords, confirm: !showPasswords.confirm })
-                      }
-                    >
-                      {showPasswords.confirm ? <FaEyeSlash /> : <FaEye />}
-                    </button>
-                  </div>
-                </div>
-              </div>
+            <div className="input-group">
+              <FaEnvelope className="input-icon" />
+              <input
+                type="email"
+                name="correo"
+                placeholder="Correo"
+                value={formData.correo}
+                onChange={handleChange}
+                required
+              />
             </div>
 
-            {/* ------------ PREFERENCIAS ------------ */}
-            <div className="auth-form-section">
-              <label className="input-labels">Preferencias</label>
+            <div className="input-group">
+              <FaCalendarAlt className="input-icon" />
+              <input
+                type="date"
+                name="fechaNacimiento"
+                value={formData.fechaNacimiento}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-              <label style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <label>Género</label>
+            <div className="gender-select">
+              <label>
                 <input
-                  type="checkbox"
-                  name="notificaciones"
-                  checked={formData.notificaciones}
+                  type="radio"
+                  name="genero"
+                  value="M"
+                  checked={formData.genero === "M"}
                   onChange={handleChange}
                 />
-                Recibir notificaciones por correo
+                <FaMars /> Masculino
               </label>
+
+              
+
+              <label>
+                <input
+                  type="radio"
+                  name="genero"
+                  value="F"
+                  checked={formData.genero === "F"}
+                  onChange={handleChange}
+                />
+                <FaVenus /> Femenino
+              </label>
+
+              <label>
+                <input
+                  type="radio"
+                  name="genero"
+                  value="O"
+                  checked={formData.genero === "O"}
+                  onChange={handleChange}
+                />
+                <FaTransgender /> Otro
+              </label>
+
+              <div className="input-group">
+  <FaCalendarAlt className="input-icon" />
+  <input
+    type="number"
+    name="edad"
+    value={formData.edad}
+    readOnly
+    style={{ background: "#222", cursor: "not-allowed" }}
+  />
+</div>
+
+
+
+
             </div>
 
-            <button
-              type="submit"
-              className="auth-button"
-              disabled={loading}
-            >
-              {loading ? "Guardando..." : "Guardar Cambios"}
+            <hr style={{ margin: "1rem 0" }} />
+
+            <h3>Cambio de contraseña (opcional)</h3>
+
+            <div className="input-group">
+              <FaLock className="input-icon" />
+              <input
+                type={showPasswords.current ? "text" : "password"}
+                name="contraseñaActual"
+                placeholder="Contraseña actual"
+                value={formData.contraseñaActual}
+                onChange={handleChange}
+              />
+              <span
+                className="toggle-password"
+                onClick={() =>
+                  setShowPasswords((prev) => ({
+                    ...prev,
+                    current: !prev.current,
+                  }))
+                }
+              >
+                {showPasswords.current ? <FaEyeSlash /> : <FaEye />}
+              </span>
+            </div>
+
+            <div className="input-group">
+              <FaLock className="input-icon" />
+              <input
+                type={showPasswords.new ? "text" : "password"}
+                name="contraseñaNueva"
+                placeholder="Nueva contraseña"
+                value={formData.contraseñaNueva}
+                onChange={handleChange}
+              />
+              <span
+                className="toggle-password"
+                onClick={() =>
+                  setShowPasswords((prev) => ({
+                    ...prev,
+                    new: !prev.new,
+                  }))
+                }
+              >
+                {showPasswords.new ? <FaEyeSlash /> : <FaEye />}
+              </span>
+            </div>
+
+            <div className="input-group">
+              <FaLock className="input-icon" />
+              <input
+                type={showPasswords.confirm ? "text" : "password"}
+                name="confirmarContraseña"
+                placeholder="Confirmar contraseña"
+                value={formData.confirmarContraseña}
+                onChange={handleChange}
+              />
+              <span
+                className="toggle-password"
+                onClick={() =>
+                  setShowPasswords((prev) => ({
+                    ...prev,
+                    confirm: !prev.confirm,
+                  }))
+                }
+              >
+                {showPasswords.confirm ? <FaEyeSlash /> : <FaEye />}
+              </span>
+            </div>
+
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                name="notificaciones"
+                checked={formData.notificaciones}
+                onChange={handleChange}
+              />
+              Recibir notificaciones y alertas
+            </label>
+
+            <button type="submit" className="btn-primary" disabled={loading}>
+              Guardar cambios
             </button>
           </form>
         </div>
       </div>
 
-      {/* FOOTER */}
       <footer className="footer">
         © {new Date().getFullYear()} SerenVoice — Todos los derechos reservados.
       </footer>

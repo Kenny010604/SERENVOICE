@@ -38,7 +38,7 @@ const authService = {
         correo: userData.correo,
         contrasena: userData.contrasena,
         genero: userData.genero,
-        fechaNacimiento: userData.fecha_nacimiento     
+        fechaNacimiento: userData.fecha_nacimiento
       });
 
       if (!response.data.success) {
@@ -72,6 +72,9 @@ const authService = {
 
   isAuthenticated() {
     return !!localStorage.getItem("token");
+  },
+   setUser(updatedUser) {
+    localStorage.setItem("user", JSON.stringify(updatedUser));
   }
 };
 

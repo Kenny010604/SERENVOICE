@@ -2,25 +2,21 @@ import axios from "axios";
 import api from "../config/api";
 
 const apiClient = axios.create({
-  baseURL: api.baseURL || "", // Si está vacío usa proxy del Vite
+  baseURL: api.baseURL || "",
   headers: {
     "Content-Type": "application/json",
   },
   withCredentials: true,
 });
 
-// Normaliza URLs para evitar dobles slashes
 const normalizeUrl = (url) => {
-    if (!url) return url;
-    return url.replace(/\/+$/, ""); // Quita / al final
+  if (!url) return url;
+  return url.replace(/\/+$/, ""); 
 };
 
-// Interceptor REQUEST → agrega token y normaliza URL
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
-
-    // Normalización de URL para evitar errores como /api/usuarios/
     config.url = normalizeUrl(config.url);
 
     if (token) {
@@ -36,7 +32,6 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Interceptor RESPONSE → captura códigos de error
 apiClient.interceptors.response.use(
   (response) => {
     console.log(`RESPONSE ${response.status}: ${response.config.url}`);

@@ -20,7 +20,7 @@ def get_current_user():
     if not usuario:
         return Helpers.format_response(False, "Usuario no encontrado", status=404)
 
-    usuario.pop('contraseña', None)
+    usuario.pop('contrasena', None)
     usuario.pop('contrasena', None)
 
     return Helpers.format_response(True, data=usuario)

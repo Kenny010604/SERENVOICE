@@ -30,7 +30,7 @@ class AuthService:
 
         # Validar contraseña
         if len(data['contrasena']) < 6:
-            return {'success': False, 'error': 'La contraseña debe tener al menos 6 caracteres'}
+            return {'success': False, 'error': 'La contrasena debe tener al menos 6 caracteres'}
 
         hashed_password = Seguridad.hash_password(data['contrasena'])
 
