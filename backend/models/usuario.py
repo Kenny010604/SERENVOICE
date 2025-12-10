@@ -1,5 +1,6 @@
 from database.connection import DatabaseConnection, get_db_connection
 from datetime import date, datetime
+from werkzeug.security import check_password_hash, generate_password_hash
 
 class Usuario:
     """Modelo para la tabla usuario"""

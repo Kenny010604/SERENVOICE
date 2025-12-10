@@ -52,11 +52,14 @@ const Dashboard = () => {
             <button onClick={() => navigate("/recomendaciones")}>Ver Recomendaciones</button>
           </div>
 
-          <div className="card">
-            <FaMicrophone size={40} />
-            <h3>Registrar Sesión</h3>
-            <button onClick={() => navigate("/probar")}>Grabar Ahora</button>
-          </div>
+         <div className="card">
+  <FaMicrophone size={40} />
+  <h3>Registrar Sesión</h3>
+  <button onClick={() => navigate("/probar-voz-usuario")}>
+    Grabar Ahora
+  </button>
+</div>
+
         </div>
 
         <div className="card" style={{ marginTop: "2rem" }}>
