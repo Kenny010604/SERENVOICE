@@ -33,7 +33,10 @@ class SesionJuego(db.Model):
     __tablename__ = 'sesiones_juego'
     
     id = db.Column(db.Integer, primary_key=True)
-    id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id_usuario'), nullable=False)
+    # `usuario` table is managed by raw SQL helper functions (not a SQLAlchemy model).
+    # Avoid DB-level ForeignKey here to prevent SQLAlchemy metadata errors when
+    # the `usuario` table is not declared as a SQLAlchemy model.
+    id_usuario = db.Column(db.Integer, nullable=False)
     id_juego = db.Column(db.Integer, db.ForeignKey('juegos_terapeuticos.id'), nullable=False)
     
     fecha_inicio = db.Column(db.DateTime, default=datetime.utcnow)

@@ -16,7 +16,13 @@ const authService = {
       if (!response.data.success) throw new Error(response.data.error || "Credenciales incorrectas");
 
       const { token, user } = response.data;
-      const userWithRole = { ...user, role: user.role || (user.roles?.[0] || "usuario") };
+      
+      // Manejar roles como array
+      const userWithRole = { 
+        ...user, 
+        role: user.roles && user.roles.length > 0 ? user.roles[0] : "usuario",
+        roles: user.roles || ["usuario"]
+      };
 
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(userWithRole));
@@ -44,12 +50,26 @@ const authService = {
 
       if (!response.data.success) throw new Error(response.data.error || "Error al registrar usuario");
 
-      const { token, user } = response.data;
-      const userWithRole = { ...user, role: user.role || (user.roles?.[0] || "usuario") };
+      // El backend ahora retorna requiresVerification en lugar de token
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || error.message);
+    }
+  },
 
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(userWithRole));
-      return { token, user: userWithRole };
+  async registerWithPhoto(formData) {
+    if (this.publicMode) {
+      console.log("[authService] Modo público activado: registro ignorado");
+      return { token: null, user: null };
+    }
+
+    try {
+      // No especificar Content-Type, axios lo detectará automáticamente para FormData
+      const response = await apiClient.post(api.endpoints.auth.register, formData);
+
+      if (!response.data.success) throw new Error(response.data.error || "Error al registrar usuario");
+
+      return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.error || error.message);
     }
@@ -72,14 +92,53 @@ const authService = {
     return user ? JSON.parse(user) : null;
   },
 
+  getCurrentUser() {
+    return this.getUser();
+  },
+
   isAuthenticated() {
     return !this.publicMode && !!localStorage.getItem("user");
   },
 
   setUser(updatedUser) {
     if (this.publicMode) return;
-    const userWithRole = { ...updatedUser, role: updatedUser.role || (updatedUser.roles?.[0] || "usuario") };
+    const userWithRole = { 
+      ...updatedUser, 
+      role: updatedUser.role || (updatedUser.roles?.[0] || "usuario"),
+      roles: updatedUser.roles || ["usuario"]
+    };
     localStorage.setItem("user", JSON.stringify(userWithRole));
+  },
+
+  // Método para autenticación con Google
+  async googleAuth(googleData) {
+    if (this.publicMode) {
+      console.log("[authService] Modo público activado: Google Auth ignorado");
+      return { token: null, user: null };
+    }
+
+    try {
+      const response = await apiClient.post(api.endpoints.auth.google, googleData);
+      
+      if (!response.data.success) {
+        throw new Error(response.data.error || "Error en autenticación de Google");
+      }
+
+      const { token, user } = response.data;
+      
+      // Manejar roles como array
+      const userWithRole = { 
+        ...user, 
+        role: user.roles && user.roles.length > 0 ? user.roles[0] : "usuario",
+        roles: user.roles || ["usuario"]
+      };
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(userWithRole));
+      return { token, user: userWithRole };
+    } catch (error) {
+      throw new Error(error.response?.data?.error || error.message);
+    }
   }
 };
 

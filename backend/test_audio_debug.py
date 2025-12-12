@@ -64,10 +64,16 @@ try:
     
     if features is None:
         print("❌ FeatureExtractor.extract() devolvió None")
-    elif not isinstance(features, dict):
-        print(f"❌ FeatureExtractor.extract() devolvió {type(features)} en lugar de dict")
-    else:
-        print(f"✅ Features extraídas exitosamente")
+        sys.exit(1)
+    elif isinstance(features, np.ndarray):
+        print(f"✅ Features extraídas exitosamente (como numpy array)")
+        print(f"   - Tipo: {type(features)}")
+        print(f"   - Shape: {features.shape}")
+        print(f"   - Primeros valores: {features[:5]}")
+        # Saltar al paso 4 ya que ya es un array
+        features_array = features
+    elif isinstance(features, dict):
+        print(f"✅ Features extraídas exitosamente (como dict)")
         print(f"   - Número de features: {len(features)}")
         print(f"   - Keys: {list(features.keys())[:10]}...")  # Primeras 10
         
@@ -75,6 +81,9 @@ try:
         print("\n   Verificando contenido de features:")
         for key, val in list(features.items())[:5]:  # Primeras 5
             print(f"   - {key}: {type(val)}, value={val}")
+    else:
+        print(f"❌ FeatureExtractor.extract() devolvió tipo inesperado: {type(features)}")
+        sys.exit(1)
             
 except Exception as e:
     print(f"❌ Error en FeatureExtractor: {e}")
@@ -82,32 +91,37 @@ except Exception as e:
     traceback.print_exc()
     sys.exit(1)
 
-# PASO 4: Convertir a array
-print("\n4️⃣ Convirtiendo features a numpy array...")
-try:
-    feature_values = []
-    for key in sorted(features.keys()):
-        val = features[key]
-        if isinstance(val, (list, np.ndarray)):
-            if isinstance(val, list):
-                val = np.array(val)
-            if val.ndim > 0:
-                feature_values.extend(val.flatten())
+# PASO 4: Convertir a array (si no lo es ya)
+if not isinstance(features, np.ndarray):
+    print("\n4️⃣ Convirtiendo features a numpy array...")
+    try:
+        feature_values = []
+        for key in sorted(features.keys()):
+            val = features[key]
+            if isinstance(val, (list, np.ndarray)):
+                if isinstance(val, list):
+                    val = np.array(val)
+                if val.ndim > 0:
+                    feature_values.extend(val.flatten())
+                else:
+                    feature_values.append(float(val))
             else:
                 feature_values.append(float(val))
-        else:
-            feature_values.append(float(val))
-    
-    features_array = np.array(feature_values, dtype=np.float32)
-    print(f"✅ Array creado exitosamente")
+        
+        features_array = np.array(feature_values, dtype=np.float32)
+        print(f"✅ Array creado exitosamente")
+        print(f"   - Shape: {features_array.shape}")
+        print(f"   - Primeros valores: {features_array[:5]}")
+    except Exception as e:
+        print(f"❌ Error convirtiendo a array: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+else:
+    print("\n4️⃣ Features ya están en formato numpy array, omitiendo conversión...")
+    print(f"✅ Array listo para usar")
     print(f"   - Shape: {features_array.shape}")
     print(f"   - Primeros valores: {features_array[:5]}")
-    
-except Exception as e:
-    print(f"❌ Error convirtiendo a array: {e}")
-    import traceback
-    traceback.print_exc()
-    sys.exit(1)
 
 print("\n" + "=" * 60)
 print("✅ TODAS LAS PRUEBAS PASARON")

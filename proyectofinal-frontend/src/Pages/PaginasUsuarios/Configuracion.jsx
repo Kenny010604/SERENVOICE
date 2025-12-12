@@ -49,7 +49,7 @@ const Configuracion = () => {
   return (
     <>
       <NavbarUsuario />
-      <main className="container" style={{ paddingBottom: "100px" }}>
+      <main className="container" style={{ paddingTop: "2rem", paddingBottom: "4rem" }}>
         <div
           ref={cardRef}
           className="card reveal"

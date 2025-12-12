@@ -9,7 +9,7 @@ class Sesion:
     def create(id_usuario, estado='activa'):
         """Crear nueva sesión"""
         query = """
-            INSERT INTO Sesion (id_usuario, fecha_inicio, estado)
+            INSERT INTO sesion (id_usuario, fecha_inicio, estado)
             VALUES (%s, %s, %s)
         """
         return DatabaseConnection.execute_query(
@@ -21,7 +21,7 @@ class Sesion:
     @staticmethod
     def get_by_id(id_sesion):
         """Obtener sesión por ID"""
-        query = "SELECT * FROM Sesion WHERE id_sesion = %s"
+        query = "SELECT * FROM sesion WHERE id_sesion = %s AND activo = 1"
         results = DatabaseConnection.execute_query(query, (id_sesion,))
         return results[0] if results else None
     
@@ -29,8 +29,8 @@ class Sesion:
     def get_user_sessions(id_usuario, limit=10):
         """Obtener sesiones de un usuario"""
         query = """
-            SELECT * FROM Sesion 
-            WHERE id_usuario = %s 
+            SELECT * FROM sesion 
+            WHERE id_usuario = %s AND activo = 1
             ORDER BY fecha_inicio DESC 
             LIMIT %s
         """
@@ -40,8 +40,8 @@ class Sesion:
     def get_active_sessions(id_usuario):
         """Obtener sesiones activas de un usuario"""
         query = """
-            SELECT * FROM Sesion 
-            WHERE id_usuario = %s AND estado = 'activa'
+            SELECT * FROM sesion 
+            WHERE id_usuario = %s AND estado = 'activa' AND activo = 1
         """
         return DatabaseConnection.execute_query(query, (id_usuario,))
     

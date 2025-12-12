@@ -57,7 +57,7 @@ const JuegoContainer = () => {
 
   if (!juego) {
     return (
-      <div className="container" style={{ textAlign: "center", paddingTop: 100 }}>
+      <div className="container" style={{ paddingTop: "2rem", paddingBottom: "4rem", textAlign: "center" }}>
         <h2>Juego no encontrado</h2>
         <button className="auth-button" onClick={() => navigate("/juegos")}>
           Volver a juegos
@@ -99,7 +99,7 @@ const JuegoContainer = () => {
   };
 
   return (
-    <div className="container" style={{ paddingTop: 20, paddingBottom: 50 }}>
+    <div className="container" style={{ paddingTop: "2rem", paddingBottom: "4rem" }}>
       {renderJuego()}
     </div>
   );

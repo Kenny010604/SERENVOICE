@@ -1,28 +1,26 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import NavbarAdministrador from "../../components/Administrador/NavbarAdministrador";
 import apiClient from "../../services/apiClient";
+import { ThemeContext } from "../../context/themeContextDef";
+import FondoClaro from "../../assets/FondoClaro.svg";
+import FondoOscuro from "../../assets/FondoOscuro.svg";
 import "../../global.css";
 import { FaUserEdit, FaUserShield } from "react-icons/fa";
 
 const Usuarios = () => {
+  const { isDark } = useContext(ThemeContext);
   const [users, setUsers] = useState([]);
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(true);
   const cardRef = useRef(null);
 
-  // =========================================
-  // Cargar usuarios desde el backend
-  // =========================================
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const res = await apiClient.get("/api/usuarios/lista");
-        console.log("Respuesta completa:", res.data); // Para debug
-        
-        // La respuesta viene en res.data.data.usuarios
-const usuariosData = res.data?.data || [];
-console.log("Usuarios procesados:", usuariosData);
-        
+        console.log("Respuesta completa:", res.data);
+        const usuariosData = res.data?.data || [];
+        console.log("Usuarios procesados:", usuariosData);
         setUsers(usuariosData);
       } catch (error) {
         console.error("Error al cargar usuarios:", error);
@@ -34,9 +32,6 @@ console.log("Usuarios procesados:", usuariosData);
     fetchUsers();
   }, []);
 
-  // =========================================
-  // Animación reveal
-  // =========================================
   useEffect(() => {
     if (!cardRef.current) return;
     const els = cardRef.current.querySelectorAll(".reveal");
@@ -47,9 +42,6 @@ console.log("Usuarios procesados:", usuariosData);
     }
   }, []);
 
-  // =========================================
-  // Simular asignación de rol
-  // =========================================
   const assignRole = (id, role) => {
     setUsers((prev) =>
       prev.map((u) =>
@@ -65,7 +57,17 @@ console.log("Usuarios procesados:", usuariosData);
     <>
       <NavbarAdministrador />
 
-      <main className="container" style={{ paddingBottom: "100px" }}>
+      <main 
+        className="container" 
+        style={{ 
+          paddingBottom: "100px",
+          backgroundImage: `url(${isDark ? FondoOscuro : FondoClaro})`,
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center center",
+          backgroundSize: "cover",
+          backgroundAttachment: "fixed"
+        }}
+      >
         <div
           ref={cardRef}
           className="card reveal"

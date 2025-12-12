@@ -15,10 +15,11 @@ export const useAuth = () => {
       if (authService.isAuthenticated()) {
         const userData = authService.getCurrentUser();
 
-        // Normalizamos rol
+        // Normalizamos roles - el authService ya tiene role y roles
         const normalizedUser = {
           ...userData,
-          rol: userData?.rol?.toLowerCase()
+          role: userData?.role || (userData?.roles?.[0]?.toLowerCase() || 'usuario'),
+          roles: userData?.roles || ['usuario']
         };
 
         setUser(normalizedUser);
@@ -36,9 +37,11 @@ export const useAuth = () => {
   const login = async (email, password) => {
     const data = await authService.login(email, password);
 
+    // authService ya normaliza role y roles
     const normalizedUser = {
       ...data.user,
-      rol: data.user?.rol?.toLowerCase()
+      role: data.user?.role || 'usuario',
+      roles: data.user?.roles || ['usuario']
     };
 
     setUser(normalizedUser);
@@ -49,9 +52,11 @@ export const useAuth = () => {
   const register = async (userData) => {
     const data = await authService.register(userData);
 
+    // authService ya normaliza role y roles
     const normalizedUser = {
       ...data.user,
-      rol: data.user?.rol?.toLowerCase()
+      role: data.user?.role || 'usuario',
+      roles: data.user?.roles || ['usuario']
     };
 
     setUser(normalizedUser);

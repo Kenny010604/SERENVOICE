@@ -9,9 +9,6 @@ const API_BASE_URL = apiConfig?.baseURL || import.meta.env.VITE_API_URL || "http
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
   withCredentials: false, // 🔥 Cambiar a true si usas cookies/sesiones
 });
 
@@ -33,6 +30,11 @@ apiClient.interceptors.request.use(
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    // Solo establecer Content-Type si no es FormData
+    if (!(config.data instanceof FormData)) {
+      config.headers['Content-Type'] = 'application/json';
     }
 
     console.log(`REQUEST: ${config.method.toUpperCase()} ${config.baseURL}${config.url}`);

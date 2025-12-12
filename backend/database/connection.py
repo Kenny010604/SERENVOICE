@@ -94,7 +94,12 @@ class DatabaseConnection:
                 return result
 
             conn.commit()
-            return True
+            # Cuando no se solicita fetch (INSERT/UPDATE/DELETE), devolver información útil
+            try:
+                last_id = cursor.lastrowid
+            except Exception:
+                last_id = None
+            return {"ok": True, "last_id": last_id, "rowcount": cursor.rowcount}
 
         except Error as e:
             print(f"[DB] Error ejecutando query: {e}")
@@ -105,6 +110,14 @@ class DatabaseConnection:
                 cursor.close()
             if conn:
                 DatabaseConnection.release_connection(conn)
+
+    @staticmethod
+    def execute_update(query, params=None):
+        """
+        Compatibilidad: ejecutar una consulta de modificación (INSERT/UPDATE/DELETE)
+        y devolver un dict con el last_id y rowcount.
+        """
+        return DatabaseConnection.execute_query(query, params, fetch=False)
 
 
 # ------------------------------------------------------------

@@ -1,9 +1,31 @@
 # backend/test_models.py
+import os
+import sys
+
+# Cargar variables de entorno
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except:
+    pass
+
+from database.connection import DatabaseConnection
+from database.config import Config
 from models.usuario import Usuario
 from models.rol import Rol
 
 # Probar conexión y modelos
-print("🧪 Probando modelos...")
+print("🧪 Probando modelos...\n")
+
+# Inicializar pool de conexiones
+print("Inicializando pool de base de datos...")
+try:
+    DatabaseConnection.initialize_pool()
+    print("✅ Pool inicializado correctamente\n")
+except Exception as e:
+    print(f"❌ Error inicializando pool: {e}")
+    print("   Verifica tu archivo .env y que MySQL esté corriendo")
+    sys.exit(1)
 
 # Test 1: Obtener roles
 print("\n1. Probando Rol.get_all():")

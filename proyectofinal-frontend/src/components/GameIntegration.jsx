@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { juegosAPI } from '../services/apiClient';
 import { toast } from 'react-hot-toast'; // Instalar: npm install react-hot-toast
+import { useNavigate } from 'react-router-dom';
+import TherapeuticGames from './TherapeuticGames.jsx';
 
 const GameIntegration = ({ estadoEmocionalUsuario = 'estable', onGameComplete }) => {
   const [sesionActual, setSesionActual] = useState(null);
@@ -73,13 +75,26 @@ const GameIntegration = ({ estadoEmocionalUsuario = 'estable', onGameComplete })
     }
   };
 
+  const navigate = useNavigate();
+
+  const handleStartAndNavigate = async (juego) => {
+    const sesionId = await handleIniciarJuego(juego.id || juego.id_juego || juego.id);
+    if (sesionId) {
+      navigate(`/juegos/${juego.id || juego.id_juego || juego.id}`, { state: { juego, estadoAntes: estadoEmocionalUsuario } });
+    }
+  };
+
+  const handleView = (juego) => {
+    navigate(`/juegos/${juego.id || juego.id_juego || juego.id}`, { state: { juego, estadoAntes: estadoEmocionalUsuario } });
+  };
+
   return (
     <div className="game-integration-container">
       <TherapeuticGames
         estadoInicial={estadoEmocionalUsuario}
         juegosRecomendados={juegosRecomendados}
-        onIniciarJuego={handleIniciarJuego}
-        onFinalizarJuego={handleFinalizarJuego}
+        onStart={handleStartAndNavigate}
+        onView={handleView}
         loading={loading}
       />
     </div>

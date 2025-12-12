@@ -1,7 +1,6 @@
-import React from "react";
+import React, { useContext } from "react";
 import { Link } from "react-router-dom";
 import "../../global.css";
-import heroImg from "../../assets/ImagenCalma.jpg";
 import {
   FaHeart,
   FaShieldAlt,
@@ -10,18 +9,22 @@ import {
   FaArrowLeft,
 } from "react-icons/fa";
 import NavbarPublic from "../../components/Publico/NavbarPublic";
+import { ThemeContext } from "../../context/themeContextDef";
+import PaisajeClaro from "../../assets/PaisajeClaro.svg";
+import PaisajeOscuro from "../../assets/PaisajeOscuro.svg";
 
 const Sobre = () => {
+  const { isDark } = useContext(ThemeContext);
   return (
     <>
       <NavbarPublic />
 
-      {/* ---------- Contenido Principal ---------- */}
       <main
         className="container"
         style={{
-          paddingBottom: "100px",
-          backgroundImage: `url(${heroImg}), linear-gradient(rgba(255,255,255,0.28), rgba(255,255,255,0.36))`,
+          paddingTop: "2rem",
+          paddingBottom: "3rem",
+          backgroundImage: `url(${isDark ? PaisajeOscuro : PaisajeClaro})`,
           backgroundRepeat: "no-repeat",
           backgroundPosition: "center center",
           backgroundSize: "cover",
@@ -29,7 +32,6 @@ const Sobre = () => {
           minHeight: "100vh",
         }}
       >
-        {/* Encabezado */}
         <div className="card" style={{ width: "100%", maxWidth: "1000px" }}>
           <h2>Sobre SerenVoice</h2>
           <p style={{ fontSize: "1.1rem", lineHeight: "1.8" }}>
@@ -40,7 +42,6 @@ const Sobre = () => {
           </p>
         </div>
 
-        {/* Nuestra Misión */}
         <div className="card" style={{ width: "100%", maxWidth: "1000px" }}>
           <h3 style={{ color: "var(--color-primary)", marginBottom: "1rem" }}>
             <FaHeart style={{ marginRight: "0.5rem" }} />
@@ -54,7 +55,6 @@ const Sobre = () => {
           </p>
         </div>
 
-        {/* Nuestra Visión */}
         <div className="card" style={{ width: "100%", maxWidth: "1000px" }}>
           <h3 style={{ color: "var(--color-primary)", marginBottom: "1rem" }}>
             <FaLightbulb style={{ marginRight: "0.5rem" }} />
@@ -67,7 +67,6 @@ const Sobre = () => {
           </p>
         </div>
 
-        {/* Nuestros Valores */}
         <div
           style={{
             display: "grid",
@@ -77,7 +76,6 @@ const Sobre = () => {
             maxWidth: "1000px",
           }}
         >
-          {/* Privacidad */}
           <div className="card">
             <FaShieldAlt
               size={40}
@@ -98,7 +96,6 @@ const Sobre = () => {
             </p>
           </div>
 
-          {/* Precisión */}
           <div className="card">
             <FaLightbulb
               size={40}
@@ -118,7 +115,6 @@ const Sobre = () => {
             </p>
           </div>
 
-          {/* Accesibilidad */}
           <div className="card">
             <FaUsers
               size={40}
@@ -139,7 +135,6 @@ const Sobre = () => {
           </div>
         </div>
 
-        {/* Nuestra Historia */}
         <div className="card" style={{ width: "100%", maxWidth: "1000px" }}>
           <h3 style={{ color: "var(--color-primary)", marginBottom: "1rem" }}>
             Nuestra Historia
@@ -158,7 +153,6 @@ const Sobre = () => {
           </p>
         </div>
 
-        {/* Estadísticas */}
         <div className="card" style={{ width: "100%", maxWidth: "1000px" }}>
           <h3 style={{ color: "var(--color-primary)", marginBottom: "1.5rem" }}>
             Nuestro Impacto
@@ -197,7 +191,6 @@ const Sobre = () => {
           </div>
         </div>
 
-        {/* Llamada a la Acción */}
         <div className="card" style={{ width: "100%", maxWidth: "1000px" }}>
           <h3>¿Listo para unirte?</h3>
           <p>
@@ -209,7 +202,6 @@ const Sobre = () => {
         </div>
       </main>
 
-      {/* ---------- Footer ---------- */}
       <footer className="footer">
         © {new Date().getFullYear()} SerenVoice — Todos los derechos reservados.
       </footer>

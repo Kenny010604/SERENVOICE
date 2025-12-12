@@ -23,6 +23,7 @@ except ImportError as e:
     HAS_DB = False
 
 from sqlalchemy.exc import SQLAlchemyError
+from database.connection import DatabaseConnection
 
 # Crear Blueprint con url_prefix
 juegos_bp = Blueprint('juegos', __name__, url_prefix='/juegos')
@@ -54,24 +55,42 @@ def juegos_recomendados():
         # Intentar obtener de la base de datos
         if HAS_MODELS and HAS_DB:
             try:
-                print("[JUEGOS] Consultando base de datos...")
-                juegos = JuegoTerapeutico.query.filter(
-                    JuegoTerapeutico.tipo_juego.in_(tipos_recomendados),
-                    JuegoTerapeutico.activo == True
-                ).limit(10).all()
-                
-                juegos_data = [juego.to_dict() for juego in juegos]
-                print(f"[JUEGOS] OK - {len(juegos_data)} juegos encontrados en BD")
-                
+                print("[JUEGOS] Consultando base de datos (raw SQL)...")
+                # Construir consulta para tipos recomendados
+                placeholders = ','.join(['%s'] * len(tipos_recomendados))
+                sql = f"SELECT id, nombre, descripcion, tipo_juego, duracion_recomendada, objetivo_emocional, icono, activo FROM juegos_terapeuticos WHERE tipo_juego IN ({placeholders}) AND activo = 1 LIMIT 10"
+                juegos_rows = DatabaseConnection.execute_query(sql, tuple(tipos_recomendados))
+                juegos_data = juegos_rows or []
+                print(f"[JUEGOS] OK - {len(juegos_data)} juegos encontrados en BD (raw)")
+
+                # Si hay menos de 10, obtener todos los juegos activos y completar
+                if len(juegos_data) < 10:
+                    try:
+                        existentes_ids = {j['id'] for j in juegos_data}
+                        sql_all = "SELECT id, nombre, descripcion, tipo_juego, duracion_recomendada, objetivo_emocional, icono, activo FROM juegos_terapeuticos WHERE activo = 1 ORDER BY id"
+                        all_active = DatabaseConnection.execute_query(sql_all)
+                        added = 0
+                        for row in all_active:
+                            if row['id'] in existentes_ids:
+                                continue
+                            juegos_data.append(row)
+                            existentes_ids.add(row['id'])
+                            added += 1
+                            if len(juegos_data) >= 10:
+                                break
+                        if added:
+                            print(f"[JUEGOS] INFO - Se añadieron {added} juegos adicionales para completar recomendaciones (raw)")
+                    except Exception as fill_err:
+                        print(f"[JUEGOS] ADVERTENCIA - No se pudieron obtener juegos adicionales (raw): {fill_err}")
+
                 return jsonify({
                     'success': True,
                     'estado': estado,
                     'juegos_recomendados': juegos_data,
                     'fuente': 'base_de_datos'
                 }), 200
-                
             except Exception as db_error:
-                print(f"[JUEGOS] ADVERTENCIA - Error al consultar BD: {db_error}")
+                print(f"[JUEGOS] ADVERTENCIA - Error al consultar BD (raw): {db_error}")
                 # Continuar con datos de ejemplo si falla la BD
         
         # Datos de ejemplo como fallback

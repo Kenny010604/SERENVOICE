@@ -21,7 +21,20 @@ Thumbs.db
 
 # Environment
 .env
+.env.*
+backend/.env
+proyectofinal-frontend/.env
+proyectofinal-mobile/.env
 
 .venv/
 venv/
 __pycache__/
+
+# Backend local data
+backend/uploads/
+backend/.pytest_cache/
+backend/.venv/
+
+# Frontend
+proyectofinal-frontend/node_modules/
+proyectofinal-mobile/node_modules/

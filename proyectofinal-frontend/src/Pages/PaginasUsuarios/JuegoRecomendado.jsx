@@ -106,7 +106,7 @@ const JuegoRecomendado = () => {
   }
 
   return (
-    <div className="container" style={{ paddingTop: 50, paddingBottom: 100 }}>
+    <div className="container" style={{ paddingTop: "2rem", paddingBottom: "4rem" }}>
       <div className="card" style={{ maxWidth: 1000, margin: "0 auto", padding: 20 }}>
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: 30 }}>

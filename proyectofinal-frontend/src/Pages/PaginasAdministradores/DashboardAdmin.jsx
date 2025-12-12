@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaUsers,
@@ -12,10 +12,14 @@ import NavbarAdministrador from "../../components/Administrador/NavbarAdministra
 import AdminCard from "../../components/Administrador/AdminCard";
 import { dashboardStyles } from "../../styles/StylesAdmin/DashboardAdmin.styles";
 import apiClient from "../../services/apiClient";
+import { ThemeContext } from "../../context/themeContextDef";
+import FondoClaro from "../../assets/FondoClaro.svg";
+import FondoOscuro from "../../assets/FondoOscuro.svg";
 import "../../global.css";
 
 const DashboardAdmin = () => {
   const navigate = useNavigate();
+  const { isDark } = useContext(ThemeContext);
 
   // -----------------------------
   // ESTADOS NECESARIOS
@@ -34,7 +38,7 @@ const DashboardAdmin = () => {
         // Usar las rutas de /api/usuarios
         const [statsRes, profileRes] = await Promise.all([
           apiClient.get("/api/usuarios/statistics"),
-          apiClient.get("/api/usuarios/me")
+          apiClient.get("/api/usuarios/me"),
         ]);
 
         // Verificar estructura de respuesta
@@ -158,7 +162,17 @@ const DashboardAdmin = () => {
     <>
       <NavbarAdministrador adminData={adminData} />
 
-      <main className="container admin-dashboard" style={dashboardStyles.main}>
+      <main 
+        className="container admin-dashboard" 
+        style={{
+          ...dashboardStyles.main,
+          backgroundImage: `url(${isDark ? FondoOscuro : FondoClaro})`,
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center center",
+          backgroundSize: "cover",
+          backgroundAttachment: "fixed"
+        }}
+      >
         {/* Encabezado */}
         <AdminCard
           variant="header"

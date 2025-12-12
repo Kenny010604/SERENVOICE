@@ -5,9 +5,15 @@ const api = {
   baseURL: API_BASE_URL,
   endpoints: {
     auth: {
+      base: "/api/auth",
       login: "/api/auth/login",
       register: "/api/auth/register",
       logout: "/api/auth/logout",
+      google: "/api/auth/google",
+      forgotPassword: "/api/auth/forgot-password",
+      resetPassword: "/api/auth/reset-password",
+      verifyEmail: "/api/auth/verify-email",
+      resendVerification: "/api/auth/resend-verification",
     },
     usuarios: {
       list: "/api/usuarios",

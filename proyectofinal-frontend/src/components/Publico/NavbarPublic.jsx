@@ -1,45 +1,49 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import logo from "../../assets/Logo.svg";
-import { FaHome, FaInfoCircle, FaEnvelope, FaMicrophone, FaUserPlus, FaSignInAlt } from "react-icons/fa";
+import { FaHome, FaInfoCircle, FaEnvelope, FaMicrophone, FaUserPlus, FaSignInAlt, FaBars, FaTimes } from "react-icons/fa";
 
 const NavbarPublic = () => {
+  const [open, setOpen] = useState(false);
+
   return (
     <nav className="navbar">
-      <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-        <img
-          src={logo}
-          alt="SerenVoice Logo"
-          style={{
-            width: "40px",
-            height: "40px",
-            objectFit: "contain",
-          }}
-        />
-        <h1 style={{ margin: 0, fontSize: "1.5rem" }}>SerenVoice</h1>
+      <div className="nav-brand">
+        <img src={logo} alt="SerenVoice Logo" className="nav-logo" />
+        <h1 className="nav-title">SerenVoice</h1>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-        <Link to="/" style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}>
+
+      <button
+        className={`nav-toggle ${open ? "open" : ""}`}
+        aria-label={open ? "Cerrar menú" : "Abrir menú"}
+        aria-expanded={open}
+        onClick={() => setOpen((s) => !s)}
+      >
+        {open ? <FaTimes /> : <FaBars />}
+      </button>
+
+      <div className={`nav-links ${open ? "open" : ""}`}>
+        <Link to="/" className="nav-link" onClick={() => setOpen(false)}>
           <FaHome /> <span>Inicio</span>
         </Link>
 
-        <Link to="/sobre" style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}>
+        <Link to="/sobre" className="nav-link" onClick={() => setOpen(false)}>
           <FaInfoCircle /> <span>Sobre</span>
         </Link>
 
-        <Link to="/contacto" style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}>
+        <Link to="/contacto" className="nav-link" onClick={() => setOpen(false)}>
           <FaEnvelope /> <span>Contacto</span>
         </Link>
 
-        <Link to="/probar" style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}>
+        <Link to="/probar" className="nav-link" onClick={() => setOpen(false)}>
           <FaMicrophone /> <span>Prueba de Análisis</span>
         </Link>
 
-        <Link to="/registro" style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", marginLeft: "1rem" }}>
+        <Link to="/registro" className="nav-link nav-cta" onClick={() => setOpen(false)}>
           <FaUserPlus /> <span>Registrarse</span>
         </Link>
 
-        <Link to="/login" style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", marginLeft: "0.5rem" }}>
+        <Link to="/login" className="nav-link nav-cta" onClick={() => setOpen(false)}>
           <FaSignInAlt /> <span>Iniciar Sesión</span>
         </Link>
       </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { juegosAPI } from '../services/apiClient';
-import { Award, TrendingUp, Target, Clock } from 'lucide-react';
+import { FiTarget } from 'react-icons/fi';
+import { FaAward, FaChartLine, FaClock } from 'react-icons/fa';
 
 const GameStats = () => {
   const [stats, setStats] = useState(null);
@@ -13,8 +14,8 @@ const GameStats = () => {
   const cargarEstadisticas = async () => {
     try {
       const data = await juegosAPI.estadisticas();
-      if (data.success) {
-        setStats(data.estadisticas);
+      if (data && data.success) {
+        setStats(data.estadisticas || {});
       }
     } catch (error) {
       console.error('Error al cargar estadísticas:', error);
@@ -24,54 +25,51 @@ const GameStats = () => {
   };
 
   if (loading) {
-    return <div className="text-center py-8">Cargando estadísticas...</div>;
+    return <div className="stats-loading">Cargando estadísticas...</div>;
   }
 
-  if (!stats) {
-    return null;
-  }
+  if (!stats) return null;
+
+  const totalSesiones = stats.total_sesiones || 0;
+  const puntuacionTotal = stats.puntuacion_total || 0;
+  const tasaMejora = stats.tasa_mejora ?? 0;
+  const completadas = stats.sesiones_completadas || 0;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <StatCard
-        icon={<Target className="text-blue-500" size={32} />}
-        title="Sesiones Totales"
-        value={stats.total_sesiones}
-        color="bg-blue-50"
-      />
-      
-      <StatCard
-        icon={<Award className="text-yellow-500" size={32} />}
-        title="Puntos Totales"
-        value={stats.puntuacion_total.toLocaleString()}
-        color="bg-yellow-50"
-      />
-      
-      <StatCard
-        icon={<TrendingUp className="text-green-500" size={32} />}
-        title="Tasa de Mejora"
-        value={`${stats.tasa_mejora}%`}
-        color="bg-green-50"
-      />
-      
-      <StatCard
-        icon={<Clock className="text-purple-500" size={32} />}
-        title="Completadas"
-        value={`${stats.sesiones_completadas}/${stats.total_sesiones}`}
-        color="bg-purple-50"
-      />
+    <div className="stats-row">
+      <div className="stat-card">
+        <div className="stat-icon icon-blue"><FiTarget size={22} /></div>
+        <div className="stat-content">
+          <div className="stat-title">Sesiones Totales</div>
+          <div className="stat-value">{totalSesiones}</div>
+        </div>
+      </div>
+
+      <div className="stat-card">
+        <div className="stat-icon icon-yellow"><FaAward size={22} /></div>
+        <div className="stat-content">
+          <div className="stat-title">Puntos Totales</div>
+          <div className="stat-value">{Number(puntuacionTotal).toLocaleString()}</div>
+        </div>
+      </div>
+
+      <div className="stat-card">
+        <div className="stat-icon icon-green"><FaChartLine size={22} /></div>
+        <div className="stat-content">
+          <div className="stat-title">Tasa de Mejora</div>
+          <div className="stat-value">{tasaMejora}%</div>
+        </div>
+      </div>
+
+      <div className="stat-card">
+        <div className="stat-icon icon-purple"><FaClock size={22} /></div>
+        <div className="stat-content">
+          <div className="stat-title">Completadas</div>
+          <div className="stat-value">{completadas}/{totalSesiones}</div>
+        </div>
+      </div>
     </div>
   );
 };
-
-const StatCard = ({ icon, title, value, color }) => (
-  <div className={`${color} rounded-lg p-6 flex items-center gap-4`}>
-    <div>{icon}</div>
-    <div>
-      <p className="text-sm text-gray-600">{title}</p>
-      <p className="text-2xl font-bold text-gray-800">{value}</p>
-    </div>
-  </div>
-);
 
 export default GameStats;

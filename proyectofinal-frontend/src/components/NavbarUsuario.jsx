@@ -8,15 +8,21 @@ import {
   FaBell,
   FaHome,
   FaChevronDown,
+  FaBars,
+  FaTimes,
+  FaMicrophone,
+  FaHistory,
+  FaLightbulb,
 } from "react-icons/fa";
 
 const NavbarUsuario = ({ userData = {} }) => {
   const navigate = useNavigate();
   const auth = useAuth();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
-    // Use auth context if available to clear session and persistence
+    // Usar contexto de autenticación si está disponible para limpiar sesión y persistencia
     if (auth && auth.logout) auth.logout();
     else {
       localStorage.removeItem("token");
@@ -30,108 +36,62 @@ const NavbarUsuario = ({ userData = {} }) => {
   const handleNavigateToProfile = () => {
     navigate("/actualizar-perfil");
     setUserMenuOpen(false);
+    setMobileMenuOpen(false);
   };
 
   const handleNavigateToSettings = () => {
     navigate("/configuracion");
     setUserMenuOpen(false);
+    setMobileMenuOpen(false);
   };
 
   return (
-    <nav
-      className="navbar"
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "1rem 2rem",
-        background: "var(--color-panel)",
-        backdropFilter: "blur(8px)",
-        borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
-      }}
-    >
+    <nav className="navbar user-navbar">
       {/* Logo y nombre */}
-      <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-        <h1 style={{ margin: 0, fontSize: "1.5rem" }}>SerenVoice</h1>
-        <span
-          style={{
-            background: "#5ad0d2",
-            color: "#fff",
-            padding: "0.25rem 0.75rem",
-            borderRadius: "20px",
-            fontSize: "0.75rem",
-            fontWeight: "600",
-            textTransform: "uppercase",
-          }}
-        >
-          Usuario
-        </span>
+      <div className="nav-brand">
+        <h1 className="nav-title">SerenVoice</h1>
+        <span className="user-badge">Usuario</span>
       </div>
 
+      {/* Botón hamburguesa para móvil */}
+      <button
+        className={`nav-toggle ${mobileMenuOpen ? "open" : ""}`}
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
+        aria-expanded={mobileMenuOpen}
+      >
+        {mobileMenuOpen ? <FaTimes /> : <FaBars />}
+      </button>
+
       {/* Enlaces y menú */}
-      <div style={{ display: "flex", alignItems: "center", gap: "2rem" }}>
-        <Link
-          to="/dashboard"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            textDecoration: "none",
-            color: "var(--color-text-main)",
-            transition: "color 0.3s",
-          }}
-          onMouseEnter={(e) => (e.target.style.color = "var(--color-primary)")}
-          onMouseLeave={(e) => (e.target.style.color = "var(--color-text-main)")}
-        >
-          <FaHome /> Inicio
+      <div className={`nav-links user-nav-links ${mobileMenuOpen ? "open" : ""}`}>
+        <Link to="/dashboard" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
+          <FaHome /> <span>Inicio</span>
         </Link>
 
-        <Link
-          to="/alertas"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            textDecoration: "none",
-            color: "var(--color-text-main)",
-            transition: "color 0.3s",
-          }}
-          onMouseEnter={(e) => (e.target.style.color = "var(--color-primary)")}
-          onMouseLeave={(e) => (e.target.style.color = "var(--color-text-main)")}
-        >
-          <FaBell /> Alertas
+        <Link to="/analizar-voz" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
+          <FaMicrophone /> <span>Analizar Voz</span>
+        </Link>
+
+        <Link to="/historial" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
+          <FaHistory /> <span>Historial</span>
+        </Link>
+
+        <Link to="/recomendaciones" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
+          <FaLightbulb /> <span>Recomendaciones</span>
+        </Link>
+
+        <Link to="/alertas" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
+          <FaBell /> <span>Alertas</span>
         </Link>
 
         {/* Menú de usuario */}
-        <div style={{ position: "relative", display: "inline-block", zIndex: 1001 }}>
+        <div className="user-menu-wrapper">
           <button
             onClick={() => setUserMenuOpen(!userMenuOpen)}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              color: "var(--color-text-main)",
-              fontSize: "1rem",
-              boxShadow: "none",
-              padding: "0.5rem 1rem",
-              borderRadius: "8px",
-              transition: "all 0.3s",
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.background = "rgba(90, 208, 210, 0.1)";
-              e.target.style.color = "var(--color-primary)";
-            }}
-            onMouseLeave={(e) => {
-              if (!userMenuOpen) {
-                e.target.style.background = "none";
-                e.target.style.color = "var(--color-text-main)";
-              }
-            }}
+            className="user-menu-button"
           >
-            <FaUser /> {userData.nombres || "Usuario"}
+            <FaUser /> <span>{userData.nombres || "Usuario"}</span>
             <FaChevronDown
               style={{
                 fontSize: "0.75rem",
@@ -142,107 +102,20 @@ const NavbarUsuario = ({ userData = {} }) => {
           </button>
 
           {userMenuOpen && (
-            <div
-              style={{
-                position: "absolute",
-                top: "100%",
-                right: 0,
-                background: "var(--color-panel)",
-                backdropFilter: "blur(8px)",
-                borderRadius: "12px",
-                boxShadow: "0 4px 12px var(--color-shadow)",
-                minWidth: "220px",
-                zIndex: 1100,
-                marginTop: "0.5rem",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                overflow: "hidden",
-              }}
-            >
+            <div className="user-dropdown">
               {/* Perfil */}
-              <button
-                onClick={handleNavigateToProfile}
-                style={{
-                  width: "100%",
-                  padding: "0.8rem 1rem",
-                  background: "none",
-                  border: "none",
-                  textAlign: "left",
-                  cursor: "pointer",
-                  color: "var(--color-text-main)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.75rem",
-                  fontSize: "0.95rem",
-                  transition: "all 0.3s",
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.background = "rgba(90, 208, 210, 0.1)";
-                  e.target.style.color = "var(--color-primary)";
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.background = "none";
-                  e.target.style.color = "var(--color-text-main)";
-                }}
-              >
-                <FaUser /> Mi Perfil
+              <button onClick={handleNavigateToProfile} className="user-menu-item">
+                <FaUser /> <span>Mi Perfil</span>
               </button>
 
               {/* Configuración */}
-              <button
-                onClick={handleNavigateToSettings}
-                style={{
-                  width: "100%",
-                  padding: "0.8rem 1rem",
-                  background: "none",
-                  border: "none",
-                  textAlign: "left",
-                  cursor: "pointer",
-                  color: "var(--color-text-main)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.75rem",
-                  fontSize: "0.95rem",
-                  transition: "all 0.3s",
-                  borderTop: "1px solid rgba(255, 255, 255, 0.1)",
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.background = "rgba(90, 208, 210, 0.1)";
-                  e.target.style.color = "var(--color-primary)";
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.background = "none";
-                  e.target.style.color = "var(--color-text-main)";
-                }}
-              >
-                <FaCog /> Configuración
+              <button onClick={handleNavigateToSettings} className="user-menu-item">
+                <FaCog /> <span>Configuración</span>
               </button>
 
               {/* Cerrar sesión */}
-              <button
-                onClick={handleLogout}
-                style={{
-                  width: "100%",
-                  padding: "0.8rem 1rem",
-                  background: "none",
-                  border: "none",
-                  textAlign: "left",
-                  cursor: "pointer",
-                  color: "#ff6b6b",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.75rem",
-                  fontSize: "0.95rem",
-                  transition: "all 0.3s",
-                  borderTop: "1px solid rgba(255, 255, 255, 0.1)",
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.background = "rgba(255, 107, 107, 0.1)";
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.background = "none";
-                }}
-              >
-                <FaSignOutAlt /> Cerrar Sesión
+              <button onClick={handleLogout} className="user-menu-item user-logout">
+                <FaSignOutAlt /> <span>Cerrar Sesión</span>
               </button>
             </div>
           )}

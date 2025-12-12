@@ -1,9 +1,12 @@
 // src/Pages/PaginasPublicas/ProbarVoz.jsx
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useContext } from "react";
 import NavbarPublic from "../../components/Publico/NavbarPublic";
+import AudioPlayer from "../../components/AudioPlayer";
 import "../../global.css";
 import Spinner from "../../components/Spinner";
-import heroImg from "../../assets/ImagenFondoClaro.png";
+import { ThemeContext } from "../../context/themeContextDef";
+import PaisajeClaro from "../../assets/PaisajeClaro.svg";
+import PaisajeOscuro from "../../assets/PaisajeOscuro.svg";
 import {
   FaMicrophone,
   FaStop,
@@ -15,8 +18,19 @@ import {
   FaSmile,
   FaAngry,
   FaSadCry,
+  FaSadTear,
   FaBrain,
   FaMeh,
+  FaFrownOpen,
+  FaSurprise,
+  FaChartLine,
+  FaUserPlus,
+  FaLock,
+  FaUser,
+  FaArrowRight,
+  FaGamepad,
+  FaUsers,
+  FaLightbulb,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
@@ -25,6 +39,7 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const ProbarVoz = () => {
   const navigate = useNavigate();
+  const { isDark } = useContext(ThemeContext);
   const [isRecording, setIsRecording] = useState(false);
   const [mediaSupported, setMediaSupported] = useState(true);
   const [audioURL, setAudioURL] = useState(null);
@@ -36,21 +51,29 @@ const ProbarVoz = () => {
   const [analysis, setAnalysis] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState(null);
+  const [carouselIndex, setCarouselIndex] = useState(0);
 
   // Verificar soporte de micrófono
   useEffect(() => {
     const checkMediaSupport = async () => {
-      if (!navigator.mediaDevices?.getUserMedia) {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         setMediaSupported(false);
-        setError("Tu navegador no soporta grabación de audio.");
+        setError("Tu navegador no soporta la grabación de audio. Usa Chrome, Firefox o Edge.");
         return;
       }
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        stream.getTracks().forEach((t) => t.stop());
-      } catch {
+        stream.getTracks().forEach((track) => track.stop());
+        setMediaSupported(true);
+        setError(null);
+      } catch (err) {
+        console.error("Error de permisos:", err);
         setMediaSupported(false);
-        setError("Debes permitir el acceso al micrófono.");
+        setError(
+          err.name === "NotAllowedError"
+            ? "Debes permitir el acceso al micrófono."
+            : "Error al acceder al micrófono: " + err.message
+        );
       }
     };
     checkMediaSupport();
@@ -58,6 +81,7 @@ const ProbarVoz = () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (audioURL) URL.revokeObjectURL(audioURL);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Temporizador
@@ -73,18 +97,26 @@ const ProbarVoz = () => {
     setError(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: { channelCount: 1, sampleRate: 16000 },
+        audio: { channelCount: 1, sampleRate: 16000, echoCancellation: true, noiseSuppression: true },
       });
-      const mr = new MediaRecorder(stream, { mimeType: "audio/webm" });
+
+      // Seleccionar un mimeType soportado
+      let mimeType = "";
+      if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) mimeType = "audio/webm;codecs=opus";
+      else if (MediaRecorder.isTypeSupported("audio/webm")) mimeType = "audio/webm";
+
+      const mr = new MediaRecorder(stream, mimeType ? { mimeType } : {});
       mediaRecorderRef.current = mr;
       mediaChunksRef.current = [];
 
       mr.ondataavailable = (e) => {
-        if (e.data.size > 0) mediaChunksRef.current.push(e.data);
+        if (e.data && e.data.size > 0) mediaChunksRef.current.push(e.data);
       };
 
       mr.onstop = () => {
-        const blob = new Blob(mediaChunksRef.current, { type: mr.mimeType });
+        const recordedMimeType = mr.mimeType;
+        const blob = new Blob(mediaChunksRef.current, { type: recordedMimeType });
+        if (audioURL) URL.revokeObjectURL(audioURL);
         const url = URL.createObjectURL(blob);
         setAudioURL(url);
         stream.getTracks().forEach((t) => t.stop());
@@ -93,15 +125,24 @@ const ProbarVoz = () => {
       mr.start();
       setIsRecording(true);
       startTimer();
-    } catch {
-      setError("No se pudo acceder al micrófono.");
+    } catch (err) {
+      console.error("Error accessing microphone:", err);
+      setMediaSupported(false);
+      setError("No se pudo acceder al micrófono. Verifica los permisos.");
     }
   };
 
   const handleStop = () => {
-    if (mediaRecorderRef.current?.state !== "inactive") mediaRecorderRef.current.stop();
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
     setIsRecording(false);
     stopTimer();
+
+    // Auto-analizar poco después de detener
+    setTimeout(() => {
+      if (audioURL) handleAnalyze();
+    }, 500);
   };
 
   const handlePlay = () => audioRef.current?.play();
@@ -110,7 +151,9 @@ const ProbarVoz = () => {
     const a = document.createElement("a");
     a.href = audioURL;
     a.download = `grabacion_serenvoice_${Date.now()}.webm`;
+    document.body.appendChild(a);
     a.click();
+    a.remove();
   };
 
   // Analizar audio
@@ -123,16 +166,22 @@ const ProbarVoz = () => {
       setIsAnalyzing(true);
       setError(null);
 
-      const blob = new Blob(mediaChunksRef.current, { type: "audio/webm" });
+      if (!audioURL) {
+        setError("No hay audio para analizar.");
+        return;
+      }
+
+      const blob = new Blob(mediaChunksRef.current, { type: "audio/webm;codecs=opus" });
       const formData = new FormData();
       formData.append("audio", blob, "grabacion.webm");
 
       const res = await fetch(`${API_URL}/api/audio/analyze`, { method: "POST", body: formData });
-      if (!res.ok) throw new Error("Error del servidor");
+      if (!res.ok) throw new Error("Error del servidor: " + res.status);
       const data = await res.json();
       setAnalysis(data);
     } catch (err) {
-      setError("Error al analizar el audio: " + err.message);
+      console.error("Error analyzing audio:", err);
+      setError(err.message || "Error al analizar el audio");
     } finally {
       setIsAnalyzing(false);
     }
@@ -166,42 +215,52 @@ const ProbarVoz = () => {
 
   const indicadores = calcularIndicadores();
 
-  const alerta = () => {
-    if (!indicadores) return null;
-    if (indicadores.estres.nivel === "ALTO" || indicadores.ansiedad.nivel === "ALTO")
-      return { tipo: "crítico", mensaje: "⚠️ Tu estado es crítico, te recomendamos entrar al juego terapéutico.", color: "#ff3b30" };
-    if (indicadores.estres.nivel === "MEDIO" || indicadores.ansiedad.nivel === "MEDIO")
-      return { tipo: "alerta", mensaje: "🟠 Estás en estado de alerta, sería bueno relajarte jugando.", color: "#ff9500" };
-    return { tipo: "estable", mensaje: "🟢 Tu estado emocional es estable.", color: "#34c759" };
+  // Navegación del carrusel
+  const benefitCards = [
+    { icon: FaLock, title: "Privacidad Garantizada", description: "Tus grabaciones se guardan de forma segura en tu cuenta personal." },
+    { icon: FaChartLine, title: "Análisis Avanzado", description: "Acceso a análisis detallado y patrones emocionales en el tiempo." },
+    { icon: FaUser, title: "Perfil Personal", description: "Mantén tu historial y seguimiento personalizado de bienestar." },
+    { icon: FaGamepad, title: "Juegos Terapéuticos", description: "Accede a juegos diseñados para mejorar tu bienestar emocional." },
+    { icon: FaUsers, title: "Grupos de Apoyo", description: "Únete a comunidades de apoyo y comparte experiencias." },
+    { icon: FaLightbulb, title: "Recomendaciones IA", description: "Recibe sugerencias personalizadas basadas en tus análisis." },
+  ];
+
+  const handlePrevCard = () => {
+    setCarouselIndex((prev) => (prev > 0 ? prev - 1 : 0));
   };
 
-  const alertaActual = alerta();
+  const handleNextCard = () => {
+    setCarouselIndex((prev) => (prev < benefitCards.length - 3 ? prev + 1 : prev));
+  };
 
   // Iconos y colores para emociones
   const getEmotionIcon = (emotion) => {
-    const map = {
+    const iconMap = {
       Felicidad: FaSmile,
-      Tristeza: FaSadCry,
+      Tristeza: FaSadTear,
       Enojo: FaAngry,
-      Estrés: FaHeartbeat,
-      Ansiedad: FaBrain,
+      Estrés: FaFrownOpen,
+      Ansiedad: FaMeh,
       Neutral: FaMeh,
-      Miedo: FaExclamationTriangle,
+      Miedo: FaFrownOpen,
+      Sorpresa: FaSurprise,
     };
-    return map[emotion] || FaMeh;
+    return iconMap[emotion] || FaMeh;
   };
 
   const getEmotionColor = (emotion) => {
-    const map = {
-      Felicidad: "#FFD700",
-      Tristeza: "#4169E1",
-      Enojo: "#FF6347",
-      Estrés: "#FF4500",
-      Ansiedad: "#9370DB",
-      Neutral: "#90A4AE",
-      Miedo: "#FF6F00",
-    };
-    return map[emotion] || "#90A4AE";
+    return (
+      {
+        Felicidad: "#ffb703",
+        Tristeza: "#4361ee",
+        Enojo: "#e63946",
+        Estrés: "#e76f51",
+        Ansiedad: "#9b5de5",
+        Neutral: "#6c757d",
+        Miedo: "#7e22ce",
+        Sorpresa: "#2a9d8f",
+      }[emotion]
+    ) || "#6c757d";
   };
 
   return (
@@ -210,11 +269,13 @@ const ProbarVoz = () => {
       <main
         className="container"
         style={{
-          paddingBottom: 100,
-          backgroundImage: `url(${heroImg}), linear-gradient(rgba(255,255,255,0.28), rgba(255,255,255,0.36))`,
+          paddingTop: "2rem",
+          paddingBottom: "3rem",
+          backgroundImage: `url(${isDark ? PaisajeOscuro : PaisajeClaro})`,
           backgroundRepeat: "no-repeat",
           backgroundPosition: "center center",
           backgroundSize: "cover",
+          backgroundAttachment: "fixed",
           minHeight: "100vh",
         }}
       >
@@ -224,97 +285,243 @@ const ProbarVoz = () => {
 
           {error && <div style={{ color: "#d32f2f", padding: 12, background: "#ffebee", borderRadius: 8 }}><FaExclamationTriangle /> {error}</div>}
 
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+          <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 12, flexWrap: "wrap" }}>
             {!isRecording ? (
-              <button className="auth-button" onClick={handleStart} disabled={!mediaSupported}><FaMicrophone /> Grabar</button>
+              <button className="auth-button" onClick={handleStart} disabled={!mediaSupported}>
+                <FaMicrophone style={{ marginRight: 8 }} /> Empezar a grabar
+              </button>
             ) : (
-              <button className="auth-button" onClick={handleStop} style={{ background: "#ff6b6b" }}><FaStop /> Detener</button>
+              <button className="auth-button" onClick={handleStop} style={{ background: "#ff6b6b" }}>
+                <FaStop style={{ marginRight: 8 }} /> Detener
+              </button>
             )}
-            <div style={{ minWidth: 80, padding: "6px 12px", background: "#eee", borderRadius: 6 }}>
+
+            <div style={{
+              minWidth: 120,
+              padding: "8px 16px",
+              background: isRecording ? "#ffebee" : "var(--color-panel)",
+              borderRadius: 8,
+              fontWeight: "bold",
+              color: isRecording ? "#d32f2f" : "var(--color-text-main)",
+            }}>
               {Math.floor(recTime / 60)}:{String(recTime % 60).padStart(2, "0")}
             </div>
-            <button className="auth-button" onClick={handlePlay} disabled={!audioURL}><FaPlay /> Reproducir</button>
-            <button className="auth-button" onClick={handleDownload} disabled={!audioURL}><FaDownload /> Descargar</button>
-            <button className="auth-button" onClick={handleAnalyze} disabled={!audioURL || isAnalyzing} style={{ background: "#007bff" }}>
-              <FaWaveSquare /> {isAnalyzing ? "Analizando..." : "Analizar"}
-            </button>
+
+            <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button className="auth-button" onClick={handlePlay} disabled={!audioURL} style={{ opacity: audioURL ? 1 : 0.5 }}>
+                <FaPlay /> Reproducir
+              </button>
+              <button className="auth-button" onClick={handleDownload} disabled={!audioURL} style={{ opacity: audioURL ? 1 : 0.5 }}>
+                <FaDownload /> Descargar
+              </button>
+              <button className="auth-button analyze-button" onClick={handleAnalyze} disabled={!audioURL || isAnalyzing} style={{ opacity: audioURL && !isAnalyzing ? 1 : 0.5, background: "var(--color-primary)" }}>
+                <FaWaveSquare /> {isAnalyzing ? "Analizando..." : "Analizar"}
+              </button>
+            </div>
           </div>
 
-          {audioURL && <audio ref={audioRef} src={audioURL} controls style={{ width: "100%" }} />}
-          {isAnalyzing && <Spinner overlay message="Analizando..." />}
+          {audioURL && <AudioPlayer src={audioURL} />}
+          {isAnalyzing && <Spinner overlay={true} message="Analizando emociones con IA..." />}
+        </div>
 
-          {/* Emociones individuales */}
-          {analysis && (
-            <div style={{ marginTop: 24 }}>
-              <h3>Resultados por emoción</h3>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, 140px)", gap: 15 }}>
-                {analysis.emotions.map((emo, idx) => {
-                  const Icon = getEmotionIcon(emo.name);
-                  const color = getEmotionColor(emo.name);
+        {/* Card de Resultados del Análisis */}
+        {analysis && analysis.emotions && (
+          <div className="card" style={{ maxWidth: 900, width: "100%", marginTop: 24 }}>
+            <h3 style={{ marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
+              <FaChartLine style={{ color: "var(--color-primary)" }} /> Resultados del Análisis
+            </h3>
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, 1fr)",
+              gap: 16,
+              marginTop: 16,
+            }}>
+              {analysis.emotions.slice(0, 8).map((emotion, idx) => {
+                const Icon = getEmotionIcon(emotion.name);
+                const color = getEmotionColor(emotion.name);
+                return (
+                  <div key={idx} style={{ 
+                    padding: 12, 
+                    borderRadius: 14, 
+                    background: "var(--color-panel)", 
+                    border: `3px solid ${color}`,
+                    aspectRatio: "1 / 1",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 10
+                  }}>
+                    <Icon size={56} style={{ color }} />
+                    <p style={{ margin: 0, fontWeight: 800, color, fontSize: "1.05rem", textAlign: "center" }}>{emotion.name}</p>
+                    <span style={{ fontWeight: 800 }}>{emotion.value}%</span>
+                    <div style={{ width: "100%", height: 8, background: "#e0e0e0", borderRadius: 6, overflow: "hidden" }}>
+                      <div style={{ width: `${Math.max(0, Math.min(100, emotion.value))}%`, height: "100%", background: color }}></div>
+                    </div>
+                  </div>
+                );
+              })}
+              
+              {/* Estrés */}
+              {indicadores && (
+                <div style={{ 
+                  padding: 12, 
+                  borderRadius: 14, 
+                  background: "var(--color-panel)", 
+                  border: `3px solid #e76f51`,
+                  aspectRatio: "1 / 1",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 10
+                }}>
+                  <FaFrownOpen size={56} style={{ color: "#e76f51" }} />
+                  <p style={{ margin: 0, fontWeight: 800, color: "#e76f51", fontSize: "1.05rem", textAlign: "center" }}>Estrés</p>
+                  <span style={{ fontWeight: 800 }}>{Math.round(indicadores.estres.porcentaje)}%</span>
+                  <div style={{ width: "100%", height: 8, background: "#e0e0e0", borderRadius: 6, overflow: "hidden" }}>
+                    <div style={{ width: `${Math.max(0, Math.min(100, indicadores.estres.porcentaje))}%`, height: "100%", background: "#e76f51" }}></div>
+                  </div>
+                </div>
+              )}
+
+              {/* Ansiedad */}
+              {indicadores && (
+                <div style={{ 
+                  padding: 12, 
+                  borderRadius: 14, 
+                  background: "var(--color-panel)", 
+                  border: `3px solid #9b5de5`,
+                  aspectRatio: "1 / 1",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 10
+                }}>
+                  <FaMeh size={56} style={{ color: "#9b5de5" }} />
+                  <p style={{ margin: 0, fontWeight: 800, color: "#9b5de5", fontSize: "1.05rem", textAlign: "center" }}>Ansiedad</p>
+                  <span style={{ fontWeight: 800 }}>{Math.round(indicadores.ansiedad.porcentaje)}%</span>
+                  <div style={{ width: "100%", height: 8, background: "#e0e0e0", borderRadius: 6, overflow: "hidden" }}>
+                    <div style={{ width: `${Math.max(0, Math.min(100, indicadores.ansiedad.porcentaje))}%`, height: "100%", background: "#9b5de5" }}></div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Card de mensaje de registro */}
+        {analysis && (
+          <div className="card" style={{ maxWidth: 900, width: "100%", marginTop: 24 }}>
+            <h2 style={{ color: "var(--color-text-main)", marginBottom: 16 }}>
+              Desbloquea el Potencial Completo
+            </h2>
+            <p style={{ color: "var(--color-text-secondary)", fontSize: "1.1rem", marginBottom: 24 }}>
+              Regístrate ahora para acceder a análisis avanzados, historial de
+              grabaciones y reportes personalizados.
+            </p>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "2rem" }}>
+              <button
+                onClick={handlePrevCard}
+                disabled={carouselIndex === 0}
+                aria-label="Anterior"
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  fontSize: 26,
+                  fontWeight: 700,
+                  color: "var(--color-primary)",
+                  cursor: carouselIndex === 0 ? "not-allowed" : "pointer",
+                  opacity: carouselIndex === 0 ? 0.3 : 1,
+                  padding: 8,
+                }}
+              >
+                {'<'}
+              </button>
+
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: "1.5rem",
+                flex: 1,
+              }}>
+                {benefitCards.slice(carouselIndex, carouselIndex + 3).map((card, idx) => {
+                  const Icon = card.icon;
                   return (
-                    <div key={idx} style={{ padding: 15, border: `2px solid ${color}`, borderRadius: 10, textAlign: "center" }}>
-                      <Icon size={36} style={{ color, marginBottom: 4 }} />
-                      <p><b>{emo.name}</b></p>
-                      <p style={{ fontSize: 22 }}>{emo.value}%</p>
+                    <div key={idx} style={{
+                      padding: "1.5rem",
+                      borderRadius: "12px",
+                      background: "var(--color-panel)",
+                      boxShadow: "0 2px 8px var(--color-shadow)",
+                      transition: "all 0.3s ease",
+                    }}>
+                      <Icon size={32} style={{ color: "var(--color-primary)", marginBottom: 8 }} />
+                      <h4 style={{ color: "var(--color-text-main)" }}>
+                        {card.title}
+                      </h4>
+                      <p style={{ color: "var(--color-text-secondary)", fontSize: "0.9rem" }}>
+                        {card.description}
+                      </p>
                     </div>
                   );
                 })}
               </div>
+
+              <button
+                onClick={handleNextCard}
+                disabled={carouselIndex >= benefitCards.length - 3}
+                aria-label="Siguiente"
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  fontSize: 26,
+                  fontWeight: 700,
+                  color: "var(--color-primary)",
+                  cursor: carouselIndex >= benefitCards.length - 3 ? "not-allowed" : "pointer",
+                  opacity: carouselIndex >= benefitCards.length - 3 ? 0.3 : 1,
+                  padding: 8,
+                }}
+              >
+                {'>'}
+              </button>
             </div>
-          )}
 
-          {/* Indicadores de Estrés y Ansiedad + alerta */}
-          {indicadores && (
-            <>
-              <h3 style={{ marginTop: 30 }}>Indicadores Clave</h3>
-              <div style={{ display: "flex", gap: 20, marginTop: 10, flexWrap: "wrap" }}>
-                <div style={{
-                  padding: 20, borderRadius: 12, background: "white",
-                  width: 250, boxShadow: "0 3px 10px rgba(0,0,0,0.1)", textAlign: "center"
-                }}>
-                  <FaExclamationTriangle size={40} color="#ff3b30" />
-                  <h4>Estrés</h4>
-                  <p style={{ fontSize: 25, fontWeight: "bold" }}>{indicadores.estres.porcentaje}%</p>
-                  <span style={{ background: "#ff3b30", padding: "5px 15px", color: "white", borderRadius: 12 }}>{indicadores.estres.nivel}</span>
-                </div>
-                <div style={{
-                  padding: 20, borderRadius: 12, background: "white",
-                  width: 250, boxShadow: "0 3px 10px rgba(0,0,0,0.1)", textAlign: "center"
-                }}>
-                  <FaHeartbeat size={40} color="#8e44ad" />
-                  <h4>Ansiedad</h4>
-                  <p style={{ fontSize: 25, fontWeight: "bold" }}>{indicadores.ansiedad.porcentaje}%</p>
-                  <span style={{ background: "#8e44ad", padding: "5px 15px", color: "white", borderRadius: 12 }}>{indicadores.ansiedad.nivel}</span>
-                </div>
-              </div>
-
-              <div style={{ marginTop: 30, padding: 20, borderRadius: 12, background: alertaActual.color, color: "white", fontSize: 18, textAlign: "center" }}>
-                {alertaActual.mensaje}
-              </div>
-
-             <div style={{ marginTop: 20, textAlign: "center" }}>
-  <button
-    onClick={() => {
-      // Determinar estado para enviar al juego recomendado
-      let estadoJuego = "estable"; // valor por defecto
-      if (alertaActual.tipo === "crítico") estadoJuego = "critico";
-      else if (alertaActual.tipo === "alerta") estadoJuego = "alerta";
-      else if (alertaActual.tipo === "estable") estadoJuego = "estable";
-
-      navigate("/juego-recomendado", { state: { estado: estadoJuego } });
-    }}
-    className="auth-button"
-    style={{ padding: "12px 25px", background: "black", fontSize: "1.1rem" }}
-  >
-    🎮 Ir a Juegos Terapéuticos
-  </button>
-</div>
-
-            </>
-          )}
-
-        </div>
+            <button
+              onClick={() => navigate("/registro")}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                padding: "0.8rem 2rem",
+                background: "var(--color-primary)",
+                color: "white",
+                borderRadius: "50px",
+                border: "none",
+                fontSize: "1rem",
+                fontWeight: "600",
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+                boxShadow: "0 4px 10px var(--color-shadow)",
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = "translateY(-2px)";
+                e.target.style.boxShadow = "0 6px 15px var(--color-shadow)";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = "translateY(0)";
+                e.target.style.boxShadow = "0 4px 10px var(--color-shadow)";
+              }}
+            >
+              Crear Cuenta <FaArrowRight />
+            </button>
+          </div>
+        )}
       </main>
+      <footer className="footer">
+        © {new Date().getFullYear()} SerenVoice — Todos los derechos reservados.
+      </footer>
     </>
   );
 };

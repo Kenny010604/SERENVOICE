@@ -1,9 +1,13 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useContext } from "react";
 import NavbarAdministrador from "../../components/Administrador/NavbarAdministrador";
 import { FaBell, FaCheck } from "react-icons/fa";
 import { useAlertas } from "../../context/AlertasContext";
+import { ThemeContext } from "../../context/themeContextDef";
+import FondoClaro from "../../assets/FondoClaro.svg";
+import FondoOscuro from "../../assets/FondoOscuro.svg";
 
 const Alertas = () => {
+  const { isDark } = useContext(ThemeContext);
   const { alerts, assignToMe, resolveAlerta } = useAlertas();
   const [msg, setMsg] = useState("");
   const cardRef = useRef(null);
@@ -27,7 +31,17 @@ const Alertas = () => {
   return (
     <>
       <NavbarAdministrador />
-      <main className="container" style={{ paddingBottom: "100px" }}>
+      <main 
+        className="container" 
+        style={{ 
+          paddingBottom: "100px",
+          backgroundImage: `url(${isDark ? FondoOscuro : FondoClaro})`,
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center center",
+          backgroundSize: "cover",
+          backgroundAttachment: "fixed"
+        }}
+      >
         <div ref={cardRef} className="card reveal" style={{ maxWidth: "1200px" }}>
           <h2>
             <FaBell /> Gestión de Alertas

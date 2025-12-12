@@ -11,6 +11,8 @@ import {
   FaChartBar,
   FaChevronDown,
   FaShieldAlt,
+  FaBars,
+  FaTimes,
 } from "react-icons/fa";
 import logo from "../../assets/Logo.svg";
 
@@ -18,6 +20,7 @@ const NavbarAdministrador = ({ adminData = {} }) => {
   const navigate = useNavigate();
   const auth = useAuth();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     if (auth && auth.logout) auth.logout();
@@ -33,95 +36,65 @@ const NavbarAdministrador = ({ adminData = {} }) => {
   const handleNavigateToProfile = () => {
     navigate("/admin/perfil");
     setUserMenuOpen(false);
+    setMobileMenuOpen(false);
   };
 
   const handleNavigateToSettings = () => {
     navigate("/admin/configuracion");
     setUserMenuOpen(false);
+    setMobileMenuOpen(false);
   };
 
   return (
-    <nav
-      className="navbar"
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "1rem 2rem",
-        background: "var(--color-panel)",
-        backdropFilter: "blur(8px)",
-        borderBottom: "2px solid #ff6b6b",
-      }}
-    >
+    <nav className="navbar admin-navbar">
       {/* Logo y nombre */}
-      <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+      <div className="nav-brand">
         <img
           src={logo}
           alt="SerenVoice Logo"
-          style={{
-            width: "40px",
-            height: "40px",
-            objectFit: "contain",
-          }}
+          className="nav-logo"
         />
-        <h1 style={{ margin: 0, fontSize: "1.5rem" }}>SerenVoice</h1>
-        <span
-          style={{
-            background: "#ff6b6b",
-            color: "#fff",
-            padding: "0.25rem 0.75rem",
-            borderRadius: "20px",
-            fontSize: "0.75rem",
-            fontWeight: "600",
-            textTransform: "uppercase",
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-          }}
-        >
+        <h1 className="nav-title">SerenVoice</h1>
+        <span className="admin-badge">
           <FaShieldAlt /> Admin
         </span>
       </div>
 
+      {/* Botón hamburguesa para móvil */}
+      <button
+        className={`nav-toggle ${mobileMenuOpen ? 'open' : ''}`}
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        aria-label="Toggle menu"
+        aria-expanded={mobileMenuOpen}
+      >
+        {mobileMenuOpen ? <FaTimes /> : <FaBars />}
+      </button>
+
       {/* Enlaces y menú */}
-      <div style={{ display: "flex", alignItems: "center", gap: "2rem" }}>
-        <Link to="/admin/dashboard" className="admin-link">
-          <FaHome /> Dashboard
+      <div className={`nav-links admin-nav-links ${mobileMenuOpen ? 'open' : ''}`}>
+        <Link to="/admin/dashboard" className="admin-link" onClick={() => setMobileMenuOpen(false)}>
+          <FaHome /> <span>Dashboard</span>
         </Link>
 
-        <Link to="/admin/usuarios" className="admin-link">
-          <FaUsers /> Usuarios
+        <Link to="/admin/usuarios" className="admin-link" onClick={() => setMobileMenuOpen(false)}>
+          <FaUsers /> <span>Usuarios</span>
         </Link>
 
-        <Link to="/admin/reportes" className="admin-link">
-          <FaChartBar /> Reportes
+        <Link to="/admin/reportes" className="admin-link" onClick={() => setMobileMenuOpen(false)}>
+          <FaChartBar /> <span>Reportes</span>
         </Link>
 
-        <Link to="/admin/alertas" className="admin-link">
-          <FaBell /> Alertas
+        <Link to="/admin/alertas" className="admin-link" onClick={() => setMobileMenuOpen(false)}>
+          <FaBell /> <span>Alertas</span>
         </Link>
 
         {/* Menú de administrador */}
-        <div style={{ position: "relative", display: "inline-block", zIndex: 1001 }}>
+        <div className="user-menu-wrapper">
           <button
             onClick={() => setUserMenuOpen(!userMenuOpen)}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              color: "var(--color-text-main)",
-              fontSize: "1rem",
-              boxShadow: "none",
-              padding: "0.5rem 1rem",
-              borderRadius: "8px",
-              transition: "all 0.3s",
-            }}
             className="admin-user-button"
           >
-            <FaUser /> {adminData.nombres || "Admin"}
+            <FaUser /> <span>{adminData.nombres || "Admin"}</span>
             <FaChevronDown
               style={{
                 fontSize: "0.75rem",
@@ -132,88 +105,29 @@ const NavbarAdministrador = ({ adminData = {} }) => {
           </button>
 
           {userMenuOpen && (
-            <div
-              style={{
-                position: "absolute",
-                top: "100%",
-                right: 0,
-                background: "var(--color-panel)",
-                backdropFilter: "blur(8px)",
-                borderRadius: "12px",
-                boxShadow: "0 4px 12px var(--color-shadow)",
-                minWidth: "220px",
-                zIndex: 1100,
-                marginTop: "0.5rem",
-                border: "1px solid rgba(255, 107, 107, 0.2)",
-                overflow: "hidden",
-              }}
-            >
+            <div className="user-dropdown">
               {/* Perfil */}
               <button
                 onClick={handleNavigateToProfile}
-                style={{
-                  width: "100%",
-                  padding: "0.8rem 1rem",
-                  background: "none",
-                  border: "none",
-                  textAlign: "left",
-                  cursor: "pointer",
-                  color: "var(--color-text-main)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.75rem",
-                  fontSize: "0.95rem",
-                  transition: "all 0.3s",
-                }}
                 className="admin-menu-item"
               >
-                <FaUser /> Mi Perfil
+                <FaUser /> <span>Mi Perfil</span>
               </button>
 
               {/* Configuración */}
               <button
                 onClick={handleNavigateToSettings}
-                style={{
-                  width: "100%",
-                  padding: "0.8rem 1rem",
-                  background: "none",
-                  border: "none",
-                  textAlign: "left",
-                  cursor: "pointer",
-                  color: "var(--color-text-main)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.75rem",
-                  fontSize: "0.95rem",
-                  transition: "all 0.3s",
-                  borderTop: "1px solid rgba(255, 255, 255, 0.1)",
-                }}
                 className="admin-menu-item"
               >
-                <FaCog /> Configuración
+                <FaCog /> <span>Configuración</span>
               </button>
 
               {/* Cerrar sesión */}
               <button
                 onClick={handleLogout}
-                style={{
-                  width: "100%",
-                  padding: "0.8rem 1rem",
-                  background: "none",
-                  border: "none",
-                  textAlign: "left",
-                  cursor: "pointer",
-                  color: "#ff6b6b",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.75rem",
-                  fontSize: "0.95rem",
-                  transition: "all 0.3s",
-                  borderTop: "1px solid rgba(255, 255, 255, 0.1)",
-                }}
                 className="admin-menu-item admin-logout"
               >
-                <FaSignOutAlt /> Cerrar Sesión
+                <FaSignOutAlt /> <span>Cerrar Sesión</span>
               </button>
             </div>
           )}

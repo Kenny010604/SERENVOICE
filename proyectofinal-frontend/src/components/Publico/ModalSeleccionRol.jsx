@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaShieldAlt, FaUser, FaArrowRight } from "react-icons/fa";
-import { useAuth } from "../context/useAuth";
+import { useAuth } from "../../context/useAuth";
 
 const ModalSeleccionRol = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
@@ -14,21 +14,18 @@ const ModalSeleccionRol = ({ isOpen, onClose }) => {
 
   const handleConfirm = () => {
     if (selectedRole) {
-      // Guardar el rol seleccionado en el contexto y localStorage via setUserRole
       if (auth && auth.setUserRole) {
         auth.setUserRole(selectedRole);
       } else {
         localStorage.setItem("userRole", selectedRole);
       }
 
-      // Redirigir según el rol
       if (selectedRole === "ADMINISTRADOR") {
         navigate("/admin/dashboard");
       } else {
         navigate("/dashboard");
       }
 
-      // Limpiar estado del modal
       setSelectedRole(null);
       if (onClose) onClose();
     }
@@ -63,7 +60,6 @@ const ModalSeleccionRol = ({ isOpen, onClose }) => {
           border: "1px solid rgba(255, 255, 255, 0.1)",
         }}
       >
-        {/* Encabezado */}
         <div style={{ textAlign: "center", marginBottom: "2rem" }}>
           <h2 style={{ margin: "0 0 0.5rem 0", fontSize: "1.8rem" }}>
             ¿Cuál es tu rol?
@@ -79,7 +75,6 @@ const ModalSeleccionRol = ({ isOpen, onClose }) => {
           </p>
         </div>
 
-        {/* Opciones de roles */}
         <div
           style={{
             display: "grid",
@@ -88,7 +83,6 @@ const ModalSeleccionRol = ({ isOpen, onClose }) => {
             marginBottom: "2rem",
           }}
         >
-          {/* Opción Usuario */}
           <div
             onClick={() => handleSelectRole("USUARIO")}
             style={{
@@ -143,7 +137,6 @@ const ModalSeleccionRol = ({ isOpen, onClose }) => {
             </p>
           </div>
 
-          {/* Opción Administrador */}
           <div
             onClick={() => handleSelectRole("ADMINISTRADOR")}
             style={{
@@ -199,7 +192,6 @@ const ModalSeleccionRol = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        {/* Botones */}
         <div
           style={{
             display: "flex",
@@ -269,7 +261,6 @@ const ModalSeleccionRol = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        {/* Información adicional */}
         {selectedRole && (
           <div
             style={{

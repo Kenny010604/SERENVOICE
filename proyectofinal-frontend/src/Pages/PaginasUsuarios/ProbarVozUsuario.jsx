@@ -229,7 +229,7 @@ const ProbarVozUsuario = () => {
     <>
       <NavbarPublic />
 
-      <main className="container">
+      <main className="container" style={{ paddingTop: "2rem", paddingBottom: "4rem" }}>
         <div className="card" style={{ maxWidth: 900 }}>
 
           {user && (

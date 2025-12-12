@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { juegosAPI } from '../services/apiClient';
-import { Calendar, Trophy, Clock } from 'lucide-react';
+import { FaRegCalendarAlt, FaTrophy, FaClock } from 'react-icons/fa';
 
 const GameHistory = () => {
   const [historial, setHistorial] = useState([]);

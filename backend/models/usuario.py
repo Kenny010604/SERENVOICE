@@ -16,13 +16,16 @@ class Usuario:
         contrasena,
         fecha_nacimiento=None,
         usa_medicamentos=False,
-        rol='usuario',
-        genero=None
+        genero=None,
+        auth_provider='local'
     ):
+        # Calcular edad si se proporciona fecha de nacimiento
+        edad = Usuario.calcular_edad(fecha_nacimiento) if fecha_nacimiento else None
+        
         query = """
             INSERT INTO usuario 
-            (nombre, apellido, correo, contrasena, genero, fecha_nacimiento, usa_medicamentos, rol)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            (nombre, apellido, correo, contrasena, genero, fecha_nacimiento, edad, usa_medicamentos, auth_provider)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
 
         return DatabaseConnection.execute_query(
@@ -34,8 +37,9 @@ class Usuario:
                 contrasena,
                 genero,
                 fecha_nacimiento,
+                edad,
                 usa_medicamentos,
-                rol
+                auth_provider
             ),
             fetch=False
         )
@@ -45,7 +49,7 @@ class Usuario:
     # ---------------------------------------------------
     @staticmethod
     def get_by_id(id_usuario):
-        query = "SELECT * FROM usuario WHERE id_usuario = %s"
+        query = "SELECT * FROM usuario WHERE id_usuario = %s AND activo = 1"
         results = DatabaseConnection.execute_query(query, (id_usuario,))
         return results[0] if results else None
 
@@ -55,10 +59,11 @@ class Usuario:
     @staticmethod
     def get_by_email(correo):
         query = """
-            SELECT id_usuario, nombre, apellido, correo, contrasena,
-                   fecha_nacimiento, usa_medicamentos, rol
+            SELECT id_usuario, nombre, apellido, correo, contrasena, foto_perfil,
+                   google_uid, auth_provider, fecha_registro, fecha_nacimiento,
+                   fecha_actualizacion, edad, usa_medicamentos, genero, notificaciones, activo
             FROM usuario
-            WHERE correo = %s
+            WHERE correo = %s AND activo = 1
             LIMIT 1
         """
         results = DatabaseConnection.execute_query(query, (correo.lower(),))
@@ -69,7 +74,7 @@ class Usuario:
     # ---------------------------------------------------
     @staticmethod
     def get_all(limit=None, offset=0):
-        query = "SELECT * FROM usuario ORDER BY id_usuario DESC"
+        query = "SELECT * FROM usuario WHERE activo = 1 ORDER BY id_usuario DESC"
         if limit:
             query += f" LIMIT {limit} OFFSET {offset}"
         return DatabaseConnection.execute_query(query)
@@ -161,3 +166,108 @@ class Usuario:
             (hoy.month, hoy.day) < (fecha_nacimiento.month, fecha_nacimiento.day)
         )
         return edad
+    
+    # ---------------------------------------------------
+    # Google Auth - Crear usuario
+    # ---------------------------------------------------
+    @staticmethod
+    def create_google_user(nombre, apellido, correo, google_uid, foto_perfil=None):
+        """Crear usuario con autenticación de Google"""
+        query = """
+            INSERT INTO usuario 
+            (nombre, apellido, correo, google_uid, auth_provider, foto_perfil, activo)
+            VALUES (%s, %s, %s, %s, 'google', %s, 1)
+        """
+        return DatabaseConnection.execute_query(
+            query, 
+            (nombre, apellido, correo.lower(), google_uid, foto_perfil),
+            fetch=False
+        )
+    
+    # ---------------------------------------------------
+    # Google Auth - Obtener por Google UID
+    # ---------------------------------------------------
+    @staticmethod
+    def get_by_google_uid(google_uid):
+        """Obtener usuario por Google UID"""
+        query = "SELECT * FROM usuario WHERE google_uid = %s AND activo = 1"
+        results = DatabaseConnection.execute_query(query, (google_uid,))
+        return results[0] if results else None
+    
+    # ---------------------------------------------------
+    # Google Auth - Verificar o crear
+    # ---------------------------------------------------
+    @staticmethod
+    def get_or_create_google_user(google_uid, nombre, apellido, correo, foto_perfil=None):
+        """Obtener usuario existente o crear uno nuevo con Google Auth"""
+        # Buscar por Google UID
+        user = Usuario.get_by_google_uid(google_uid)
+        
+        if user:
+            # Actualizar foto de perfil si cambió
+            if foto_perfil and user.get('foto_perfil') != foto_perfil:
+                Usuario.update_foto_perfil(user['id_usuario'], foto_perfil)
+                user['foto_perfil'] = foto_perfil
+            return user
+        
+        # Buscar por correo (puede existir cuenta local)
+        user = Usuario.get_by_email(correo)
+        
+        if user:
+            # Vincular cuenta existente con Google
+            Usuario.link_google_account(user['id_usuario'], google_uid, foto_perfil)
+            user['google_uid'] = google_uid
+            user['auth_provider'] = 'google'
+            user['foto_perfil'] = foto_perfil
+            return user
+        
+        # Crear nuevo usuario
+        Usuario.create_google_user(nombre, apellido, correo, google_uid, foto_perfil)
+        return Usuario.get_by_google_uid(google_uid)
+    
+    # ---------------------------------------------------
+    # Google Auth - Vincular cuenta
+    # ---------------------------------------------------
+    @staticmethod
+    def link_google_account(id_usuario, google_uid, foto_perfil=None):
+        """Vincular cuenta existente con Google"""
+        query = """
+            UPDATE usuario 
+            SET google_uid = %s, auth_provider = 'google', foto_perfil = %s
+            WHERE id_usuario = %s
+        """
+        DatabaseConnection.execute_query(query, (google_uid, foto_perfil, id_usuario), fetch=False)
+        return True
+    
+    # ---------------------------------------------------
+    # Actualizar foto de perfil
+    # ---------------------------------------------------
+    @staticmethod
+    def update_foto_perfil(id_usuario, foto_perfil):
+        """Actualizar foto de perfil del usuario"""
+        query = "UPDATE usuario SET foto_perfil = %s WHERE id_usuario = %s"
+        DatabaseConnection.execute_query(query, (foto_perfil, id_usuario), fetch=False)
+        return True
+    
+    # ---------------------------------------------------
+    # Estadísticas - Obtener por usuario
+    # ---------------------------------------------------
+    @staticmethod
+    def get_estadisticas(id_usuario):
+        """Obtener estadísticas del usuario usando vista optimizada"""
+        query = "SELECT * FROM vista_usuarios_estadisticas WHERE id_usuario = %s"
+        results = DatabaseConnection.execute_query(query, (id_usuario,))
+        return results[0] if results else None
+    
+    # ---------------------------------------------------
+    # Obtener todos con estadísticas
+    # ---------------------------------------------------
+    @staticmethod
+    def get_all_with_stats(limit=50, offset=0):
+        """Obtener todos los usuarios con sus estadísticas"""
+        query = """
+            SELECT * FROM vista_usuarios_estadisticas 
+            ORDER BY fecha_registro DESC
+            LIMIT %s OFFSET %s
+        """
+        return DatabaseConnection.execute_query(query, (limit, offset))

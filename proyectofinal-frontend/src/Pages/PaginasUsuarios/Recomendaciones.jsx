@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import NavbarAdministrador from "../../components/Administrador/NavbarAdministrador";
+import NavbarUsuario from "../../components/NavbarUsuario";
 import "../../global.css";
 import { FaHeart, FaCheck } from "react-icons/fa";
 
@@ -41,7 +41,7 @@ const Recomendaciones = () => {
   return (
     <>
       <NavbarUsuario />
-      <main className="container" style={{ paddingBottom: "100px" }}>
+      <main className="container" style={{ paddingTop: "2rem", paddingBottom: "4rem" }}>
         <div
           ref={cardRef}
           className="card reveal"

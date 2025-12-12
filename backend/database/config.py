@@ -14,8 +14,8 @@ class Config:
     DB_CONFIG = {
         'host': os.getenv('DB_HOST', 'localhost'),
         'user': os.getenv('DB_USER', 'root'),
-        'password': os.getenv('DB_PASSWORD', '1234'),
-        'database': os.getenv('DB_NAME', 'sistema_estres'),
+        'password': os.getenv('DB_PASSWORD', ''),
+        'database': os.getenv('DB_NAME', 'serenvoice'),
         'port': int(os.getenv('DB_PORT', 3306)),
         'autocommit': False,
         'raise_on_warnings': True

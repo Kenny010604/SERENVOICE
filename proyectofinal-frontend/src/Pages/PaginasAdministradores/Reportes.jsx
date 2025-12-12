@@ -1,9 +1,13 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import NavbarAdministrador from "../../components/Administrador/NavbarAdministrador";
+import { ThemeContext } from "../../context/themeContextDef";
+import FondoClaro from "../../assets/FondoClaro.svg";
+import FondoOscuro from "../../assets/FondoOscuro.svg";
 import "../../global.css";
 import { FaFilePdf, FaFilter } from "react-icons/fa";
 
 const Reportes = () => {
+  const { isDark } = useContext(ThemeContext);
   const [filters, setFilters] = useState({ tipo: "individual", desde: "", hasta: "" });
   const [msg, setMsg] = useState("");
   const cardRef = useRef(null);
@@ -16,14 +20,23 @@ const Reportes = () => {
   }, []);
 
   const generate = () => {
-    // Generar reporte inmediatamente (simulado)
     setMsg("Reporte generado (simulado): report.csv");
   };
 
   return (
     <>
       <NavbarAdministrador />
-      <main className="container" style={{ paddingBottom: "100px" }}>
+      <main 
+        className="container" 
+        style={{ 
+          paddingBottom: "100px",
+          backgroundImage: `url(${isDark ? FondoOscuro : FondoClaro})`,
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center center",
+          backgroundSize: "cover",
+          backgroundAttachment: "fixed"
+        }}
+      >
         <div ref={cardRef} className="card reveal" data-revealdelay="60" style={{ maxWidth: "1000px" }}>
           <h2><FaFilePdf /> Reportes y Análisis</h2>
           <p style={{ color: "var(--color-text-secondary)" }}>Filtra y genera reportes del sistema.</p>

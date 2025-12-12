@@ -1,9 +1,13 @@
-import React, { useEffect, useRef } from "react";
-import NavbarAdministrador from "../../components/Administrador/NavbarAdministrador";
+import React, { useEffect, useRef, useContext } from "react";
+import NavbarUsuario from "../../components/NavbarUsuario";
 import "../../global.css";
 import { FaUser, FaEnvelope, FaCalendarAlt } from "react-icons/fa";
+import { ThemeContext } from "../../context/themeContextDef";
+import FondoClaro from "../../assets/FondoClaro.svg";
+import FondoOscuro from "../../assets/FondoOscuro.svg";
 
 const Perfil = ({ user = {} }) => {
+  const { isDark } = useContext(ThemeContext);
   const u = user.nombres
     ? user
     : {
@@ -25,7 +29,15 @@ const Perfil = ({ user = {} }) => {
   return (
     <>
       <NavbarUsuario userData={u} />
-      <main className="container" style={{ paddingBottom: "100px" }}>
+      <main className="container" style={{
+        paddingTop: "2rem",
+        paddingBottom: "4rem",
+        backgroundImage: `url(${isDark ? FondoOscuro : FondoClaro})`,
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center center",
+        backgroundSize: "cover",
+        backgroundAttachment: "fixed"
+      }}>
         <div
           ref={cardRef}
           className="card reveal"
