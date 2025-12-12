@@ -16,6 +16,7 @@ const ResultadoDetallado = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [audioUrl, setAudioUrl] = useState(null);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -45,6 +46,38 @@ const ResultadoDetallado = () => {
     };
     fetchDetail();
   }, [id, navigate]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let objectUrl = null;
+    const fetchAudio = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        const res = await fetch(`${API_URL}/api/analisis/${id}/audio`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+          console.debug('[ResultadoDetallado] audio fetch failed', res.status);
+          return;
+        }
+        const blob = await res.blob();
+        objectUrl = URL.createObjectURL(blob);
+        if (!cancelled) setAudioUrl(objectUrl);
+      } catch (e) {
+        console.debug('[ResultadoDetallado] audio fetch error', e);
+      }
+    };
+
+    if (data && data.analisis && data.analisis.ruta_archivo) {
+      fetchAudio();
+    }
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [id, data]);
 
   return (
     <>
@@ -174,24 +207,22 @@ const ResultadoDetallado = () => {
                       {data.analisis.ruta_archivo && (
                         <div style={{ gridColumn: "1 / -1" }}>
                           <p style={{ margin: 0, color: "var(--color-text-secondary)" }}>Audio</p>
-                            {(() => {
-                              const token = localStorage.getItem("token") || "";
-                              const fileUrl = `${API_URL}/api/analisis/${id}/audio?token=${encodeURIComponent(token)}`;
-                              return (
-                                <>
-                                  <audio controls style={{ width: "100%" }}>
-                                    <source src={fileUrl} type="audio/wav" />
-                                    Tu navegador no soporta el elemento audio.
-                                  </audio>
-                                  <div style={{ marginTop: 8 }}>
-                                    <a href={fileUrl} download>Descargar archivo</a>
-                                    <span style={{ marginLeft: 12 }}>
-                                      <a href={fileUrl} target="_blank" rel="noreferrer">Abrir en pestaña nueva</a>
-                                    </span>
-                                  </div>
-                                </>
-                              );
-                            })()}
+                          {audioUrl ? (
+                            <>
+                              <audio controls style={{ width: "100%" }}>
+                                <source src={audioUrl} type="audio/wav" />
+                                Tu navegador no soporta el elemento audio.
+                              </audio>
+                              <div style={{ marginTop: 8 }}>
+                                <a href={audioUrl} download>Descargar archivo</a>
+                                <span style={{ marginLeft: 12 }}>
+                                  <a href={audioUrl} target="_blank" rel="noreferrer">Abrir en pestaña nueva</a>
+                                </span>
+                              </div>
+                            </>
+                          ) : (
+                            <p style={{ margin: 0 }}>Cargando audio...</p>
+                          )}
                         </div>
                       )}
                       {data.analisis.duracion !== undefined && (
@@ -211,19 +242,24 @@ const ResultadoDetallado = () => {
                 </h3>
                 {data.recomendaciones && data.recomendaciones.length > 0 ? (
                   <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12 }}>
-                    {data.recomendaciones.map((rec, idx) => (
-                      <div key={idx} className="panel" style={{ padding: 16 }}>
-                        <p style={{ margin: 0, fontWeight: 700 }}>{rec.titulo || rec.tipo || `Recomendación ${idx+1}`}</p>
-                        {rec.descripcion && (
-                          <p style={{ margin: "6px 0 0 0", color: "var(--color-text-secondary)" }}>{rec.descripcion}</p>
-                        )}
-                        {rec.enlace && (
-                          <p style={{ margin: "8px 0 0 0" }}>
-                            <a href={rec.enlace} target="_blank" rel="noreferrer">Más información</a>
-                          </p>
-                        )}
-                      </div>
-                    ))}
+                    {data.recomendaciones.map((rec, idx) => {
+                      const titulo = rec.titulo || rec.tipo || rec.tipo_recomendacion || `Recomendación ${idx + 1}`;
+                      const descripcion = rec.descripcion || rec.contenido || rec.texto || "";
+                      const enlace = rec.enlace || rec.link || rec.url || null;
+                      return (
+                        <div key={idx} className="panel" style={{ padding: 16 }}>
+                          <p style={{ margin: 0, fontWeight: 700 }}>{titulo}</p>
+                          {descripcion && (
+                            <p style={{ margin: "6px 0 0 0", color: "var(--color-text-secondary)" }}>{descripcion}</p>
+                          )}
+                          {enlace && (
+                            <p style={{ margin: "8px 0 0 0" }}>
+                              <a href={enlace} target="_blank" rel="noreferrer">Más información</a>
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="panel" style={{ padding: 16 }}>

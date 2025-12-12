@@ -14,6 +14,11 @@ def get_analisis(id_analisis):
     from models.analisis import Analisis
     
     user_id = get_jwt_identity()
+    try:
+        user_id = int(user_id)
+    except Exception:
+        # si no se puede convertir, dejar como estaba (permitirá la comparación fallida que resultará en 403)
+        pass
     
     # Verificar que el análisis pertenece al usuario
     analisis = Analisis.get_by_id(id_analisis)
