@@ -6,15 +6,31 @@ class Sesion:
     """Modelo para la tabla Sesion"""
     
     @staticmethod
-    def create(id_usuario, estado='activa'):
-        """Crear nueva sesión"""
+    def create(id_usuario, estado='activa', ip_address=None, dispositivo=None, navegador=None, sistema_operativo=None, ultimo_acceso=None):
+        """Crear nueva sesión con metadatos del cliente"""
+        # Si no se proporciona ultimo_acceso, usar la fecha actual
+        if ultimo_acceso is None:
+            ultimo_acceso = datetime.now()
+
         query = """
-            INSERT INTO sesion (id_usuario, fecha_inicio, estado)
-            VALUES (%s, %s, %s)
+            INSERT INTO sesion (
+                id_usuario, fecha_inicio, estado,
+                ip_address, dispositivo, navegador, sistema_operativo, ultimo_acceso
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """
         return DatabaseConnection.execute_query(
-            query, 
-            (id_usuario, datetime.now(), estado),
+            query,
+            (
+                id_usuario,
+                datetime.now(),
+                estado,
+                ip_address,
+                dispositivo,
+                navegador,
+                sistema_operativo,
+                ultimo_acceso,
+            ),
             fetch=False
         )
     
@@ -50,22 +66,27 @@ class Sesion:
         """Cerrar sesión"""
         fecha_fin = datetime.now()
         query = """
-            UPDATE Sesion 
-            SET fecha_fin = %s, 
-                duracion = TIMESTAMPDIFF(MINUTE, fecha_inicio, %s),
+            UPDATE sesion
+            SET fecha_fin = %s,
+                -- duracion stored as TIME; use TIMEDIFF to compute hh:mm:ss
+                duracion = TIMEDIFF(%s, fecha_inicio),
                 estado = 'cerrada'
             WHERE id_sesion = %s
         """
+        # Note: TIMEDIFF(fecha_fin, fecha_inicio) returns TIME
         DatabaseConnection.execute_query(query, (fecha_fin, fecha_fin, id_sesion), fetch=False)
         return True
     
     @staticmethod
     def close_all_user_sessions(id_usuario):
         """Cerrar todas las sesiones activas de un usuario"""
+        fecha_fin = datetime.now()
         query = """
-            UPDATE Sesion 
-            SET fecha_fin = %s, estado = 'cerrada'
+            UPDATE sesion
+            SET fecha_fin = %s,
+                duracion = TIMEDIFF(%s, fecha_inicio),
+                estado = 'cerrada'
             WHERE id_usuario = %s AND estado = 'activa'
         """
-        DatabaseConnection.execute_query(query, (datetime.now(), id_usuario), fetch=False)
+        DatabaseConnection.execute_query(query, (fecha_fin, fecha_fin, id_usuario), fetch=False)
         return True

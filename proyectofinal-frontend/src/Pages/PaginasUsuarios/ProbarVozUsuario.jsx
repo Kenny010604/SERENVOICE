@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import NavbarPublic from "../../components/Publico/NavbarPublic";
 import "../../global.css";
-import Spinner from "../../components/Spinner";
+import Spinner from "../../components/Publico/Spinner";
 import {
   FaMicrophone,
   FaStop,
@@ -41,7 +41,7 @@ const ProbarVozUsuario = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const resp = await fetch(`${API_URL}/api/usuarios/me`, {
+        const resp = await fetch(`${API_URL}/usuarios/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -142,7 +142,7 @@ const ProbarVozUsuario = () => {
       formData.append("audio", blob, "grabacion.webm");
       formData.append("userId", userId);
 
-      const response = await fetch(`${API_URL}/api/audio/analyze`, {
+      const response = await fetch(`${API_URL}/audio/analyze`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,

@@ -37,8 +37,8 @@ const DashboardAdmin = () => {
       try {
         // Usar las rutas de /api/usuarios
         const [statsRes, profileRes] = await Promise.all([
-          apiClient.get("/api/usuarios/statistics"),
-          apiClient.get("/api/usuarios/me"),
+          apiClient.get("/usuarios/statistics"),
+          apiClient.get("/usuarios/me"),
         ]);
 
         // Verificar estructura de respuesta

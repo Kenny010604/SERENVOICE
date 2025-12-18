@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { juegosAPI } from '../services/apiClient';
+import { juegosAPI } from '../../services/apiClient';
 import { FiTarget } from 'react-icons/fi';
 import { FaAward, FaChartLine, FaClock } from 'react-icons/fa';
 

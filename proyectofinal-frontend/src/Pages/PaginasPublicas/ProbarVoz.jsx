@@ -1,9 +1,9 @@
 // src/Pages/PaginasPublicas/ProbarVoz.jsx
 import React, { useEffect, useRef, useState, useContext } from "react";
 import NavbarPublic from "../../components/Publico/NavbarPublic";
-import AudioPlayer from "../../components/AudioPlayer";
+import AudioPlayer from "../../components/Publico/AudioPlayer";
 import "../../global.css";
-import Spinner from "../../components/Spinner";
+import Spinner from "../../components/Publico/Spinner";
 import { ThemeContext } from "../../context/themeContextDef";
 import PaisajeClaro from "../../assets/PaisajeClaro.svg";
 import PaisajeOscuro from "../../assets/PaisajeOscuro.svg";
@@ -52,7 +52,22 @@ const ProbarVoz = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState(null);
   const [carouselIndex, setCarouselIndex] = useState(0);
+  
+  // Pasajes para LECTURA EN VOZ ALTA (el usuario solo los lee)
+  const phrases = [
+    "En un día soleado caminé por un sendero lleno de hojas crujientes, respiré profundamente y observé cómo la luz jugaba entre las ramas, sintiendo la calma recorrer mi cuerpo mientras avanzaba paso a paso.",
+    "Había una pequeña cafetería en la esquina donde el aroma del café recién hecho llenaba el aire y la gente conversaba en voz baja, una escena cotidiana que invitaba a quedarse y escuchar el murmullo de la ciudad.",
+    "El río corría pausado junto al puente, reflejando el cielo y las nubes que pasaban lentamente, mientras una brisa suave traía recuerdos de otras tardes similares que ahora parecían memorias cálidas.",
+    "Una mañana comencé a ordenar mi escritorio, encontré notas antiguas y pequeñas fotos, recordé sonrisas y conversaciones y me detuve un momento para sonreír sin razón antes de seguir con el día.",
+    "Caminé por la playa sintiendo la arena fría bajo los pies, vi las olas romper en la orilla y dejé que el sonido rítmico del mar me llevara siguiendo la respiración hasta relajar mi cuerpo por completo.",
+    "En un jardín florecido observé los colores y los insectos trabajando, pensé en las pequeñas cosas que pasan desapercibidas y en cómo cada detalle forma parte de una escena tranquila y agradable."
+  ];
+  const [suggestedPhrase, setSuggestedPhrase] = useState("");
 
+  useEffect(() => {
+    setSuggestedPhrase(phrases[Math.floor(Math.random() * phrases.length)]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // Verificar soporte de micrófono
   useEffect(() => {
     const checkMediaSupport = async () => {
@@ -282,6 +297,14 @@ const ProbarVoz = () => {
         <div className="card" style={{ maxWidth: 900 }}>
           <h2>Análisis Emocional por Voz</h2>
           <p>Graba al menos 5 segundos de tu voz hablando naturalmente. La IA analizará tus emociones.</p>
+
+          {/* Instrucción para lectura en voz alta */}
+          <div style={{ marginTop: 12, marginBottom: 8 }}>
+            <div style={{ padding: '12px 16px', background: 'var(--color-panel)', borderRadius: 8 }}>
+              <div style={{ fontWeight: 700, marginBottom: 6 }}>Lee en voz alta:</div>
+              <div style={{ fontStyle: 'italic', fontSize: '0.98rem' }}>{suggestedPhrase}</div>
+            </div>
+          </div>
 
           {error && <div style={{ color: "#d32f2f", padding: 12, background: "#ffebee", borderRadius: 8 }}><FaExclamationTriangle /> {error}</div>}
 

@@ -1,5 +1,5 @@
 // src/Pages/VerificarEmail.jsx
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import apiClient from "../../services/apiClient";
 import api from "../../config/api";
@@ -16,70 +16,66 @@ const VerificarEmail = () => {
   const navigate = useNavigate();
   const [status, setStatus] = useState("loading"); // loading, success, error
   const [message, setMessage] = useState("");
+  const isMountedRef = useRef(true);
+  const verifyingRef = useRef(false);
 
   useEffect(() => {
-    let isMounted = true; // Evitar actualizaciones si el componente se desmonta
-    let verificacionEnProceso = false; // Prevenir llamadas duplicadas
-
     const verificarEmail = async () => {
-      // Prevenir ejecuciones duplicadas (React StrictMode)
-      if (verificacionEnProceso) return;
-      verificacionEnProceso = true;
-
       const token = searchParams.get("token");
 
       if (!token) {
-        if (isMounted) {
-          setStatus("error");
-          setMessage("Token de verificación no encontrado");
-        }
+        setStatus("error");
+        setMessage("Token de verificación no encontrado");
         return;
       }
 
+      // Evitar múltiples verificaciones para el mismo token (StrictMode o clicks múltiples)
+      const key = `emailVerified_${token}`;
+      if (sessionStorage.getItem(key)) {
+        setStatus("success");
+        setMessage("Tu email ya ha sido verificado");
+        navigate("/login");
+        return;
+      }
+
+      if (verifyingRef.current) return;
+      verifyingRef.current = true;
+
       try {
         const response = await apiClient.get(`${api.endpoints.auth.verifyEmail}/${token}`);
-        
-        if (!isMounted) return; // No actualizar si el componente se desmontó
-        
-        if (response.data.success) {
+
+        if (response.data && response.data.success) {
+          sessionStorage.setItem(key, '1');
           setStatus("success");
           setMessage(response.data.message || "Email verificado exitosamente");
-          
-          // Redirigir al login después de 3 segundos
-          setTimeout(() => {
-            if (isMounted) {
-              navigate("/login");
-            }
-          }, 3000);
-        } else {
-          setStatus("error");
-          setMessage(response.data.error || "Error al verificar email");
+          // Redirigir inmediatamente al login
+          navigate("/login");
+          return;
         }
+
+        setStatus("error");
+        setMessage(response.data?.error || "Error al verificar email");
       } catch (error) {
-        if (!isMounted) return; // No actualizar si el componente se desmontó
-        
-        // Si el error es "Email ya verificado", mostrarlo como éxito
         const errorMsg = error.response?.data?.error || "Error al verificar email";
         if (errorMsg.includes("ya verificado")) {
+          // Marcar en sessionStorage para evitar reintentos
+          sessionStorage.setItem(key, '1');
           setStatus("success");
           setMessage("Tu email ya ha sido verificado");
-          setTimeout(() => {
-            if (isMounted) {
-              navigate("/login");
-            }
-          }, 3000);
+          navigate("/login");
         } else {
           setStatus("error");
           setMessage(errorMsg);
         }
+      } finally {
+        verifyingRef.current = false;
       }
     };
 
     verificarEmail();
 
-    // Cleanup function
     return () => {
-      isMounted = false;
+      isMountedRef.current = false;
     };
   }, [searchParams, navigate]);
 

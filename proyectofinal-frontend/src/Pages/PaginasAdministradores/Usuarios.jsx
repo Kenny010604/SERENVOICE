@@ -17,7 +17,7 @@ const Usuarios = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await apiClient.get("/api/usuarios/lista");
+        const res = await apiClient.get("/usuarios/lista");
         console.log("Respuesta completa:", res.data);
         const usuariosData = res.data?.data || [];
         console.log("Usuarios procesados:", usuariosData);

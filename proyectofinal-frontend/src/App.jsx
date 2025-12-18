@@ -19,6 +19,8 @@ import RegistroExitoso from "./Pages/PaginasPublicas/RegistroExitoso.jsx";
 import Dashboard from "./Pages/PaginasUsuarios/Dashboard.jsx";
 import ActualizarPerfil from "./Pages/PaginasUsuarios/ActualizarPerfil.jsx";
 import Configuracion from "./Pages/PaginasUsuarios/Configuracion.jsx";
+import ConfiguracionNotificaciones from "./Pages/PaginasUsuarios/ConfiguracionNotificaciones.jsx";
+import Notificaciones from "./Pages/PaginasUsuarios/Notificaciones.jsx";
 import Historial from "./Pages/PaginasUsuarios/Historial.jsx";
 import Recomendaciones from "./Pages/PaginasUsuarios/Recomendaciones.jsx";
 import ReportesUsuario from "./Pages/PaginasUsuarios/ReportesUsuario.jsx";
@@ -36,6 +38,11 @@ import ConfiguracionAdmin from "./Pages/PaginasAdministradores/ConfiguracionAdmi
 import Usuarios from "./Pages/PaginasAdministradores/Usuarios.jsx";
 import Alertas from "./Pages/PaginasAdministradores/Alertas.jsx";
 import Reportes from "./Pages/PaginasAdministradores/Reportes.jsx";
+import PerfilAdmin from "./Pages/PaginasAdministradores/PerfilAdmin.jsx";
+import Grupos from "./Pages/PaginasUsuarios/Grupos.jsx";
+import GrupoForm from "./Pages/PaginasUsuarios/GrupoForm.jsx";
+import Miembros from "./Pages/PaginasUsuarios/Miembros.jsx";
+import ActividadesGrupo from "./Pages/PaginasUsuarios/ActividadesGrupo.jsx";
 
 // Contextos y utilidades
 import PageWithTitle from "./utils/PageWithTitle.jsx";
@@ -154,6 +161,24 @@ function App() {
 								}
 							/>
 
+							<Route
+								path="/notificaciones"
+								element={
+									<ProtectedRoute requiredRole="usuario">
+										<PageWithTitle title="Notificaciones"><Notificaciones /></PageWithTitle>
+									</ProtectedRoute>
+								}
+							/>
+
+							<Route
+								path="/notificaciones/configuracion"
+								element={
+									<ProtectedRoute requiredRole="usuario">
+										<PageWithTitle title="Configuración de Notificaciones"><ConfiguracionNotificaciones /></PageWithTitle>
+									</ProtectedRoute>
+								}
+							/>
+
 							{/* Páginas de administradores */}
 							<Route
 								path="/admin/dashboard"
@@ -169,6 +194,60 @@ function App() {
 								element={
 									<ProtectedRoute requiredRole="admin">
 										<PageWithTitle title="Gestión de Usuarios"><Usuarios /></PageWithTitle>
+									</ProtectedRoute>
+								}
+							/>
+
+							<Route
+								path="/admin/perfil"
+								element={
+									<ProtectedRoute requiredRole="admin">
+										<PageWithTitle title="Perfil Admin"><PerfilAdmin /></PageWithTitle>
+									</ProtectedRoute>
+								}
+							/>
+
+							<Route
+								path="/grupos"
+								element={
+									<ProtectedRoute requiredRole="usuario">
+										<PageWithTitle title="Grupos"><Grupos /></PageWithTitle>
+									</ProtectedRoute>
+								}
+							/>
+
+							<Route
+								path="/grupos/nuevo"
+								element={
+									<ProtectedRoute requiredRole="usuario">
+										<PageWithTitle title="Crear Grupo"><GrupoForm /></PageWithTitle>
+									</ProtectedRoute>
+								}
+							/>
+
+							<Route
+								path="/grupos/:id"
+								element={
+									<ProtectedRoute requiredRole="usuario">
+										<PageWithTitle title="Editar Grupo"><GrupoForm /></PageWithTitle>
+									</ProtectedRoute>
+								}
+							/>
+
+							<Route
+								path="/grupos/:id/miembros"
+								element={
+									<ProtectedRoute requiredRole="usuario">
+										<PageWithTitle title="Miembros del Grupo"><Miembros /></PageWithTitle>
+									</ProtectedRoute>
+								}
+							/>
+
+							<Route
+								path="/grupos/:id/actividades"
+								element={
+									<ProtectedRoute requiredRole="usuario">
+										<PageWithTitle title="Actividades del Grupo"><ActividadesGrupo /></PageWithTitle>
 									</ProtectedRoute>
 								}
 							/>

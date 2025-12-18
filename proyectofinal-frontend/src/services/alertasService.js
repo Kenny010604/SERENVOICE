@@ -5,7 +5,7 @@ const alertasService = {
   // Obtener alertas del usuario actual
   async getMyAlerts() {
     try {
-      const response = await apiClient.get('/api/alertas/my-alerts');
+      const response = await apiClient.get('/alertas/my-alerts');
       return response.data;
     } catch (error) {
       throw new Error(
@@ -19,7 +19,7 @@ const alertasService = {
   // Obtener todas las alertas activas (solo admin)
   async getActiveAlerts() {
     try {
-      const response = await apiClient.get('/api/alertas/active');
+      const response = await apiClient.get('/alertas/active');
       return response.data;
     } catch (error) {
       throw new Error(
@@ -33,7 +33,7 @@ const alertasService = {
   // Obtener alerta específica
   async getAlertById(id_alerta) {
     try {
-      const response = await apiClient.get(`/api/alertas/${id_alerta}`);
+      const response = await apiClient.get(`/alertas/${id_alerta}`);
       return response.data;
     } catch (error) {
       throw new Error(

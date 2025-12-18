@@ -2,7 +2,7 @@ import React, { useState, useContext, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../../global.css";
 import NavbarPublic from "../../components/Publico/NavbarPublic";
-import GoogleLoginButton from "../../components/GoogleLoginButton";
+import GoogleLoginButton from "../../components/Publico/GoogleLoginButton";
 import { ThemeContext } from "../../context/themeContextDef";
 import PaisajeClaro from "../../assets/PaisajeClaro.svg";
 import PaisajeOscuro from "../../assets/PaisajeOscuro.svg";
@@ -231,7 +231,7 @@ const Registro = () => {
         formDataToSend.append('correo', formData.correo);
         formDataToSend.append('contrasena', formData.contrasena);
         formDataToSend.append('genero', formData.genero);
-        formDataToSend.append('fechaNacimiento', formData.fecha_nacimiento);
+        formDataToSend.append('fecha_nacimiento', formData.fecha_nacimiento);
         formDataToSend.append('foto_perfil', fotoPerfil);
         
         response = await authService.registerWithPhoto(formDataToSend);
@@ -242,7 +242,7 @@ const Registro = () => {
           correo: formData.correo,
           contrasena: formData.contrasena,
           genero: formData.genero,
-          fechaNacimiento: formData.fecha_nacimiento,
+          fecha_nacimiento: formData.fecha_nacimiento,
         };
         
         response = await authService.register(userData);

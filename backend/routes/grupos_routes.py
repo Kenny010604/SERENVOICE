@@ -1,9 +1,12 @@
 # backend/routes/grupos_routes.py
 from flask import Blueprint, request, jsonify
+import traceback
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models.grupo import Grupo
 from models.grupo_miembro import GrupoMiembro
 from models.actividad_grupo import ActividadGrupo, ParticipacionActividad
+from models.usuario import Usuario
+from datetime import datetime
 
 bp = Blueprint('grupos', __name__, url_prefix='/api/grupos')
 
@@ -11,23 +14,54 @@ bp = Blueprint('grupos', __name__, url_prefix='/api/grupos')
 # GRUPOS - CRUD
 # ============================================================
 
+@bp.route('/', methods=['GET'])
+@jwt_required()
+def get_all_groups():
+    """Obtener todos los grupos disponibles (públicos o donde el usuario es miembro)"""
+    try:
+        identity = get_jwt_identity()
+        try:
+            current_user_id = int(identity)
+        except Exception:
+            # Si por alguna razón el identity es un dict
+            current_user_id = identity.get('id_usuario') if isinstance(identity, dict) else identity
+
+        # Obtener los grupos del usuario
+        grupos_usuario = GrupoMiembro.get_user_groups(current_user_id)
+        
+        return jsonify(grupos_usuario), 200
+        
+    except Exception as e:
+        tb = traceback.format_exc()
+        print("[GRUPOS] Error en get_all_groups:\n", tb)
+        return jsonify({'error': str(e), 'trace': tb}), 500
+
+
 @bp.route('/', methods=['POST'])
 @jwt_required()
 def create_group():
     """Crear un nuevo grupo"""
     try:
-        data = request.get_json()
-        current_user = get_jwt_identity()
-        
+        data = request.get_json() or {}
+        identity = get_jwt_identity()
+        try:
+            current_user_id = int(identity)
+        except Exception:
+            current_user_id = identity.get('id_usuario') if isinstance(identity, dict) else identity
+
+        # Aceptar tanto 'nombre_grupo' como 'nombre' desde el frontend
+        nombre = data.get('nombre_grupo') or data.get('nombre')
+        descripcion = data.get('descripcion') or data.get('description')
+
         # Validaciones
-        if not data.get('nombre_grupo'):
+        if not nombre:
             return jsonify({'error': 'El nombre del grupo es requerido'}), 400
-        
+
         # Crear grupo
         id_grupo = Grupo.create(
-            nombre_grupo=data['nombre_grupo'],
-            id_facilitador=current_user['id_usuario'],
-            descripcion=data.get('descripcion'),
+            nombre_grupo=nombre,
+            id_facilitador=current_user_id,
+            descripcion=descripcion,
             tipo_grupo=data.get('tipo_grupo', 'apoyo'),
             privacidad=data.get('privacidad', 'privado'),
             max_participantes=data.get('max_participantes'),
@@ -35,18 +69,30 @@ def create_group():
             fecha_fin=data.get('fecha_fin')
         )
         
+        # Si el método devolvió un dict con metadata, extraer el id
+        created_id = None
+        if isinstance(id_grupo, dict):
+            created_id = id_grupo.get('last_id') or id_grupo.get('lastrowid') or id_grupo.get('lastInsertId')
+        else:
+            try:
+                created_id = int(id_grupo)
+            except Exception:
+                created_id = id_grupo
+
         # Agregar al facilitador como miembro
-        grupo = Grupo.get_by_id(id_grupo)
-        GrupoMiembro.add_member(id_grupo, current_user['id_usuario'], 'facilitador')
-        
+        grupo = Grupo.get_by_id(created_id)
+        GrupoMiembro.add_member(created_id, current_user_id, 'facilitador')
+
         return jsonify({
             'message': 'Grupo creado exitosamente',
-            'id_grupo': id_grupo,
-            'codigo_acceso': grupo['codigo_acceso']
+            'id_grupo': created_id,
+            'codigo_acceso': grupo.get('codigo_acceso') if grupo else None
         }), 201
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        tb = traceback.format_exc()
+        print("[GRUPOS] Error en create_group:\n", tb)
+        return jsonify({'error': str(e), 'trace': tb}), 500
 
 
 @bp.route('/<int:id_grupo>', methods=['GET'])
@@ -59,8 +105,13 @@ def get_group(id_grupo):
             return jsonify({'error': 'Grupo no encontrado'}), 404
         
         # Verificar si el usuario es miembro
-        current_user = get_jwt_identity()
-        miembro = GrupoMiembro.is_member(id_grupo, current_user['id_usuario'])
+        identity = get_jwt_identity()
+        try:
+            current_user_id = int(identity)
+        except Exception:
+            current_user_id = identity.get('id_usuario') if isinstance(identity, dict) else identity
+
+        miembro = GrupoMiembro.is_member(id_grupo, current_user_id)
         
         if not miembro and grupo['privacidad'] == 'privado':
             return jsonify({'error': 'No tienes acceso a este grupo'}), 403
@@ -76,7 +127,11 @@ def get_group(id_grupo):
 def update_group(id_grupo):
     """Actualizar información del grupo"""
     try:
-        current_user = get_jwt_identity()
+        identity = get_jwt_identity()
+        try:
+            current_user_id = int(identity)
+        except Exception:
+            current_user_id = identity.get('id_usuario') if isinstance(identity, dict) else identity
         data = request.get_json()
         
         # Verificar que sea facilitador
@@ -84,7 +139,7 @@ def update_group(id_grupo):
         if not grupo:
             return jsonify({'error': 'Grupo no encontrado'}), 404
         
-        if grupo['id_facilitador'] != current_user['id_usuario']:
+        if grupo['id_facilitador'] != current_user_id:
             return jsonify({'error': 'Solo el facilitador puede actualizar el grupo'}), 403
         
         # Actualizar
@@ -101,14 +156,18 @@ def update_group(id_grupo):
 def delete_group(id_grupo):
     """Eliminar un grupo (soft delete)"""
     try:
-        current_user = get_jwt_identity()
+        identity = get_jwt_identity()
+        try:
+            current_user_id = int(identity)
+        except Exception:
+            current_user_id = identity.get('id_usuario') if isinstance(identity, dict) else identity
         
         # Verificar que sea facilitador
         grupo = Grupo.get_by_id(id_grupo)
         if not grupo:
             return jsonify({'error': 'Grupo no encontrado'}), 404
         
-        if grupo['id_facilitador'] != current_user['id_usuario']:
+        if grupo['id_facilitador'] != current_user_id:
             return jsonify({'error': 'Solo el facilitador puede eliminar el grupo'}), 403
         
         Grupo.delete(id_grupo)
@@ -127,14 +186,18 @@ def delete_group(id_grupo):
 def join_group(codigo):
     """Unirse a un grupo por código de acceso"""
     try:
-        current_user = get_jwt_identity()
+        identity = get_jwt_identity()
+        try:
+            current_user_id = int(identity)
+        except Exception:
+            current_user_id = identity.get('id_usuario') if isinstance(identity, dict) else identity
         grupo = Grupo.get_by_codigo(codigo)
         
         if not grupo:
             return jsonify({'error': 'Código inválido'}), 404
         
         # Verificar si ya es miembro
-        miembro = GrupoMiembro.is_member(grupo['id_grupo'], current_user['id_usuario'])
+        miembro = GrupoMiembro.is_member(grupo['id_grupo'], current_user_id)
         if miembro:
             return jsonify({'error': 'Ya eres miembro de este grupo'}), 400
         
@@ -143,7 +206,7 @@ def join_group(codigo):
             return jsonify({'error': 'El grupo ha alcanzado su límite de participantes'}), 400
         
         # Agregar miembro
-        GrupoMiembro.add_member(grupo['id_grupo'], current_user['id_usuario'])
+        GrupoMiembro.add_member(grupo['id_grupo'], current_user_id)
         
         return jsonify({
             'message': 'Te has unido al grupo exitosamente',
@@ -159,8 +222,12 @@ def join_group(codigo):
 def get_my_groups():
     """Obtener grupos del usuario actual"""
     try:
-        current_user = get_jwt_identity()
-        grupos = GrupoMiembro.get_user_groups(current_user['id_usuario'])
+        identity = get_jwt_identity()
+        try:
+            current_user_id = int(identity)
+        except Exception:
+            current_user_id = identity.get('id_usuario') if isinstance(identity, dict) else identity
+        grupos = GrupoMiembro.get_user_groups(current_user_id)
         
         return jsonify(grupos), 200
         
@@ -173,10 +240,14 @@ def get_my_groups():
 def get_group_members(id_grupo):
     """Obtener miembros de un grupo"""
     try:
-        current_user = get_jwt_identity()
-        
+        identity = get_jwt_identity()
+        try:
+            current_user_id = int(identity)
+        except Exception:
+            current_user_id = identity.get('id_usuario') if isinstance(identity, dict) else identity
+
         # Verificar acceso
-        miembro = GrupoMiembro.is_member(id_grupo, current_user['id_usuario'])
+        miembro = GrupoMiembro.is_member(id_grupo, current_user_id)
         if not miembro:
             return jsonify({'error': 'No tienes acceso a este grupo'}), 403
         
@@ -187,20 +258,68 @@ def get_group_members(id_grupo):
         return jsonify({'error': str(e)}), 500
 
 
+@bp.route('/<int:id_grupo>/miembros', methods=['POST'])
+@jwt_required()
+def add_group_member(id_grupo):
+    """Agregar un miembro al grupo (por usuario existente). Acepta payload con 'usuario_id' o 'correo'."""
+    try:
+        data = request.get_json() or {}
+        identity = get_jwt_identity()
+        try:
+            current_user_id = int(identity)
+        except Exception:
+            current_user_id = identity.get('id_usuario') if isinstance(identity, dict) else identity
+
+        # Verificar que el grupo existe
+        grupo = Grupo.get_by_id(id_grupo)
+        if not grupo:
+            return jsonify({'error': 'Grupo no encontrado'}), 404
+
+        # Verificar permisos: solo facilitador o co_facilitador pueden agregar
+        miembro_actual = GrupoMiembro.is_member(id_grupo, current_user_id)
+        if not miembro_actual or miembro_actual.get('rol_grupo') not in ['facilitador', 'co_facilitador']:
+            return jsonify({'error': 'No tienes permiso para agregar miembros'}), 403
+
+        usuario_id = data.get('usuario_id') or data.get('id')
+        if not usuario_id and data.get('correo'):
+            usuario = Usuario.get_by_email(data.get('correo'))
+            if usuario:
+                usuario_id = usuario.get('id_usuario') or usuario.get('id')
+
+        if not usuario_id:
+            return jsonify({'error': 'Se requiere usuario_id o correo del usuario existente'}), 400
+
+        # Evitar duplicados
+        if GrupoMiembro.is_member(id_grupo, usuario_id):
+            return jsonify({'error': 'El usuario ya es miembro del grupo'}), 400
+
+        GrupoMiembro.add_member(id_grupo, usuario_id)
+        return jsonify({'message': 'Miembro agregado exitosamente'}), 201
+
+    except Exception as e:
+        tb = traceback.format_exc()
+        print('[GRUPOS] Error en add_group_member:\n', tb)
+        return jsonify({'error': str(e), 'trace': tb}), 500
+
+
 @bp.route('/<int:id_grupo>/miembros/<int:id_usuario>', methods=['DELETE'])
 @jwt_required()
 def remove_member(id_grupo, id_usuario):
     """Remover un miembro del grupo"""
     try:
-        current_user = get_jwt_identity()
+        identity = get_jwt_identity()
+        try:
+            current_user_id = int(identity)
+        except Exception:
+            current_user_id = identity.get('id_usuario') if isinstance(identity, dict) else identity
         
         # Verificar que sea facilitador o el mismo usuario
         grupo = Grupo.get_by_id(id_grupo)
         if not grupo:
             return jsonify({'error': 'Grupo no encontrado'}), 404
         
-        is_facilitator = grupo['id_facilitador'] == current_user['id_usuario']
-        is_self = current_user['id_usuario'] == id_usuario
+        is_facilitator = grupo['id_facilitador'] == current_user_id
+        is_self = current_user_id == id_usuario
         
         if not (is_facilitator or is_self):
             return jsonify({'error': 'No tienes permiso para esta acción'}), 403
@@ -217,10 +336,14 @@ def remove_member(id_grupo, id_usuario):
 def get_group_stats(id_grupo):
     """Obtener estadísticas del grupo usando vista optimizada"""
     try:
-        current_user = get_jwt_identity()
-        
+        identity = get_jwt_identity()
+        try:
+            current_user_id = int(identity)
+        except Exception:
+            current_user_id = identity.get('id_usuario') if isinstance(identity, dict) else identity
+
         # Verificar acceso
-        miembro = GrupoMiembro.is_member(id_grupo, current_user['id_usuario'])
+        miembro = GrupoMiembro.is_member(id_grupo, current_user_id)
         if not miembro:
             return jsonify({'error': 'No tienes acceso a este grupo'}), 403
         
@@ -243,11 +366,15 @@ def get_group_stats(id_grupo):
 def create_activity(id_grupo):
     """Crear una nueva actividad para el grupo"""
     try:
-        current_user = get_jwt_identity()
+        identity = get_jwt_identity()
+        try:
+            current_user_id = int(identity)
+        except Exception:
+            current_user_id = identity.get('id_usuario') if isinstance(identity, dict) else identity
         data = request.get_json()
         
         # Verificar que sea miembro (facilitador o co-facilitador)
-        miembro = GrupoMiembro.is_member(id_grupo, current_user['id_usuario'])
+        miembro = GrupoMiembro.is_member(id_grupo, current_user_id)
         if not miembro or miembro['rol_grupo'] not in ['facilitador', 'co_facilitador']:
             return jsonify({'error': 'No tienes permiso para crear actividades'}), 403
         
@@ -255,15 +382,32 @@ def create_activity(id_grupo):
         if not data.get('titulo'):
             return jsonify({'error': 'El título es requerido'}), 400
         
+        # Parsear fechas (el frontend envía YYYY-MM-DD)
+        def parse_date_field(key):
+            v = data.get(key)
+            if not v:
+                return None
+            try:
+                # aceptar 'YYYY-MM-DD' y también ISO datetimes
+                return datetime.strptime(v, '%Y-%m-%d').date()
+            except Exception:
+                try:
+                    return datetime.fromisoformat(v).date()
+                except Exception:
+                    return v
+
+        fecha_inicio = parse_date_field('fecha_inicio')
+        fecha_fin = parse_date_field('fecha_fin')
+
         # Crear actividad
         id_actividad = ActividadGrupo.create(
             id_grupo=id_grupo,
-            id_creador=current_user['id_usuario'],
+            id_creador=current_user_id,
             titulo=data['titulo'],
             descripcion=data.get('descripcion'),
             tipo_actividad=data.get('tipo_actividad', 'tarea'),
-            fecha_programada=data.get('fecha_programada'),
-            duracion_estimada=data.get('duracion_estimada')
+            fecha_inicio=fecha_inicio,
+            fecha_fin=fecha_fin
         )
         
         return jsonify({
@@ -280,10 +424,14 @@ def create_activity(id_grupo):
 def get_group_activities(id_grupo):
     """Obtener actividades de un grupo"""
     try:
-        current_user = get_jwt_identity()
-        
+        identity = get_jwt_identity()
+        try:
+            current_user_id = int(identity)
+        except Exception:
+            current_user_id = identity.get('id_usuario') if isinstance(identity, dict) else identity
+
         # Verificar acceso
-        miembro = GrupoMiembro.is_member(id_grupo, current_user['id_usuario'])
+        miembro = GrupoMiembro.is_member(id_grupo, current_user_id)
         if not miembro:
             return jsonify({'error': 'No tienes acceso a este grupo'}), 403
         
@@ -318,7 +466,11 @@ def get_activity(id_actividad):
 def participate_activity(id_actividad):
     """Registrar participación en una actividad"""
     try:
-        current_user = get_jwt_identity()
+        identity = get_jwt_identity()
+        try:
+            current_user_id = int(identity)
+        except Exception:
+            current_user_id = identity.get('id_usuario') if isinstance(identity, dict) else identity
         data = request.get_json()
         
         # Verificar que la actividad existe
@@ -327,13 +479,13 @@ def participate_activity(id_actividad):
             return jsonify({'error': 'Actividad no encontrada'}), 404
         
         # Verificar que sea miembro del grupo
-        miembro = GrupoMiembro.is_member(actividad['id_grupo'], current_user['id_usuario'])
+        miembro = GrupoMiembro.is_member(actividad['id_grupo'], current_user_id)
         if not miembro:
             return jsonify({'error': 'No eres miembro de este grupo'}), 403
         
         # Verificar si ya participó
         participacion = ParticipacionActividad.get_user_participation(
-            id_actividad, current_user['id_usuario']
+            id_actividad, current_user_id
         )
         if participacion:
             return jsonify({'error': 'Ya estás registrado en esta actividad'}), 400
@@ -341,7 +493,7 @@ def participate_activity(id_actividad):
         # Registrar participación
         id_participacion = ParticipacionActividad.create(
             id_actividad=id_actividad,
-            id_usuario=current_user['id_usuario'],
+            id_usuario=current_user_id,
             estado_emocional_antes=data.get('estado_emocional_antes'),
             notas_participante=data.get('notas')
         )
@@ -360,7 +512,11 @@ def participate_activity(id_actividad):
 def complete_participation(id_participacion):
     """Marcar participación como completada"""
     try:
-        current_user = get_jwt_identity()
+        identity = get_jwt_identity()
+        try:
+            current_user_id = int(identity)
+        except Exception:
+            current_user_id = identity.get('id_usuario') if isinstance(identity, dict) else identity
         data = request.get_json()
         
         # Verificar que sea su participación
@@ -368,7 +524,7 @@ def complete_participation(id_participacion):
         if not participacion:
             return jsonify({'error': 'Participación no encontrada'}), 404
         
-        if participacion['id_usuario'] != current_user['id_usuario']:
+        if participacion['id_usuario'] != current_user_id:
             return jsonify({'error': 'No puedes modificar esta participación'}), 403
         
         # Marcar como completada

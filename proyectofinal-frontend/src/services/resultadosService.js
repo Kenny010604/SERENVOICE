@@ -5,7 +5,7 @@ const resultadosService = {
   // Obtener resultado por ID
   async getById(id_resultado) {
     try {
-      const response = await apiClient.get(`/api/resultados/${id_resultado}`);
+      const response = await apiClient.get(`/resultados/${id_resultado}`);
       return response.data;
     } catch (error) {
       throw new Error(

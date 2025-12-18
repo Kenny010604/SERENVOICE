@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import AuthContext from "./authContextDef";
+import authService from "../services/authService";
 
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(() => localStorage.getItem("token") || null);
@@ -48,7 +49,15 @@ export const AuthProvider = ({ children }) => {
     // Do not set userRole here — selection may be required if multiple roles
   };
 
-  const logout = () => {
+  const logout = async () => {
+    // Attempt remote logout (will also clear session on server)
+    try {
+      await authService.logout();
+    } catch (e) {
+      console.warn("AuthProvider.logout: authService.logout failed:", e);
+    }
+
+    // Clear local state and storage
     setToken(null);
     setRoles([]);
     setUser(null);

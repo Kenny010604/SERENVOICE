@@ -1,5 +1,6 @@
 from database.connection import DatabaseConnection
 from models.usuario import Usuario
+from models.rol_usuario import RolUsuario
 
 
 class UsuarioService:
@@ -26,12 +27,19 @@ class UsuarioService:
 
             usuarios_formatted = []
             for u in usuarios:
+                # Obtener roles asociados al usuario desde la tabla rol_usuario
+                try:
+                    roles_rows = RolUsuario.get_user_roles(u.get("id_usuario")) or []
+                    roles_list = [r.get("nombre_rol") for r in roles_rows]
+                except Exception:
+                    roles_list = []
+
                 usuario_formateado = {
                     "id": u.get("id_usuario"),
                     "nombre": u.get("nombre"),
                     "apellido": u.get("apellido"),
                     "email": u.get("correo"),
-                    "roles": [u.get("rol", "usuario")],
+                    "roles": roles_list or ["usuario"],
                     "ultimoAcceso": u.get("ultima_sesion", "N/A"),
                     "genero": u.get("genero"),
                     "fecha_nacimiento": str(u.get("fecha_nacimiento")) if u.get("fecha_nacimiento") else None,
@@ -60,7 +68,6 @@ class UsuarioService:
         try:
             with DatabaseConnection.get_connection() as conn:
                 cursor = conn.cursor(dictionary=True)
-
                 query = """
                     SELECT 
                         id_usuario,
@@ -69,9 +76,9 @@ class UsuarioService:
                         correo,
                         genero,
                         fecha_nacimiento,
-                        rol,
                         usa_medicamentos,
-                        fecha_registro AS fecha_creacion
+                        fecha_registro AS fecha_creacion,
+                        foto_perfil
                     FROM usuario
                     WHERE id_usuario = %s
                 """
@@ -88,6 +95,16 @@ class UsuarioService:
 
                 if usuario.get("fecha_creacion"):
                     usuario["fecha_creacion"] = str(usuario["fecha_creacion"])
+
+                # Adjuntar roles desde la tabla rol_usuario
+                try:
+                    roles_rows = RolUsuario.get_user_roles(id_usuario) or []
+                    roles_list = [r.get("nombre_rol") for r in roles_rows]
+                except Exception:
+                    roles_list = []
+
+                usuario["roles"] = roles_list
+                usuario["rol"] = roles_list[0] if roles_list else None
 
                 return usuario
 
@@ -108,6 +125,19 @@ class UsuarioService:
                 usuario = cursor.fetchone()
 
                 cursor.close()
+                if not usuario:
+                    return None
+
+                # Adjuntar roles
+                try:
+                    roles_rows = RolUsuario.get_user_roles(id_usuario) or []
+                    roles_list = [r.get("nombre_rol") for r in roles_rows]
+                except Exception:
+                    roles_list = []
+
+                usuario["roles"] = roles_list
+                usuario["rol"] = roles_list[0] if roles_list else None
+
                 return usuario
 
         except Exception as e:
@@ -131,7 +161,6 @@ class UsuarioService:
                         nombre,
                         apellido,
                         correo,
-                        rol,
                         fecha_registro AS fecha_creacion
                     FROM usuario
                     ORDER BY fecha_registro DESC
@@ -142,6 +171,16 @@ class UsuarioService:
                 usuarios = cursor.fetchall()
 
                 cursor.close()
+                # Para cada usuario, adjuntar roles
+                for u in usuarios:
+                    try:
+                        roles_rows = RolUsuario.get_user_roles(u.get("id_usuario")) or []
+                        u_roles = [r.get("nombre_rol") for r in roles_rows]
+                    except Exception:
+                        u_roles = []
+                    u["roles"] = u_roles
+                    u["rol"] = u_roles[0] if u_roles else None
+
                 return usuarios
 
         except Exception as e:
@@ -218,3 +257,39 @@ class UsuarioService:
         except Exception as e:
             print(f"\n Error en delete_usuario: {str(e)}")
             return {"success": False, "error": str(e)}
+
+    # ============================================
+    # BUSCAR USUARIOS POR NOMBRE / APELLIDO / CORREO
+    # ============================================
+    @staticmethod
+    def search_users(query, limit=10):
+        try:
+            if not query:
+                return []
+            q = f"%{query}%"
+            with DatabaseConnection.get_connection() as conn:
+                cursor = conn.cursor(dictionary=True)
+                sql = """
+                    SELECT id_usuario AS id, nombre, apellido, correo, foto_perfil
+                    FROM usuario
+                    WHERE nombre LIKE %s OR apellido LIKE %s OR correo LIKE %s
+                    LIMIT %s
+                """
+                cursor.execute(sql, (q, q, q, limit))
+                rows = cursor.fetchall()
+                cursor.close()
+
+                # normalize keys
+                results = []
+                for r in rows:
+                    results.append({
+                        'id': r.get('id'),
+                        'nombre': r.get('nombre'),
+                        'apellido': r.get('apellido'),
+                        'correo': r.get('correo'),
+                        'foto_perfil': r.get('foto_perfil')
+                    })
+                return results
+        except Exception as e:
+            print(f"\n Error en search_users: {str(e)}")
+            return []

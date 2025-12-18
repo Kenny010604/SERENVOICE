@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import NavbarUsuario from "../../components/NavbarUsuario";
-import Spinner from "../../components/Spinner";
+import NavbarUsuario from "../../components/Usuario/NavbarUsuario";
+import Spinner from "../../components/Publico/Spinner";
 import analisisService from "../../services/analisisService";
 import authService from "../../services/authService";
 import "../../global.css";

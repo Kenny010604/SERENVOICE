@@ -9,7 +9,7 @@ class AudioService {
       formData.append('duration', duration);
       formData.append('user_id', userId); // <-- enviar id del usuario
 
-      const response = await fetch(`${API_URL}/api/audio/analyze`, {
+      const response = await fetch(`${API_URL}/audio/analyze`, {
         method: 'POST',
         body: formData,
       });
@@ -29,7 +29,7 @@ class AudioService {
   // Verificar estado del servicio
   async checkHealth() {
     try {
-      const response = await fetch(`${API_URL}/api/audio/health`);
+      const response = await fetch(`${API_URL}/audio/health`);
       return await response.json();
     } catch (error) {
       console.error('Error verificando servicio:', error);
@@ -40,7 +40,7 @@ class AudioService {
   // Obtener estadísticas de entrenamiento
   async getTrainingStats() {
     try {
-      const response = await fetch(`${API_URL}/api/audio/training-stats`);
+      const response = await fetch(`${API_URL}/audio/training-stats`);
       return await response.json();
     } catch (error) {
       console.error('Error obteniendo estadísticas:', error);
@@ -51,7 +51,7 @@ class AudioService {
   // Reentrenar modelo manualmente
   async retrainModel() {
     try {
-      const response = await fetch(`${API_URL}/api/audio/retrain`, {
+      const response = await fetch(`${API_URL}/audio/retrain`, {
         method: 'POST',
       });
       return await response.json();

@@ -1,7 +1,7 @@
 // src/Pages/PaginasUsuarios/JuegoRecomendado.jsx
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import GameHistory from "../../components/GameHistory.jsx";
+import GameHistory from "../../components/Usuario/GameHistory.jsx";
 import { juegosAPI } from "../../services/apiClient.js";
 
 const JuegoRecomendado = () => {

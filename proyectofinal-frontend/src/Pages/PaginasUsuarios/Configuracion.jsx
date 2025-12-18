@@ -1,12 +1,16 @@
-import React, { useState, useEffect, useRef } from "react";
-import NavbarUsuario from "../../components/NavbarUsuario";
+import React, { useEffect, useRef, useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import NavbarUsuario from "../../components/Usuario/NavbarUsuario";
+import { FaUser, FaBell } from "react-icons/fa";
+import { ThemeContext } from "../../context/themeContextDef";
+import FondoClaro from "../../assets/FondoClaro.svg";
+import FondoOscuro from "../../assets/FondoOscuro.svg";
 import "../../global.css";
-import Spinner from "../../components/Spinner";
 
-// Nota: API temporal removida mientras no hay backend configurado.
 
 const Configuracion = () => {
-  const [form, setForm] = useState({ nombres: "", correo: "" });
+  const navigate = useNavigate();
+  const { isDark } = useContext(ThemeContext);
   const cardRef = useRef(null);
 
   useEffect(() => {
@@ -16,90 +20,85 @@ const Configuracion = () => {
     if (cardRef.current.classList.contains("reveal"))
       cardRef.current.classList.add("reveal-visible");
   }, []);
-  const [msg, setMsg] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((p) => ({ ...p, [name]: value }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setError("");
-    setMsg("");
-
-    // Validación básica
-    if (!form.nombres.trim()) {
-      setError("El nombre es obligatorio");
-      return;
+  const configOptions = [
+    {
+      title: "Mi Perfil",
+      description: "Ver y editar tu información personal",
+      icon: <FaUser />,
+      path: "/perfil"
+    },
+    {
+      title: "Notificaciones",
+      description: "Configurar preferencias de notificaciones",
+      icon: <FaBell />,
+      path: "/notificaciones/configuracion"
     }
-    if (!form.correo.match(/^[^@\s]+@[^@\s]+\.[^@\s]+$/)) {
-      setError("Ingrese un correo válido");
-      return;
-    }
-
-    setLoading(true);
-    // Simulación removida: completar inmediatamente (reemplazar por llamada real al backend cuando esté disponible)
-    setMsg("Guardado correctamente (simulado)");
-    setLoading(false);
-  };
+  ];
 
   return (
     <>
       <NavbarUsuario />
-      <main className="container" style={{ paddingTop: "2rem", paddingBottom: "4rem" }}>
-        <div
-          ref={cardRef}
-          className="card reveal"
-          data-revealdelay="50"
-          style={{ maxWidth: "800px", width: "100%" }}
-        >
-          {loading && (
-            <Spinner overlay={true} message="Guardando configuración..." />
-          )}
-          <h2>Configuración de la cuenta</h2>
-          <p style={{ color: "var(--color-text-secondary)" }}>
-            Actualiza tu nombre y correo. Más opciones vendrán pronto.
+      <main 
+        className="container" 
+        style={{ 
+          paddingTop: "2rem", 
+          paddingBottom: "4rem",
+          backgroundImage: `url(${isDark ? FondoOscuro : FondoClaro})`,
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center center",
+          backgroundSize: "cover",
+          backgroundAttachment: "fixed",
+          minHeight: "100vh"
+        }}
+      >
+        <div className="card" style={{ width: "100%", maxWidth: "1000px" }}>
+          <h2>Configuración</h2>
+          <p style={{ marginBottom: "1.5rem" }}>
+            Administra tu perfil y preferencias
           </p>
+        </div>
 
-          <form onSubmit={handleSubmit} style={{ marginTop: "1rem" }}>
-            <div className="form-group reveal" data-revealdelay="120">
-              <label>Nombres</label>
-              <input
-                name="nombres"
-                value={form.nombres}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="form-group reveal" data-revealdelay="160">
-              <label>Correo</label>
-              <input
-                name="correo"
-                value={form.correo}
-                onChange={handleChange}
-              />
-            </div>
-
-            <button
-              type="submit"
-              style={{ marginTop: "1rem" }}
-              disabled={loading}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+          gap: "1.5rem",
+          width: "100%",
+          maxWidth: "1000px"
+        }}>
+          {configOptions.map((option) => (
+            <div
+              key={option.path}
+              className="card"
+              style={{
+                cursor: "pointer"
+              }}
+              onClick={() => navigate(option.path)}
             >
-              {loading ? "Guardando..." : "Guardar"}
-            </button>
-            {msg && (
-              <p style={{ marginTop: "0.5rem", color: "var(--color-success)" }}>
-                {msg}
+              {React.cloneElement(option.icon, {
+                size: 40,
+                style: { color: "var(--color-primary)", marginBottom: "1rem" }
+              })}
+              <h3 style={{
+                color: "var(--color-text-main)",
+                marginBottom: "0.5rem"
+              }}>
+                {option.title}
+              </h3>
+              <p style={{ marginBottom: "1rem" }}>
+                {option.description}
               </p>
-            )}
-            {error && (
-              <p style={{ marginTop: "0.5rem", color: "var(--color-danger)" }}>
-                {error}
-              </p>
-            )}
-          </form>
+              <button
+                className="auth-button"
+                style={{
+                  width: "100%",
+                  marginTop: "auto"
+                }}
+              >
+                Ir a {option.title}
+              </button>
+            </div>
+          ))}
         </div>
       </main>
     </>

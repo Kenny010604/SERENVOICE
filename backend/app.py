@@ -72,7 +72,8 @@ def create_app():
         app,
         resources={
             r"/api/*": {"origins": "*"},
-            r"/juegos/*": {"origins": "*"}
+            r"/juegos/*": {"origins": "*"},
+            r"/grupos*": {"origins": "*"}
         },
         supports_credentials=True,
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -181,12 +182,15 @@ def create_app():
     from routes.reportes_routes import bp as reportes_bp
     from routes.recomendaciones_routes import bp as recomendaciones_bp
     from routes.alertas_routes import bp as alertas_bp
+    from routes.notificaciones_routes import bp as notificaciones_bp
     app.register_blueprint(sesion_bp)
     app.register_blueprint(roles_bp)
     app.register_blueprint(resultados_bp)
     app.register_blueprint(reportes_bp)
     app.register_blueprint(recomendaciones_bp)
     app.register_blueprint(alertas_bp)
+    app.register_blueprint(notificaciones_bp)
+    print("[ROUTES] OK - Blueprint de notificaciones registrado en /api/notificaciones")
     
     # Grupos - Nuevo
     try:
@@ -200,7 +204,7 @@ def create_app():
         print("[ROUTES] Registrando blueprint de juegos...")
         app.register_blueprint(juegos_bp)
         print("[ROUTES] OK - Blueprint de juegos registrado correctamente")
-        print(f"[ROUTES] Rutas de juegos disponibles en: /juegos/*")
+        print(f"[ROUTES] Rutas de juegos disponibles en: /api/juegos/*")
     else:
         print("[ROUTES] ADVERTENCIA - Blueprint de juegos NO disponible")
 

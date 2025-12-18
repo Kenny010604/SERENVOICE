@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../../global.css";
-import Spinner from "../../components/Spinner";
-import NavbarUsuario from "../../components/NavbarUsuario";
+import Spinner from "../../components/Publico/Spinner";
+import NavbarUsuario from "../../components/Usuario/NavbarUsuario";
 import authService from "../../services/authService";
 import apiClient from "../../services/apiClient";
 import { ThemeContext } from "../../context/themeContextDef";
@@ -56,7 +56,7 @@ const googleLockedStyles = `
   }
 `;
 
-const ActualizarPerfil = () => {
+const ActualizarPerfil = ({ NavbarComponent = NavbarUsuario }) => {
   const navigate = useNavigate();
   const cardRef = useRef(null);
   const { isDark } = useContext(ThemeContext);
@@ -69,7 +69,7 @@ const ActualizarPerfil = () => {
     apellido: user?.apellido || "",
     correo: user?.correo || "",
     genero: user?.genero ?? "O",
-    fechaNacimiento: user?.fecha_nacimiento
+    fecha_nacimiento: user?.fecha_nacimiento
       ? new Date(user.fecha_nacimiento).toISOString().slice(0, 10)
       : "",
     edad: user?.edad || "",
@@ -100,8 +100,32 @@ const ActualizarPerfil = () => {
     confirm: false,
   });
   const [fotoPerfil, setFotoPerfil] = useState(null);
+  const makeFotoUrl = (path) => {
+    if (!path) return null;
+    const trimmed = String(path).trim();
+    try {
+      const lower = trimmed.toLowerCase();
+      if (lower.startsWith('http://') || lower.startsWith('https://')) return trimmed;
+      if (lower.startsWith('//')) return `https:${trimmed}`;
+    } catch (e) {
+      return null;
+    }
+    return `http://localhost:5000${trimmed}`;
+  };
+
+  const makeFotoUrlWithProxy = (path) => {
+    if (!path) return null;
+    const trimmed = String(path).trim();
+    const lower = trimmed.toLowerCase();
+    // Si viene de Google profile (googleusercontent), usar proxy del backend
+    if (lower.includes('googleusercontent.com') || lower.includes('lh3.googleusercontent.com')) {
+      return `/api/auth/proxy_image?url=${encodeURIComponent(trimmed)}`;
+    }
+    return makeFotoUrl(trimmed);
+  };
+
   const [fotoPreview, setFotoPreview] = useState(
-    user?.foto_perfil ? `http://localhost:5000${user.foto_perfil}` : null
+    makeFotoUrlWithProxy(user?.foto_perfil) || null
   );
   const fileInputRef = useRef(null);
 
@@ -199,7 +223,7 @@ const ActualizarPerfil = () => {
         payload.append('apellido', formData.apellido);
         payload.append('correo', formData.correo);
         payload.append('genero', formData.genero);
-        payload.append('fecha_nacimiento', formData.fechaNacimiento);
+                    payload.append('fecha_nacimiento', formData.fecha_nacimiento);
         payload.append('usa_medicamentos', formData.usa_medicamentos);
         payload.append('notificaciones', formData.notificaciones);
 
@@ -219,7 +243,7 @@ const ActualizarPerfil = () => {
         }
 
         // No especificar Content-Type manualmente, Axios lo configura automáticamente con el boundary
-        response = await apiClient.put("/api/auth/update", payload);
+        response = await apiClient.put("/auth/update", payload);
       } else {
         // Usar JSON si no hay cambios en la foto
         const payload = {
@@ -227,7 +251,7 @@ const ActualizarPerfil = () => {
           apellido: formData.apellido,
           correo: formData.correo,
           genero: formData.genero,
-          fecha_nacimiento: formData.fechaNacimiento,
+          fecha_nacimiento: formData.fecha_nacimiento,
           usa_medicamentos: formData.usa_medicamentos,
           notificaciones: formData.notificaciones,
         };
@@ -239,7 +263,7 @@ const ActualizarPerfil = () => {
           if (formData.confirmarContraseña) payload.confirmarContrasena = formData.confirmarContraseña;
         }
 
-        response = await apiClient.put("/api/auth/update", payload);
+        response = await apiClient.put("/auth/update", payload);
       }
 
       if (response.data.success) {
@@ -254,7 +278,7 @@ const ActualizarPerfil = () => {
 
         // Actualizar preview de la foto si vino del backend
         if (response.data.user.foto_perfil) {
-          setFotoPreview(`http://localhost:5000${response.data.user.foto_perfil}`);
+          setFotoPreview(makeFotoUrlWithProxy(response.data.user.foto_perfil));
         } else {
           setFotoPreview(null);
         }
@@ -274,7 +298,7 @@ const ActualizarPerfil = () => {
 
   return (
     <>
-      <NavbarUsuario userData={user} />
+      <NavbarComponent userData={user} />
       <main className="container" style={{
         paddingTop: "2rem",
         paddingBottom: "4rem",
@@ -573,9 +597,9 @@ const ActualizarPerfil = () => {
                     <FaCalendarAlt className="input-icon" />
                     <input
                       type="date"
-                      name="fechaNacimiento"
-                      value={formData.fechaNacimiento}
-                      onChange={handleChange}
+                        name="fecha_nacimiento"
+                        value={formData.fecha_nacimiento}
+                        onChange={handleChange}
                       max={new Date().toISOString().split("T")[0]}
                       disabled={loading}
                       required
@@ -586,7 +610,7 @@ const ActualizarPerfil = () => {
                     <FaBirthdayCake className="input-icon" />
                     <input
                       type="text"
-                      value={formData.fechaNacimiento ? `${calcularEdad(formData.fechaNacimiento)} años` : 'Edad'}
+                      value={formData.fecha_nacimiento ? `${calcularEdad(formData.fecha_nacimiento)} años` : 'Edad'}
                       readOnly
                       placeholder="Edad"
                       style={{ cursor: 'default' }}

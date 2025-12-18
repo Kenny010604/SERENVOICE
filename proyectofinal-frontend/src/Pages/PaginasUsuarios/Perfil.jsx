@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useContext } from "react";
-import NavbarUsuario from "../../components/NavbarUsuario";
+import NavbarUsuario from "../../components/Usuario/NavbarUsuario";
 import "../../global.css";
 import { FaUser, FaEnvelope, FaCalendarAlt } from "react-icons/fa";
 import { ThemeContext } from "../../context/themeContextDef";

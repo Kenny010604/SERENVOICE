@@ -118,7 +118,7 @@ def guardar_en_bd(
             vistos_en_lote.add(k)
             payload.append({
                 "id_resultado": id_resultado,
-                "tipo": tipo,
+                "tipo_recomendacion": tipo,
                 "contenido": contenido,
             })
 
@@ -136,7 +136,7 @@ def guardar_en_bd(
             count = 0
             for r in payload:
                 try:
-                    Recomendacion.create(r["id_resultado"], r["tipo"], r["contenido"])
+                    Recomendacion.create(r["id_resultado"], r["tipo_recomendacion"], r["contenido"])
                     count += 1
                 except Exception as e2:
                     print(f"[guardar_en_bd] Error insertando individual: {e2}")

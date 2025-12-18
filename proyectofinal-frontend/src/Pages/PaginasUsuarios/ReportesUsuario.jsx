@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import NavbarUsuario from "../../components/NavbarUsuario";
+import NavbarUsuario from "../../components/Usuario/NavbarUsuario";
 import "../../global.css";
 import { FaFileDownload, FaCalendarAlt } from "react-icons/fa";
 

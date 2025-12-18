@@ -6688,5 +6688,435 @@
     ],
     "duration": 9.0,
     "timestamp": "2025-12-12T11:11:25.169878"
+  },
+  {
+    "id_audio": null,
+    "features": {
+      "pitch_mean": 174.27,
+      "pitch_variation": 87.49,
+      "energy": 0.0375,
+      "voice_quality": 0.0639
+    },
+    "emotions": [
+      {
+        "name": "Felicidad",
+        "value": 80.6,
+        "color": "#FFD700"
+      },
+      {
+        "name": "Miedo",
+        "value": 13.1,
+        "color": "#9370DB"
+      },
+      {
+        "name": "Neutral",
+        "value": 6.3,
+        "color": "#808080"
+      },
+      {
+        "name": "Tristeza",
+        "value": 0.1,
+        "color": "#4169E1"
+      },
+      {
+        "name": "Enojo",
+        "value": 0.0,
+        "color": "#FF6347"
+      },
+      {
+        "name": "Sorpresa",
+        "value": 0.0,
+        "color": "#FF69B4"
+      }
+    ],
+    "duration": 0.0,
+    "timestamp": "2025-12-16T10:40:21.158806"
+  },
+  {
+    "id_audio": null,
+    "features": {
+      "pitch_mean": 174.27,
+      "pitch_variation": 87.49,
+      "energy": 0.0375,
+      "voice_quality": 0.0639
+    },
+    "emotions": [
+      {
+        "name": "Felicidad",
+        "value": 80.6,
+        "color": "#FFD700"
+      },
+      {
+        "name": "Miedo",
+        "value": 13.1,
+        "color": "#9370DB"
+      },
+      {
+        "name": "Neutral",
+        "value": 6.3,
+        "color": "#808080"
+      },
+      {
+        "name": "Tristeza",
+        "value": 0.1,
+        "color": "#4169E1"
+      },
+      {
+        "name": "Enojo",
+        "value": 0.0,
+        "color": "#FF6347"
+      },
+      {
+        "name": "Sorpresa",
+        "value": 0.0,
+        "color": "#FF69B4"
+      }
+    ],
+    "duration": 0.0,
+    "timestamp": "2025-12-16T10:40:33.361027"
+  },
+  {
+    "id_audio": null,
+    "features": {
+      "pitch_mean": 174.27,
+      "pitch_variation": 87.49,
+      "energy": 0.0375,
+      "voice_quality": 0.0639
+    },
+    "emotions": [
+      {
+        "name": "Felicidad",
+        "value": 80.6,
+        "color": "#FFD700"
+      },
+      {
+        "name": "Miedo",
+        "value": 13.1,
+        "color": "#9370DB"
+      },
+      {
+        "name": "Neutral",
+        "value": 6.3,
+        "color": "#808080"
+      },
+      {
+        "name": "Tristeza",
+        "value": 0.1,
+        "color": "#4169E1"
+      },
+      {
+        "name": "Enojo",
+        "value": 0.0,
+        "color": "#FF6347"
+      },
+      {
+        "name": "Sorpresa",
+        "value": 0.0,
+        "color": "#FF69B4"
+      }
+    ],
+    "duration": 0.0,
+    "timestamp": "2025-12-16T10:40:36.843314"
+  },
+  {
+    "id_audio": 1,
+    "features": {
+      "pitch_mean": 174.46,
+      "pitch_variation": 88.95,
+      "energy": 0.041,
+      "voice_quality": 0.0572
+    },
+    "emotions": [
+      {
+        "name": "Miedo",
+        "value": 91.5,
+        "color": "#9370DB"
+      },
+      {
+        "name": "Felicidad",
+        "value": 3.6,
+        "color": "#FFD700"
+      },
+      {
+        "name": "Neutral",
+        "value": 3.4,
+        "color": "#808080"
+      },
+      {
+        "name": "Tristeza",
+        "value": 1.3,
+        "color": "#4169E1"
+      },
+      {
+        "name": "Enojo",
+        "value": 0.1,
+        "color": "#FF6347"
+      },
+      {
+        "name": "Sorpresa",
+        "value": 0.1,
+        "color": "#FF69B4"
+      }
+    ],
+    "duration": 11.0,
+    "timestamp": "2025-12-16T10:42:58.409529"
+  },
+  {
+    "id_audio": 2,
+    "features": {
+      "pitch_mean": 174.46,
+      "pitch_variation": 88.95,
+      "energy": 0.041,
+      "voice_quality": 0.0572
+    },
+    "emotions": [
+      {
+        "name": "Miedo",
+        "value": 91.5,
+        "color": "#9370DB"
+      },
+      {
+        "name": "Felicidad",
+        "value": 3.6,
+        "color": "#FFD700"
+      },
+      {
+        "name": "Neutral",
+        "value": 3.4,
+        "color": "#808080"
+      },
+      {
+        "name": "Tristeza",
+        "value": 1.3,
+        "color": "#4169E1"
+      },
+      {
+        "name": "Enojo",
+        "value": 0.1,
+        "color": "#FF6347"
+      },
+      {
+        "name": "Sorpresa",
+        "value": 0.1,
+        "color": "#FF69B4"
+      }
+    ],
+    "duration": 11.0,
+    "timestamp": "2025-12-16T10:43:13.564340"
+  },
+  {
+    "id_audio": 3,
+    "features": {
+      "pitch_mean": 206.63,
+      "pitch_variation": 97.08,
+      "energy": 0.0668,
+      "voice_quality": 0.0998
+    },
+    "emotions": [
+      {
+        "name": "Felicidad",
+        "value": 84.4,
+        "color": "#FFD700"
+      },
+      {
+        "name": "Enojo",
+        "value": 6.6,
+        "color": "#FF6347"
+      },
+      {
+        "name": "Tristeza",
+        "value": 4.6,
+        "color": "#4169E1"
+      },
+      {
+        "name": "Miedo",
+        "value": 3.3,
+        "color": "#9370DB"
+      },
+      {
+        "name": "Neutral",
+        "value": 1.1,
+        "color": "#808080"
+      },
+      {
+        "name": "Sorpresa",
+        "value": 0.0,
+        "color": "#FF69B4"
+      }
+    ],
+    "duration": 10.0,
+    "timestamp": "2025-12-17T10:17:44.784160"
+  },
+  {
+    "id_audio": 4,
+    "features": {
+      "pitch_mean": 166.91,
+      "pitch_variation": 77.55,
+      "energy": 0.0475,
+      "voice_quality": 0.0803
+    },
+    "emotions": [
+      {
+        "name": "Felicidad",
+        "value": 95.8,
+        "color": "#FFD700"
+      },
+      {
+        "name": "Miedo",
+        "value": 2.0,
+        "color": "#9370DB"
+      },
+      {
+        "name": "Tristeza",
+        "value": 1.2,
+        "color": "#4169E1"
+      },
+      {
+        "name": "Enojo",
+        "value": 0.9,
+        "color": "#FF6347"
+      },
+      {
+        "name": "Neutral",
+        "value": 0.1,
+        "color": "#808080"
+      },
+      {
+        "name": "Sorpresa",
+        "value": 0.1,
+        "color": "#FF69B4"
+      }
+    ],
+    "duration": 11.0,
+    "timestamp": "2025-12-17T10:34:03.030438"
+  },
+  {
+    "id_audio": 5,
+    "features": {
+      "pitch_mean": 202.18,
+      "pitch_variation": 82.23,
+      "energy": 0.0565,
+      "voice_quality": 0.0926
+    },
+    "emotions": [
+      {
+        "name": "Felicidad",
+        "value": 89.5,
+        "color": "#FFD700"
+      },
+      {
+        "name": "Enojo",
+        "value": 4.3,
+        "color": "#FF6347"
+      },
+      {
+        "name": "Miedo",
+        "value": 3.4,
+        "color": "#9370DB"
+      },
+      {
+        "name": "Tristeza",
+        "value": 2.1,
+        "color": "#4169E1"
+      },
+      {
+        "name": "Neutral",
+        "value": 0.5,
+        "color": "#808080"
+      },
+      {
+        "name": "Sorpresa",
+        "value": 0.2,
+        "color": "#FF69B4"
+      }
+    ],
+    "duration": 11.0,
+    "timestamp": "2025-12-17T10:37:41.522459"
+  },
+  {
+    "id_audio": null,
+    "features": {
+      "pitch_mean": 187.39,
+      "pitch_variation": 64.13,
+      "energy": 0.0638,
+      "voice_quality": 0.0966
+    },
+    "emotions": [
+      {
+        "name": "Felicidad",
+        "value": 88.2,
+        "color": "#FFD700"
+      },
+      {
+        "name": "Enojo",
+        "value": 8.6,
+        "color": "#FF6347"
+      },
+      {
+        "name": "Tristeza",
+        "value": 2.9,
+        "color": "#4169E1"
+      },
+      {
+        "name": "Miedo",
+        "value": 0.2,
+        "color": "#9370DB"
+      },
+      {
+        "name": "Neutral",
+        "value": 0.0,
+        "color": "#808080"
+      },
+      {
+        "name": "Sorpresa",
+        "value": 0.0,
+        "color": "#FF69B4"
+      }
+    ],
+    "duration": 0.0,
+    "timestamp": "2025-12-17T10:43:50.335403"
+  },
+  {
+    "id_audio": 6,
+    "features": {
+      "pitch_mean": 198.57,
+      "pitch_variation": 72.79,
+      "energy": 0.0521,
+      "voice_quality": 0.1178
+    },
+    "emotions": [
+      {
+        "name": "Felicidad",
+        "value": 60.8,
+        "color": "#FFD700"
+      },
+      {
+        "name": "Enojo",
+        "value": 19.8,
+        "color": "#FF6347"
+      },
+      {
+        "name": "Tristeza",
+        "value": 15.6,
+        "color": "#4169E1"
+      },
+      {
+        "name": "Miedo",
+        "value": 2.0,
+        "color": "#9370DB"
+      },
+      {
+        "name": "Sorpresa",
+        "value": 1.3,
+        "color": "#FF69B4"
+      },
+      {
+        "name": "Neutral",
+        "value": 0.5,
+        "color": "#808080"
+      }
+    ],
+    "duration": 12.0,
+    "timestamp": "2025-12-17T10:47:52.549182"
   }
 ]

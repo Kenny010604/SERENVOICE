@@ -1,24 +1,24 @@
 # backend/models/actividad_grupo.py
 from database.connection import DatabaseConnection
-from datetime import datetime
+from datetime import date
 
 class ActividadGrupo:
     """Modelo para la tabla actividades_grupo"""
     
     @staticmethod
     def create(id_grupo, id_creador, titulo, descripcion=None, tipo_actividad='tarea',
-               fecha_programada=None, duracion_estimada=None):
+               fecha_inicio=None, fecha_fin=None):
         """Crear una nueva actividad para un grupo"""
         query = """
             INSERT INTO actividades_grupo 
             (id_grupo, id_creador, titulo, descripcion, tipo_actividad, 
-             fecha_programada, duracion_estimada)
+             fecha_inicio, fecha_fin)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
         """
         return DatabaseConnection.execute_query(
             query, 
             (id_grupo, id_creador, titulo, descripcion, tipo_actividad, 
-             fecha_programada, duracion_estimada),
+             fecha_inicio, fecha_fin),
             fetch=False
         )
     
@@ -54,7 +54,7 @@ class ActividadGrupo:
         
         query += """
             GROUP BY ag.id_actividad
-            ORDER BY ag.fecha_programada DESC, ag.id_actividad DESC
+            ORDER BY ag.fecha_inicio DESC, ag.id_actividad DESC
         """
         return DatabaseConnection.execute_query(query, tuple(params))
     
@@ -68,8 +68,8 @@ class ActividadGrupo:
             WHERE ag.id_grupo = %s 
               AND ag.activo = 1 
               AND ag.completada = 0
-              AND ag.fecha_programada >= NOW()
-            ORDER BY ag.fecha_programada ASC
+              AND ag.fecha_inicio >= CURDATE()
+            ORDER BY ag.fecha_inicio ASC
             LIMIT %s
         """
         return DatabaseConnection.execute_query(query, (id_grupo, limit))
@@ -78,7 +78,7 @@ class ActividadGrupo:
     def update(id_actividad, **kwargs):
         """Actualizar actividad"""
         allowed_fields = ['titulo', 'descripcion', 'tipo_actividad', 
-                         'fecha_programada', 'duracion_estimada', 'completada']
+                 'fecha_inicio', 'fecha_fin', 'completada']
         
         updates = []
         values = []

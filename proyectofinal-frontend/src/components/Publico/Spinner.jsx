@@ -1,5 +1,5 @@
 import React from "react";
-import "../global.css";
+import "../../global.css";
 
 const Spinner = ({ overlay = false, message = "" }) => {
   if (overlay) {

@@ -166,7 +166,7 @@ def get_usuario(id_usuario):
     current_user_id = get_jwt_identity()
     current_user = UsuarioService.get_usuario_by_id(current_user_id)
 
-    if current_user_id != id_usuario and current_user['rol'] != 'admin':
+    if current_user_id != id_usuario and (not current_user or current_user.get('rol') != 'admin'):
         return Helpers.format_response(False, "No tienes permisos", 403)
 
     usuario = UsuarioService.get_usuario_with_stats(id_usuario)
@@ -180,6 +180,23 @@ def get_usuario(id_usuario):
 
 
 # ============================================
+# Buscar usuarios (por nombre / correo) - disponible para usuarios autenticados
+# ============================================
+@bp.route('/search', methods=['GET'])
+@jwt_required()
+def search_usuarios():
+    q = request.args.get('query', '', type=str)
+    if not q or len(q.strip()) < 1:
+        return Helpers.format_response(True, data=[])
+    try:
+        results = UsuarioService.search_users(q.strip(), limit=20)
+        return Helpers.format_response(True, data=results)
+    except Exception as e:
+        print(f"[ERROR] search_usuarios: {e}")
+        return Helpers.format_response(False, str(e), status=500)
+
+
+# ============================================
 # Actualizar usuario
 # ============================================
 @bp.route('/<int:id_usuario>', methods=['PUT'])
@@ -188,7 +205,7 @@ def update_usuario(id_usuario):
     current_user_id = get_jwt_identity()
     current_user = UsuarioService.get_usuario_by_id(current_user_id)
 
-    if current_user_id != id_usuario and current_user['rol'] != 'admin':
+    if current_user_id != id_usuario and (not current_user or current_user.get('rol') != 'admin'):
         return Helpers.format_response(False, "Sin permisos", 403)
 
     data = request.json

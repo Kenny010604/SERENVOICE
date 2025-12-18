@@ -5,7 +5,7 @@ const analisisService = {
   // Obtener detalle de un análisis
   async getAnalisisById(id_analisis) {
     try {
-      const response = await apiClient.get(`/api/analisis/${id_analisis}`);
+      const response = await apiClient.get(`/analisis/${id_analisis}`);
       return response.data;
     } catch (error) {
       throw new Error(
@@ -19,7 +19,7 @@ const analisisService = {
   // Obtener historial de análisis del usuario
   async getHistory(limit = 10) {
     try {
-      const response = await apiClient.get('/api/analisis/history', {
+      const response = await apiClient.get('/analisis/history', {
         params: { limit }
       });
       return response.data;

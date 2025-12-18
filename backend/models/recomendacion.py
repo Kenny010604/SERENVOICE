@@ -26,7 +26,7 @@ class Recomendacion:
             VALUES (%s, %s, %s, %s)
         """
         params_list = [
-            (r['id_resultado'], r['tipo'], r['contenido'], date.today())
+            (r['id_resultado'], r['tipo_recomendacion'], r['contenido'], date.today())
             for r in recomendaciones
         ]
         

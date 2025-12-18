@@ -38,7 +38,12 @@ def get_active_sessions():
 @jwt_required()
 def close_session(id_sesion):
     """Cerrar sesión específica"""
-    user_id = get_jwt_identity()
+    # get_jwt_identity() devuelve la identidad tal como se guardó en el token
+    # Convertimos a int para evitar comparaciones entre str e int
+    try:
+        user_id = int(get_jwt_identity())
+    except Exception:
+        user_id = get_jwt_identity()
     
     sesion = Sesion.get_by_id(id_sesion)
     
@@ -63,3 +68,18 @@ def close_session(id_sesion):
         message='Sesión cerrada exitosamente',
         status=200
     )
+
+
+@bp.route('/close-all', methods=['PUT'])
+@jwt_required()
+def close_all_sessions():
+    """Cerrar todas las sesiones activas del usuario actual"""
+    try:
+        user_id = int(get_jwt_identity())
+    except Exception:
+        user_id = get_jwt_identity()
+    try:
+        Sesion.close_all_user_sessions(user_id)
+        return Helpers.format_response(success=True, message='Todas las sesiones cerradas', status=200)
+    except Exception as e:
+        return Helpers.format_response(success=False, message=str(e), status=500)

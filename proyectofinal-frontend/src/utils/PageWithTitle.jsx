@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import ThemeToggle from "../components/ThemeToggle";
+import ThemeToggle from "../components/Publico/ThemeToggle";
 
 const PageWithTitle = ({ title, children }) => {
   const previousTitle = useRef(document.title);

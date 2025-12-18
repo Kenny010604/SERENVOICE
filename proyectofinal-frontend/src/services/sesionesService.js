@@ -5,7 +5,7 @@ const sesionesService = {
   // Obtener sesiones del usuario actual
   async getMySessions(limit = 10) {
     try {
-      const response = await apiClient.get('/api/sesiones/my-sessions', {
+      const response = await apiClient.get('/sesiones/my-sessions', {
         params: { limit }
       });
       return response.data;
@@ -21,7 +21,7 @@ const sesionesService = {
   // Obtener sesiones activas del usuario
   async getActiveSessions() {
     try {
-      const response = await apiClient.get('/api/sesiones/active');
+      const response = await apiClient.get('/sesiones/active');
       return response.data;
     } catch (error) {
       throw new Error(
@@ -35,13 +35,27 @@ const sesionesService = {
   // Cerrar sesión específica
   async closeSession(id_sesion) {
     try {
-      const response = await apiClient.put(`/api/sesiones/${id_sesion}/close`);
+      const response = await apiClient.put(`/sesiones/${id_sesion}/close`);
       return response.data;
     } catch (error) {
       throw new Error(
         error.response?.data?.message || 
         error.message || 
         'Error al cerrar sesión'
+      );
+    }
+  }
+,
+  // Cerrar todas las sesiones activas del usuario
+  async closeAllSessions() {
+    try {
+      const response = await apiClient.put('/sesiones/close-all');
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message ||
+        error.message ||
+        'Error al cerrar todas las sesiones'
       );
     }
   }

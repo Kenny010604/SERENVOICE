@@ -1,5 +1,5 @@
 # backend/routes/auth_routes.py
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, Response
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash, check_password_hash
 from database.connection import DatabaseConnection, get_db_connection
@@ -7,6 +7,39 @@ from models.rol import Rol
 from datetime import datetime, date
 
 bp = Blueprint('auth', __name__, url_prefix='/api/auth')
+
+
+# ======================================================
+# 🔶 PROXY DE IMÁGENAS (para evitar bloqueos externos como 429/CORS)
+# Permite al frontend cargar imágenes externas (solo googleusercontent.com)
+# ======================================================
+@bp.route('/proxy_image')
+def proxy_image():
+    url = request.args.get('url')
+    if not url:
+        return jsonify({'error': 'Missing url parameter'}), 400
+
+    # Seguridad: permitir solo dominios conocidos (Google user content)
+    allowed_hosts = ['googleusercontent.com', 'lh3.googleusercontent.com']
+    try:
+        lower = url.lower()
+    except Exception:
+        return jsonify({'error': 'Invalid url'}), 400
+
+    if not any(h in lower for h in allowed_hosts):
+        return jsonify({'error': 'Host not allowed'}), 403
+
+    # Fetch the image using urllib to avoid adding external deps
+    try:
+        from urllib.request import Request, urlopen
+        req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urlopen(req, timeout=10) as resp:
+            data = resp.read()
+            content_type = resp.headers.get('Content-Type', 'application/octet-stream')
+            return Response(data, mimetype=content_type)
+    except Exception as e:
+        print(f"[proxy_image] Error fetching {url}: {e}")
+        return jsonify({'error': 'Failed to fetch image', 'details': str(e)}), 502
 
 
 # ======================================================
@@ -23,7 +56,8 @@ def register():
             correo = request.form.get('correo', '').lower().strip()
             contrasena = request.form.get('contrasena', '')
             genero = request.form.get('genero')
-            fecha_nacimiento = request.form.get('fechaNacimiento')
+            # Usar solo 'fecha_nacimiento' (coincide con la BD)
+            fecha_nacimiento = request.form.get('fecha_nacimiento')
             usa_medicamentos = request.form.get('usa_medicamentos', 'false').lower() == 'true'
             foto_perfil_file = request.files.get('foto_perfil')
         else:
@@ -34,7 +68,8 @@ def register():
             correo = data.get('correo', '').lower().strip()
             contrasena = data.get('contrasena', '')
             genero = data.get('genero')
-            fecha_nacimiento = data.get('fechaNacimiento')
+            # Usar solo 'fecha_nacimiento' en el JSON
+            fecha_nacimiento = data.get('fecha_nacimiento')
             usa_medicamentos = data.get('usa_medicamentos', False)
             foto_perfil_file = None
 
@@ -460,8 +495,75 @@ def login():
             edad = hoy.year - fecha_dt.year - ((hoy.month, hoy.day) < (fecha_dt.month, fecha_dt.day))
 
         token = create_access_token(identity=str(user["id_usuario"]))
+        # Crear registro de sesión en la base de datos con metadatos del cliente
+        try:
+            from models.sesion import Sesion
+            # IP (respetar proxy headers si existen)
+            xfwd = request.headers.get('X-Forwarded-For', '')
+            if xfwd:
+                ip_addr = xfwd.split(',')[0].strip()
+            else:
+                ip_addr = request.remote_addr
 
-        return jsonify({
+            ua = request.headers.get('User-Agent', '') or ''
+            import re
+
+            if re.search(r'Mobile|Android|iPhone|iPad', ua, re.I):
+                dispositivo = 'Mobile'
+            elif re.search(r'Tablet', ua, re.I):
+                dispositivo = 'Tablet'
+            else:
+                dispositivo = 'Desktop'
+
+            if 'Chrome' in ua and 'Edg' not in ua and 'OPR' not in ua:
+                navegador = 'Chrome'
+            elif 'Firefox' in ua:
+                navegador = 'Firefox'
+            elif 'Edg' in ua or 'Edge' in ua:
+                navegador = 'Edge'
+            elif 'OPR' in ua or 'Opera' in ua:
+                navegador = 'Opera'
+            elif 'Safari' in ua and 'Chrome' not in ua:
+                navegador = 'Safari'
+            elif 'MSIE' in ua or 'Trident' in ua:
+                navegador = 'Internet Explorer'
+            else:
+                navegador = ua[:150] if ua else 'Unknown'
+
+            if 'Windows' in ua:
+                sistema_operativo = 'Windows'
+            elif 'Mac OS X' in ua or 'Macintosh' in ua:
+                sistema_operativo = 'macOS'
+            elif 'Android' in ua:
+                sistema_operativo = 'Android'
+            elif 'iPhone' in ua or 'iPad' in ua or 'iOS' in ua:
+                sistema_operativo = 'iOS'
+            elif 'Linux' in ua:
+                sistema_operativo = 'Linux'
+            else:
+                sistema_operativo = 'Unknown'
+
+            from datetime import datetime
+            sesion_result = Sesion.create(
+                user["id_usuario"],
+                'activa',
+                ip_addr,
+                dispositivo,
+                navegador,
+                sistema_operativo,
+                datetime.now(),
+            )
+            # extraer id de sesión creado si está disponible
+            session_id = None
+            try:
+                if isinstance(sesion_result, dict):
+                    session_id = sesion_result.get('last_id') or sesion_result.get('lastid')
+            except Exception:
+                session_id = None
+        except Exception as e:
+            print(f"[LOGIN] Error creando Sesion: {e}")
+
+        resp = {
             'success': True,
             'token': token,
             'user': {
@@ -477,7 +579,12 @@ def login():
                 'auth_provider': user.get("auth_provider", "local"),
                 'foto_perfil': user.get("foto_perfil")
             }
-        })
+        }
+        # incluir session_id si se obtuvo
+        if 'session_id' not in resp:
+            resp['session_id'] = session_id
+
+        return jsonify(resp)
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -612,6 +719,32 @@ def google_auth():
         else:
             # Usuario ya existe con Google - actualizar foto si cambió
             print(f"[GOOGLE AUTH] Usuario existente encontrado: {email}")
+            
+            # Calcular edad si tiene fecha_nacimiento pero no edad
+            if user.get('fecha_nacimiento') and not user.get('edad'):
+                from datetime import datetime
+                try:
+                    if isinstance(user['fecha_nacimiento'], str):
+                        fecha_nac = datetime.strptime(user['fecha_nacimiento'], '%Y-%m-%d').date()
+                    else:
+                        fecha_nac = user['fecha_nacimiento']
+                    
+                    hoy = datetime.now().date()
+                    edad_calculada = hoy.year - fecha_nac.year - ((hoy.month, hoy.day) < (fecha_nac.month, fecha_nac.day))
+                    
+                    with DatabaseConnection.get_connection() as connection:
+                        cursor = connection.cursor()
+                        cursor.execute("""
+                            UPDATE usuario SET edad = %s WHERE id_usuario = %s
+                        """, (edad_calculada, user['id_usuario']))
+                        connection.commit()
+                    
+                    user['edad'] = edad_calculada
+                    print(f"[GOOGLE AUTH] Edad calculada y actualizada: {edad_calculada}")
+                except Exception as e:
+                    print(f"[GOOGLE AUTH] Error calculando edad: {e}")
+            
+            # Actualizar foto si cambió
             if foto_perfil and user.get('foto_perfil') != foto_perfil:
                 with DatabaseConnection.get_connection() as connection:
                     cursor = connection.cursor()
@@ -637,7 +770,74 @@ def google_auth():
         access_token = create_access_token(identity=str(user['id_usuario']))
         
         print(f"[GOOGLE AUTH] Login exitoso para: {email}")
-        
+        # Crear registro de sesión (metadatos del cliente)
+        try:
+            from models.sesion import Sesion
+
+            xfwd = request.headers.get('X-Forwarded-For', '')
+            if xfwd:
+                ip_addr = xfwd.split(',')[0].strip()
+            else:
+                ip_addr = request.remote_addr
+
+            ua = request.headers.get('User-Agent', '') or ''
+            import re
+
+            if re.search(r'Mobile|Android|iPhone|iPad', ua, re.I):
+                dispositivo = 'Mobile'
+            elif re.search(r'Tablet', ua, re.I):
+                dispositivo = 'Tablet'
+            else:
+                dispositivo = 'Desktop'
+
+            if 'Chrome' in ua and 'Edg' not in ua and 'OPR' not in ua:
+                navegador = 'Chrome'
+            elif 'Firefox' in ua:
+                navegador = 'Firefox'
+            elif 'Edg' in ua or 'Edge' in ua:
+                navegador = 'Edge'
+            elif 'OPR' in ua or 'Opera' in ua:
+                navegador = 'Opera'
+            elif 'Safari' in ua and 'Chrome' not in ua:
+                navegador = 'Safari'
+            elif 'MSIE' in ua or 'Trident' in ua:
+                navegador = 'Internet Explorer'
+            else:
+                navegador = ua[:150] if ua else 'Unknown'
+
+            if 'Windows' in ua:
+                sistema_operativo = 'Windows'
+            elif 'Mac OS X' in ua or 'Macintosh' in ua:
+                sistema_operativo = 'macOS'
+            elif 'Android' in ua:
+                sistema_operativo = 'Android'
+            elif 'iPhone' in ua or 'iPad' in ua or 'iOS' in ua:
+                sistema_operativo = 'iOS'
+            elif 'Linux' in ua:
+                sistema_operativo = 'Linux'
+            else:
+                sistema_operativo = 'Unknown'
+
+            from datetime import datetime
+            sesion_result = Sesion.create(
+                user['id_usuario'],
+                'activa',
+                ip_addr,
+                dispositivo,
+                navegador,
+                sistema_operativo,
+                datetime.now(),
+            )
+            session_id = None
+            try:
+                if isinstance(sesion_result, dict):
+                    session_id = sesion_result.get('last_id') or sesion_result.get('lastid')
+            except Exception:
+                session_id = None
+        except Exception as se:
+            print(f"[GOOGLE AUTH] Error creando sesion: {se}")
+            session_id = None
+
         return jsonify({
             'success': True,
             'token': access_token,
@@ -653,7 +853,8 @@ def google_auth():
                 'edad': user.get('edad'),
                 'fecha_nacimiento': fecha_nac_str,
                 'usa_medicamentos': user.get('usa_medicamentos', False)
-            }
+            },
+            'session_id': session_id
         }), 200
         
     except Exception as e:
@@ -747,7 +948,9 @@ def verify_email(token):
             if user['token_verificacion_expira'] and datetime.now() > user['token_verificacion_expira']:
                 return jsonify({'success': False, 'error': 'Token expirado'}), 400
             
-            # Marcar como verificado
+            # Marcar como verificado y limpiar el token para que no pueda
+            # volver a usarse. El frontend debe evitar llamadas duplicadas
+            # y redirigir inmediatamente al login después de éxito.
             cursor.execute("""
                 UPDATE usuario
                 SET email_verificado = TRUE,

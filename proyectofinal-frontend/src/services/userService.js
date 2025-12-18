@@ -49,6 +49,18 @@ export const userService = {
     }
   },
 
+  async searchUsers(query = '', page = 1, perPage = 10) {
+    try {
+      const q = encodeURIComponent(query || '');
+      const response = await apiClient.get(
+        `${api.endpoints.usuarios.search}?query=${q}&page=${page}&per_page=${perPage}`
+      );
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Error al buscar usuarios' };
+    }
+  },
+
   async deleteUser(userId) {
     try {
       const response = await apiClient.delete(`${api.endpoints.users.byId}/${userId}`);

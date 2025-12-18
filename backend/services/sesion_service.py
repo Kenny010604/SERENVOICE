@@ -81,9 +81,10 @@ class SesionService:
                 COUNT(*) as total_sesiones,
                 COUNT(CASE WHEN estado = 'activa' THEN 1 END) as sesiones_activas,
                 COUNT(CASE WHEN estado = 'cerrada' THEN 1 END) as sesiones_cerradas,
-                AVG(duracion) as duracion_promedio,
+                -- duracion is stored as TIME; convert to seconds then to minutes for numeric average
+                AVG(TIME_TO_SEC(duracion))/60.0 as duracion_promedio,
                 MAX(fecha_inicio) as ultima_sesion
-            FROM Sesion
+            FROM sesion
             WHERE id_usuario = %s
         """
         
@@ -104,7 +105,7 @@ class SesionService:
         """
         query = """
             SELECT *
-            FROM Sesion
+            FROM sesion
             WHERE id_usuario = %s
             AND fecha_inicio >= DATE_SUB(CURDATE(), INTERVAL %s DAY)
             ORDER BY fecha_inicio DESC
@@ -122,8 +123,8 @@ class SesionService:
         """
         query = """
             SELECT s.*, u.nombre, u.apellido, u.correo
-            FROM Sesion s
-            JOIN Usuario u ON s.id_usuario = u.id_usuario
+            FROM sesion s
+            JOIN usuario u ON s.id_usuario = u.id_usuario
             WHERE s.estado = 'activa'
             ORDER BY s.fecha_inicio DESC
         """
@@ -144,8 +145,9 @@ class SesionService:
         import numpy as np
         
         query = """
-            SELECT duracion
-            FROM Sesion
+            -- Return duration in minutes as numeric value
+            SELECT TIME_TO_SEC(duracion)/60.0 as duracion_min
+            FROM sesion
             WHERE id_usuario = %s AND duracion IS NOT NULL
         """
         
@@ -159,7 +161,7 @@ class SesionService:
                 'max': 0
             }
         
-        duraciones = [float(r['duracion']) for r in results]
+        duraciones = [float(r['duracion_min']) for r in results]
         
         return {
             'total': len(duraciones),

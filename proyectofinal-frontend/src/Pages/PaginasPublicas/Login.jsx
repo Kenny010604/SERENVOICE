@@ -12,7 +12,7 @@ import logo from "../../assets/Logo.svg";
 import "../../global.css";
 import NavbarPublic from "../../components/Publico/NavbarPublic";
 import ModalSeleccionRol from "../../components/Publico/ModalSeleccionRol";
-import GoogleLoginButton from "../../components/GoogleLoginButton";
+import GoogleLoginButton from "../../components/Publico/GoogleLoginButton";
 import authService from "../../services/authService";
 import { ThemeContext } from "../../context/themeContextDef";
 import PaisajeClaro from "../../assets/PaisajeClaro.svg";
@@ -39,22 +39,34 @@ const Login = () => {
       // authService ya maneja la estructura correcta
       const data = await authService.login(email, password);
 
-      // Extraer roles del backend (ahora es array)
-      const userRoles = data.user.roles || ['usuario'];
+      // Extraer roles del backend (varias formas posibles). Fallbacks para respuestas inconsistentes.
+      const resp = data || {};
+      const respUser = resp.user || null;
+
+      // intentos de extracción: data.user.roles, data.roles, o desde localStorage (authService guarda user)
+      let rolesFromResp = respUser?.roles ?? resp.roles ?? null;
+
+      if (!rolesFromResp) {
+        try {
+          const stored = localStorage.getItem('user');
+          const parsed = stored ? JSON.parse(stored) : null;
+          rolesFromResp = parsed?.roles ?? null;
+        } catch (e) {
+          rolesFromResp = null;
+        }
+      }
+
+      const userRoles = Array.isArray(rolesFromResp) && rolesFromResp.length ? rolesFromResp : ['usuario'];
 
       // Si hay más de un rol → mostrar modal
       if (userRoles.length > 1) {
         setAvailableRoles(userRoles);
         setShowRoleModal(true);
       } else {
-        // Usar el primer rol
-        const role = userRoles[0].toLowerCase();
-
-        if (role === "admin") {
-          navigate("/admin/dashboard");
-        } else {
-          navigate("/dashboard");
-        }
+        // Usar el primer rol con seguridad
+        const role = (userRoles[0] || 'usuario').toString().toLowerCase();
+        if (role === 'admin') navigate('/admin/dashboard');
+        else navigate('/dashboard');
       }
     } catch (err) {
       console.error("Error en login:", err);

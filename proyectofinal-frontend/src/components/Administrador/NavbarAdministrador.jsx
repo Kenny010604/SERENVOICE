@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
+import authService from "../../services/authService";
 import {
   FaUser,
   FaSignOutAlt,
@@ -45,15 +46,34 @@ const NavbarAdministrador = ({ adminData = {} }) => {
     setMobileMenuOpen(false);
   };
 
+  // Prefer prop `adminData`, si está vacío usar authService.getUser()
+  const currentUser = (adminData && Object.keys(adminData).length > 0) ? adminData : authService.getUser() || {};
+  
+  // Debug: Log para verificar los datos del usuario
+  React.useEffect(() => {
+    console.log('[NAVBAR ADMIN] currentUser:', currentUser);
+    console.log('[NAVBAR ADMIN] foto_perfil:', currentUser?.foto_perfil);
+  }, [currentUser]);
+
+  const makeFotoUrlWithProxy = (path) => {
+    if (!path) return null;
+    const trimmed = String(path).trim();
+    const lower = trimmed.toLowerCase();
+    // Si viene de Google profile (googleusercontent), usar proxy del backend
+    if (lower.includes('googleusercontent.com') || lower.includes('lh3.googleusercontent.com')) {
+      return `/api/auth/proxy_image?url=${encodeURIComponent(trimmed)}`;
+    }
+    if (lower.startsWith('http://') || lower.startsWith('https://')) return trimmed;
+    if (lower.startsWith('//')) return `https:${trimmed}`;
+    // Ruta relativa almacenada en la base: prefijar host del backend
+    return `http://localhost:5000${trimmed}`;
+  };
+
   return (
     <nav className="navbar admin-navbar">
       {/* Logo y nombre */}
       <div className="nav-brand">
-        <img
-          src={logo}
-          alt="SerenVoice Logo"
-          className="nav-logo"
-        />
+        <img src={logo} alt="SerenVoice Logo" className="nav-logo" />
         <h1 className="nav-title">SerenVoice</h1>
         <span className="admin-badge">
           <FaShieldAlt /> Admin
@@ -93,8 +113,38 @@ const NavbarAdministrador = ({ adminData = {} }) => {
           <button
             onClick={() => setUserMenuOpen(!userMenuOpen)}
             className="admin-user-button"
+            aria-label="Abrir menú de administrador"
           >
-            <FaUser /> <span>{adminData.nombres || "Admin"}</span>
+            {
+              // Mostrar imagen de perfil si existe, sino el ícono por defecto
+              (function renderAvatar() {
+                const foto = currentUser?.foto_perfil;
+                console.log('[NAVBAR ADMIN] Renderizando avatar, foto:', foto);
+                if (foto) {
+                  try {
+                    const src = makeFotoUrlWithProxy(foto);
+                    console.log('[NAVBAR ADMIN] URL de imagen generada:', src);
+                    return (
+                      <img
+                        src={src}
+                        alt={`${currentUser.nombre || currentUser.nombres || 'Admin'} avatar`}
+                        style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', marginRight: 8 }}
+                        onError={(e) => {
+                          console.error('[NAVBAR ADMIN] Error cargando imagen:', src);
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    );
+                  } catch (err) {
+                    console.warn('[NAVBAR_ADMIN] avatar render error:', err);
+                    return <FaUser />;
+                  }
+                }
+                console.log('[NAVBAR ADMIN] No hay foto, mostrando ícono por defecto');
+                return <FaUser />;
+              })()
+            }
+            <span>{currentUser.nombre || currentUser.nombres || 'Admin'}</span>
             <FaChevronDown
               style={{
                 fontSize: "0.75rem",

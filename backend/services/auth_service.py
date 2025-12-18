@@ -4,6 +4,8 @@ from models.usuario import Usuario
 from models.sesion import Sesion
 from utils.seguridad import Seguridad
 from flask_jwt_extended import create_access_token
+from models.rol_usuario import RolUsuario
+from models.rol import Rol
 
 
 class AuthService:
@@ -42,12 +44,18 @@ class AuthService:
             contrasena=hashed_password,
             genero=data['genero'],
             fecha_nacimiento=data.get('fecha_nacimiento'),
-            usa_medicamentos=data.get('usa_medicamentos', False),
-            rol='usuario'
+            usa_medicamentos=data.get('usa_medicamentos', False)
         )
 
         if id_usuario:
             token = create_access_token(identity=str(id_usuario))
+            # Asignar rol por defecto 'usuario' en tabla rol_usuario
+            try:
+                rol_row = Rol.get_by_name('usuario')
+                if rol_row:
+                    RolUsuario.assign_role(id_usuario, rol_row.get('id_rol'))
+            except Exception:
+                pass
             return {
                 'success': True,
                 'message': 'Usuario registrado exitosamente',
@@ -58,6 +66,7 @@ class AuthService:
                     'apellido': data['apellido'],
                     'correo': data['correo'],
                     'genero': data['genero'],
+                    'roles': ['usuario'],
                     'rol': 'usuario',
                     'fecha_nacimiento': data.get('fecha_nacimiento'),
                     'usa_medicamentos': data.get('usa_medicamentos', False)
@@ -84,6 +93,13 @@ class AuthService:
 
         Sesion.create(usuario['id_usuario'])
 
+        # Obtener roles
+        try:
+            roles_rows = RolUsuario.get_user_roles(usuario['id_usuario']) or []
+            roles_list = [r.get('nombre_rol') for r in roles_rows]
+        except Exception:
+            roles_list = []
+
         return {
             'success': True,
             'token': token,
@@ -92,7 +108,8 @@ class AuthService:
                 'nombre': usuario['nombre'],
                 'apellido': usuario['apellido'],
                 'correo': usuario['correo'],
-                'rol': usuario['rol'],
+                'roles': roles_list,
+                'rol': roles_list[0] if roles_list else None,
                 'genero': usuario.get('genero'),
                 'fecha_nacimiento': usuario.get('fecha_nacimiento'),
                 'edad': usuario.get('edad'),

@@ -7,9 +7,11 @@ import {
   FaHistory,
   FaHeartbeat,
   FaMicrophone,
-  FaGamepad
+  FaGamepad,
+  FaSearch,
+  FaUsers
 } from "react-icons/fa";
-import NavbarUsuario from "../../components/NavbarUsuario";
+import NavbarUsuario from "../../components/Usuario/NavbarUsuario";
 import authService from "../../services/authService";
 import { ThemeContext } from "../../context/themeContextDef";
 import FondoClaro from "../../assets/FondoClaro.svg";
@@ -183,6 +185,48 @@ const Dashboard = () => {
               }}
             >
               Jugar Ahora
+            </button>
+          </div>
+
+          {/* Tarjeta: Buscar Grupos */}
+          <div className="card">
+            <FaSearch
+              size={40}
+              style={{ color: "var(--color-primary)", marginBottom: "1rem" }}
+            />
+            <h3 style={{ color: "var(--color-text-main)", marginBottom: "0.5rem" }}>
+              Buscar Grupos
+            </h3>
+            <p style={{ marginBottom: "1rem" }}>
+              Encuentra grupos disponibles y únete a los que te interesen.
+            </p>
+            <button
+              className="auth-button"
+              onClick={() => navigate("/grupos")}
+              style={{ width: "100%", marginTop: "auto" }}
+            >
+              Buscar Grupos
+            </button>
+          </div>
+
+          {/* Tarjeta: Gestionar Mis Grupos (dueño) */}
+          <div className="card">
+            <FaUsers
+              size={40}
+              style={{ color: "var(--color-primary)", marginBottom: "1rem" }}
+            />
+            <h3 style={{ color: "var(--color-text-main)", marginBottom: "0.5rem" }}>
+              Gestionar Mis Grupos
+            </h3>
+            <p style={{ marginBottom: "1rem" }}>
+              Administra los grupos que has creado y gestiona miembros y actividades.
+            </p>
+            <button
+              className="auth-button"
+              onClick={() => navigate("/grupos?owner=me")}
+              style={{ width: "100%", marginTop: "auto" }}
+            >
+              Mis Grupos
             </button>
           </div>
         </div>

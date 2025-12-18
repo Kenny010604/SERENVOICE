@@ -1,6 +1,7 @@
 // src/services/apiClient.js
 import axios from "axios";
 import apiConfig from "../config/api";
+import authService from './authService';
 
 // ==============================
 // CONFIGURACIÓN BASE
@@ -62,6 +63,16 @@ apiClient.interceptors.response.use(
 
     if (status === 401) {
       console.warn("Token expirado o inválido");
+      try {
+        // Forzar logout local y redirigir al login para obtener credenciales nuevas
+        authService.logout();
+      } catch (e) {
+        console.warn('Error during auto-logout:', e);
+      }
+      // Redirigir a la página de login
+      if (typeof window !== 'undefined') {
+        window.setTimeout(() => { window.location.href = '/login'; }, 150);
+      }
     }
 
     return Promise.reject(error);

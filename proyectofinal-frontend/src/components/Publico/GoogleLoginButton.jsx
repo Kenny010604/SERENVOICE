@@ -1,7 +1,7 @@
 import React from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { FaGoogle } from 'react-icons/fa';
-import authService from '../services/authService';
+import authService from '../../services/authService';
 import { useNavigate } from 'react-router-dom';
 
 const GoogleLoginButton = () => {

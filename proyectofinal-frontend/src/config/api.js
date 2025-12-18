@@ -1,28 +1,38 @@
 // src/config/api.js
-const API_BASE_URL = "http://localhost:5000";  // ← ✔ Ajusta si usas otro puerto
+const API_BASE_URL = "http://localhost:5000/api";  // ← include '/api' so apiClient baseURL matches backend blueprint
 
 const api = {
   baseURL: API_BASE_URL,
   endpoints: {
     auth: {
-      base: "/api/auth",
-      login: "/api/auth/login",
-      register: "/api/auth/register",
-      logout: "/api/auth/logout",
-      google: "/api/auth/google",
-      forgotPassword: "/api/auth/forgot-password",
-      resetPassword: "/api/auth/reset-password",
-      verifyEmail: "/api/auth/verify-email",
-      resendVerification: "/api/auth/resend-verification",
+      base: "/auth",
+      login: "/auth/login",
+      register: "/auth/register",
+      logout: "/auth/logout",
+      google: "/auth/google",
+      forgotPassword: "/auth/forgot-password",
+      resetPassword: "/auth/reset-password",
+      verifyEmail: "/auth/verify-email",
+      resendVerification: "/auth/resend-verification",
     },
     usuarios: {
-      list: "/api/usuarios",
-      detail: (id) => `/api/usuarios/${id}`,
-      create: "/api/usuarios",
-      update: (id) => `/api/usuarios/${id}`,
-      delete: (id) => `/api/usuarios/${id}`,
+      list: "/usuarios",
+      detail: (id) => `/usuarios/${id}`,
+      search: "/usuarios/search",
+      create: "/usuarios",
+      update: (id) => `/usuarios/${id}`,
+      delete: (id) => `/usuarios/${id}`,
     },
-contacto: "/api/contact/send",
+    // alias in English for existing code that references api.endpoints.users
+    users: {
+      list: "/usuarios",
+      me: "/usuarios/me",
+      byId: (id) => `/usuarios/${id}`,
+      create: "/usuarios",
+      update: (id) => `/usuarios/${id}`,
+      delete: (id) => `/usuarios/${id}`,
+    },
+contacto: "/contact/send",
   },
 };
 

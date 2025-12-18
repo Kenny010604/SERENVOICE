@@ -110,20 +110,27 @@ def role_required(required_role):
                         'message': 'Usuario no encontrado'
                     }), 404
                 
-                # Verificar que el usuario tenga el campo 'rol'
-                user_role = user.get('rol') if isinstance(user, dict) else getattr(user, 'rol', None)
-                
-                if not user_role:
+                # Obtener roles desde la tabla rol_usuario (soporta múltiples roles)
+                from models.rol_usuario import RolUsuario
+
+                try:
+                    user_roles = RolUsuario.get_user_roles(current_user_id)
+                    roles_list = [r.get('nombre_rol') for r in user_roles] if user_roles else []
+                except Exception as e:
+                    print(f"[ERROR] No se pudieron obtener roles del usuario: {e}")
+                    roles_list = []
+
+                if not roles_list:
                     return jsonify({
                         'success': False,
                         'message': 'El usuario no tiene un rol asignado'
                     }), 403
-                
-                # Verificar el rol
-                if user_role != required_role:
+
+                # Verificar si el rol requerido está presente
+                if required_role not in roles_list:
                     return jsonify({
                         'success': False,
-                        'message': f'Se requiere rol de {required_role}. Tu rol es: {user_role}'
+                        'message': f'Se requiere rol de {required_role}. Tus roles son: {roles_list}'
                     }), 403
                 
                 return fn(*args, **kwargs)

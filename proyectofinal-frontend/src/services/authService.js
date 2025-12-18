@@ -1,6 +1,7 @@
 // src/services/authService.js
 import apiClient from "./apiClient";
 import api from "../config/api";
+import sesionesService from "./sesionesService";
 
 const authService = {
   publicMode: false, // activar para pruebas públicas
@@ -16,6 +17,7 @@ const authService = {
       if (!response.data.success) throw new Error(response.data.error || "Credenciales incorrectas");
 
       const { token, user } = response.data;
+      const session_id = response.data.session_id || null;
       
       // Manejar roles como array
       const userWithRole = { 
@@ -26,6 +28,7 @@ const authService = {
 
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(userWithRole));
+      if (session_id) localStorage.setItem("session_id", session_id);
       return { token, user: userWithRole };
     } catch (error) {
       throw new Error(error.response?.data?.error || error.message);
@@ -45,7 +48,8 @@ const authService = {
         correo: userData.correo,
         contrasena: userData.contrasena,
         genero: userData.genero,
-        fechaNacimiento: userData.fecha_nacimiento
+        // Usar solo `fecha_nacimiento` para coincidir con la BD
+        fecha_nacimiento: userData.fecha_nacimiento || null
       });
 
       if (!response.data.success) throw new Error(response.data.error || "Error al registrar usuario");
@@ -75,10 +79,33 @@ const authService = {
     }
   },
 
-  logout() {
+  async logout() {
     if (this.publicMode) return;
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    try {
+      const sessionId = localStorage.getItem("session_id");
+      console.debug('[authService] logout called, session_id=', sessionId);
+      if (sessionId) {
+        try {
+          console.debug('[authService] attempting to close remote session', sessionId);
+          await sesionesService.closeSession(sessionId);
+          console.debug('[authService] remote session closed successfully');
+        } catch (e) {
+          console.warn("Error cerrando sesión remota:", e);
+        }
+      } else {
+        console.debug('[authService] no session_id found in localStorage — attempting to close all active sessions');
+        try {
+          await sesionesService.closeAllSessions();
+          console.debug('[authService] closeAllSessions succeeded');
+        } catch (e) {
+          console.warn('[authService] closeAllSessions failed:', e);
+        }
+      }
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("session_id");
+    }
   },
 
   getToken() {
@@ -135,6 +162,7 @@ const authService = {
 
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(userWithRole));
+      if (response.data.session_id) localStorage.setItem("session_id", response.data.session_id);
       return { token, user: userWithRole };
     } catch (error) {
       throw new Error(error.response?.data?.error || error.message);

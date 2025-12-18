@@ -8,13 +8,14 @@ class GrupoMiembro:
     @staticmethod
     def add_member(id_grupo, id_usuario, rol_grupo='participante', permisos_especiales=None):
         """Agregar un miembro a un grupo"""
+        # Insertar miembro marcándolo como activo y con estado 'activo'
         query = """
             INSERT INTO grupo_miembros 
-            (id_grupo, id_usuario, rol_grupo, permisos_especiales)
-            VALUES (%s, %s, %s, %s)
+            (id_grupo, id_usuario, rol_grupo, permisos_especiales, activo, estado, fecha_ingreso)
+            VALUES (%s, %s, %s, %s, 1, 'activo', NOW())
         """
         return DatabaseConnection.execute_query(
-            query, 
+            query,
             (id_grupo, id_usuario, rol_grupo, permisos_especiales),
             fetch=False
         )

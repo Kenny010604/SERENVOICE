@@ -3,6 +3,8 @@
 from flask import Blueprint, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.connection import DatabaseConnection
+from services.usuario_service import UsuarioService
+from models.rol_usuario import RolUsuario
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -11,23 +13,18 @@ bp = Blueprint('admin', __name__, url_prefix='/admin')
 # ======================================================
 def verificar_admin(user_id):
     try:
-        connection = DatabaseConnection.get_connection()
-        cursor = connection.cursor(dictionary=True)
-        cursor.execute("SELECT id_usuario, correo, rol FROM usuario WHERE id_usuario = %s LIMIT 1", (user_id,))
-        user = cursor.fetchone()
-        cursor.close()
-        DatabaseConnection.return_connection(connection)
-        
+        user = UsuarioService.get_usuario_by_id(user_id)
+
         if not user:
             print(f"❌ Usuario {user_id} no encontrado en la BD")
             return False
-        
-        print(f"✅ Usuario: {user['correo']} (ID: {user['id_usuario']}) - Rol: {user['rol']}")
-        
-        es_admin = user["rol"] == "admin"
+
+        print(f"✅ Usuario: {user.get('correo')} (ID: {user.get('id_usuario')}) - Rol: {user.get('rol')}")
+
+        es_admin = user.get("rol") == "admin"
         if not es_admin:
-            print(f"⚠️ Usuario {user['correo']} intentó acceder pero su rol es '{user['rol']}' (no 'admin')")
-        
+            print(f"⚠️ Usuario {user.get('correo')} intentó acceder pero su rol es '{user.get('rol')}' (no 'admin')")
+
         return es_admin
         
     except Exception as e:
@@ -116,53 +113,29 @@ def get_profile():
                 'error': 'Acceso no autorizado. Se requiere rol administrador.'
             }), 403
 
-        connection = DatabaseConnection.get_connection()
-        cursor = connection.cursor(dictionary=True)
-        
-        query = """
-            SELECT 
-                id_usuario,
-                nombre,
-                apellido,
-                correo,
-                genero,
-                fecha_nacimiento,
-                rol,
-                fecha_creacion
-            FROM usuario 
-            WHERE id_usuario = %s
-        """
-        
-        cursor.execute(query, (user_id,))
-        user = cursor.fetchone()
+        # Usar el service que ya adjunta roles
+        user = UsuarioService.get_usuario_by_id(user_id)
 
         if not user:
-            cursor.close()
-            DatabaseConnection.return_connection(connection)
             return jsonify({
                 'success': False,
                 'error': 'Usuario no encontrado'
             }), 404
 
-        # Construir respuesta
         profile_data = {
-            'id': user['id_usuario'],
-            'nombre': user['nombre'],
-            'apellido': user['apellido'],
-            'correo': user['correo'],
+            'id': user.get('id_usuario'),
+            'nombre': user.get('nombre'),
+            'apellido': user.get('apellido'),
+            'correo': user.get('correo'),
             'genero': user.get('genero'),
-            'rol': user['rol']
+            'rol': user.get('rol')
         }
-        
-        # Agregar campos opcionales solo si existen
-        if user.get('fecha_nacimiento'):
-            profile_data['fecha_nacimiento'] = str(user['fecha_nacimiento'])
-        
-        if user.get('fecha_creacion'):
-            profile_data['fecha_creacion'] = str(user['fecha_creacion'])
 
-        cursor.close()
-        DatabaseConnection.return_connection(connection)
+        if user.get('fecha_nacimiento'):
+            profile_data['fecha_nacimiento'] = str(user.get('fecha_nacimiento'))
+
+        if user.get('fecha_creacion'):
+            profile_data['fecha_creacion'] = str(user.get('fecha_creacion'))
 
         return jsonify({
             'success': True,
@@ -204,41 +177,12 @@ def get_usuarios():
                 'error': 'Acceso no autorizado. Se requiere rol administrador.'
             }), 403
 
-        connection = DatabaseConnection.get_connection()
-        cursor = connection.cursor(dictionary=True)
-
-        # Obtener usuarios
-        query = """
-            SELECT 
-                id_usuario,
-                nombre,
-                apellido,
-                correo,
-                rol,
-                fecha_ultimo_acceso
-            FROM usuario
-        """
-        cursor.execute(query)
-        usuarios = cursor.fetchall()
-
-        # Formatear respuesta
-        usuarios_data = []
-        for u in usuarios:
-            usuarios_data.append({
-                'id': u['id_usuario'],
-                'nombre': u['nombre'],
-                'apellido': u['apellido'],
-                'email': u['correo'],
-                'roles': [u['rol']],  # convertir rol a lista para compatibilidad frontend
-                'ultimoAcceso': str(u.get('fecha_ultimo_acceso')) if u.get('fecha_ultimo_acceso') else None
-            })
-
-        cursor.close()
-        DatabaseConnection.return_connection(connection)
+        # Delegar a UsuarioService que ya devuelve la lista con roles
+        usuarios = UsuarioService.get_all_usuarios_simple()
 
         return jsonify({
             'success': True,
-            'usuarios': usuarios_data
+            'usuarios': usuarios
         }), 200
 
     except Exception as e:

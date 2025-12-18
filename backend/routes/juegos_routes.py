@@ -26,8 +26,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from database.connection import DatabaseConnection
 
 # Crear Blueprint con url_prefix
-juegos_bp = Blueprint('juegos', __name__, url_prefix='/juegos')
-print("[DEBUG] OK - Blueprint 'juegos' creado con url_prefix='/juegos'")
+juegos_bp = Blueprint('juegos', __name__, url_prefix='/api/juegos')
+print("[DEBUG] OK - Blueprint 'juegos' creado con url_prefix='/api/juegos'")
 
 
 @juegos_bp.route('/recomendados', methods=['GET'])
