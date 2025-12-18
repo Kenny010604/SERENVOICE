@@ -238,43 +238,6 @@ npm start
 
 ---
 
-## ⚙️ Configuración
-
-### Variables de Entorno Backend (`backend/.env`)
-
-```env
-# Base de datos
-DATABASE_HOST=localhost
-DATABASE_PORT=3306
-DATABASE_USER=admin
-DATABASE_PASSWORD=admin123
-DATABASE_NAME=estudiantes_db
-
-# JWT
-JWT_SECRET_KEY=tu-clave-secreta-segura
-
-# Email (opcional)
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=tu-email@gmail.com
-EMAIL_PASSWORD=tu-contraseña-app
-
-# Groq API (para recomendaciones IA)
-GROQ_API_KEY=tu-api-key-groq
-
-# Flask
-FLASK_ENV=development
-```
-
-### Variables de Entorno Frontend (`proyectofinal-frontend/.env`)
-
-```env
-VITE_API_URL=http://localhost:5000
-VITE_BACKEND_URL=http://localhost:5000
-```
-
----
-
 ## 📖 Uso
 
 ### 1. Registro e Inicio de Sesión
@@ -379,63 +342,6 @@ SerenVoice/
 
 ---
 
-## 📚 API Documentation
-
-La API cuenta con documentación Swagger interactiva disponible en:
-
-```
-http://localhost:5000/apidocs
-```
-
-### Principales Endpoints
-
-#### Autenticación
-- `POST /api/auth/register` - Registrar nuevo usuario
-- `POST /api/auth/login` - Iniciar sesión
-- `POST /api/auth/logout` - Cerrar sesión
-- `GET /api/auth/validate` - Validar token JWT
-
-#### Usuarios
-- `GET /api/usuarios` - Listar usuarios
-- `GET /api/usuarios/{id}` - Obtener usuario
-- `PUT /api/usuarios/{id}` - Actualizar usuario
-- `DELETE /api/usuarios/{id}` - Eliminar usuario
-
-#### Audio
-- `POST /api/audio/upload` - Subir archivo de audio
-- `GET /api/audio/{id}` - Obtener información de audio
-- `DELETE /api/audio/{id}` - Eliminar audio
-
-#### Análisis
-- `POST /api/analisis/analyze` - Analizar audio
-- `GET /api/analisis/{id}` - Obtener análisis completo
-- `GET /api/analisis/usuario/{id}` - Historial de usuario
-
-#### Resultados
-- `GET /api/resultados/{id}` - Obtener resultado
-- `GET /api/resultados/usuario/{id}` - Resultados de usuario
-- `GET /api/resultados/estadisticas/{id}` - Estadísticas
-
-#### Recomendaciones
-- `GET /api/recomendaciones/resultado/{id}` - Recomendaciones por resultado
-- `POST /api/recomendaciones/generar` - Generar con IA
-
-#### Reportes
-- `POST /api/reportes/generar` - Generar reporte PDF
-- `POST /api/reportes/excel` - Exportar a Excel
-
-#### Grupos
-- `GET /api/grupos` - Listar grupos
-- `POST /api/grupos` - Crear grupo
-- `POST /api/grupos/{id}/miembros` - Añadir miembro
-
-#### Juegos Terapéuticos
-- `GET /juegos` - Listar juegos
-- `POST /juegos/sesion` - Crear sesión de juego
-- `GET /juegos/sesion/{id}` - Obtener sesión
-
----
-
 ## 🔬 Características Técnicas
 
 ### Procesamiento de Audio
@@ -487,36 +393,6 @@ npm run test
 
 ---
 
-## 🐳 Docker
-
-### Servicios Disponibles
-
-- **mysql_estudiantes**: Base de datos MySQL 8.0 (puerto 3307)
-- **phpmyadmin_estudiantes**: Administrador web (puerto 8080)
-- **flask_backend**: API backend Flask (puerto 5000)
-- **react_frontend**: Aplicación web React (puerto 5173)
-
-### Comandos Útiles
-
-```bash
-# Iniciar todos los servicios
-docker-compose up -d
-
-# Ver logs
-docker-compose logs -f
-
-# Detener servicios
-docker-compose down
-
-# Reconstruir imágenes
-docker-compose up --build
-
-# Eliminar volúmenes (⚠️ borra datos)
-docker-compose down -v
-```
-
----
-
 ## 🔐 Seguridad
 
 - **Autenticación JWT** con tokens de acceso
@@ -529,31 +405,9 @@ docker-compose down -v
 
 ---
 
-## 🤝 Contribuir
-
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
-
----
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
-
----
-
 ## 👥 Equipo
 
 Desarrollado con ❤️ por el equipo de SerenVoice
-
----
-
-## 📞 Soporte
-
-Para reportar problemas o solicitar nuevas características, por favor abre un issue en GitHub.
 
 ---
 
@@ -566,18 +420,3 @@ Para reportar problemas o solicitar nuevas características, por favor abre un i
 - **Flask** - Framework web
 
 ---
-
-## 🗺️ Roadmap
-
-- [ ] Integración con wearables para datos biométricos
-- [ ] Análisis de voz en tiempo real (streaming)
-- [ ] Soporte multiidioma
-- [ ] Dashboard analytics avanzado
-- [ ] Integración con calendarios
-- [ ] Sistema de videollamadas integrado
-- [ ] Exportación a FHIR para sistemas de salud
-- [ ] App de escritorio (Electron)
-
----
-
-**SerenVoice** - *Transformando el análisis de voz en insights de salud mental* 🎙️🧠✨
