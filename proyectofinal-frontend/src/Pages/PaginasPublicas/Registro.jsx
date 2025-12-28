@@ -268,9 +268,7 @@ const Registro = () => {
     }
   };
 
-  const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:5000/oauth2/authorization/google";
-  };
+  // Google login handled by `GoogleLoginButton` component; removed unused handler.
 
   return (
     <>

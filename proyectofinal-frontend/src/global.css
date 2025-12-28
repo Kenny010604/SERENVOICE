@@ -754,6 +754,77 @@ main {
   word-break: break-word;
 }
 
+/* User card specific styles */
+.user-card {
+  border: 1px solid transparent;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
+}
+
+.user-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+  transform: translateY(-4px);
+}
+
+.user-card.me {
+  border: 2px solid var(--color-primary);
+}
+
+.me-badge {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background-color: var(--color-primary);
+  color: #fff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.role-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid rgba(0,0,0,0.06);
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+.role-badge.role-admin {
+  border-color: #ff6b6b;
+  color: #ff6b6b;
+}
+.user-card.me {
+  border-color: #ff6b6b;
+  box-shadow: 0 4px 10px rgba(255,107,107,0.06);
+}
+.user-card.me .role-badge.role-admin {
+  background: #ff6b6b;
+  color: #fff;
+  border-color: #ff6b6b;
+}
+.user-card.me:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(255,107,107,0.08);
+}
+
+.role-badge.role-profesional {
+  border-color: #2196f3;
+  color: #2196f3;
+}
+
+.role-badge.role-usuario {
+  border-color: #4caf50;
+  color: #4caf50;
+}
+
+.role-empty {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
 /* Activity cards used in GroupActivitiesPanel */
 .activities-grid {
   display: grid;
@@ -1539,6 +1610,18 @@ input[type="password"]::-webkit-clear-button {
   width: 100%;
 }
 
+/* Compact / flush input-group: used when you want the text to start at the edge
+   (hides left icon and removes extra left padding). Useful for compact filters. */
+.input-group.flush .input-icon {
+  display: none;
+}
+.input-group.flush input,
+.input-group.flush select,
+.input-group.flush .input-textarea {
+  /* reduce left padding so text is visually flush */
+  padding-left: 0.5rem;
+}
+
 .gender-options.error .gender-option {
   border-color: var(--color-error);
   background: rgba(255, 51, 51, 0.05);
@@ -2285,4 +2368,99 @@ input[type="password"]::-webkit-clear-button {
   .notifications-wrapper {
     margin-left: 0;
   }
+}
+
+/* Stats modal styles */
+.stats-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.stats-modal {
+  max-width: 900px;
+  width: 94%;
+  padding: 1.25rem;
+}
+
+.stats-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.stat-item {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.stat-top {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.stat-icon {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(90,208,210,0.12);
+  border-radius: 10px;
+  color: var(--color-primary);
+  font-size: 1.1rem;
+}
+
+.stat-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.stat-bar {
+  height: 10px;
+  background: rgba(0,0,0,0.06);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.stat-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary), #1e88e5);
+}
+
+.close-btn {
+  background: none;
+  border: 1px solid rgba(0,0,0,0.06);
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 540px) {
+  .stats-grid { grid-template-columns: 1fr; }
 }

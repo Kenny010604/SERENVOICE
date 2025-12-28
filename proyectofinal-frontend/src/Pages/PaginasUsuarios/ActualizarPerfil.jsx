@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import "../../global.css";
 import Spinner from "../../components/Publico/Spinner";
 import NavbarUsuario from "../../components/Usuario/NavbarUsuario";
@@ -56,8 +56,7 @@ const googleLockedStyles = `
   }
 `;
 
-const ActualizarPerfil = ({ NavbarComponent = NavbarUsuario }) => {
-  const navigate = useNavigate();
+const ActualizarPerfil = () => {
   const cardRef = useRef(null);
   const { isDark } = useContext(ThemeContext);
 
@@ -107,7 +106,7 @@ const ActualizarPerfil = ({ NavbarComponent = NavbarUsuario }) => {
       const lower = trimmed.toLowerCase();
       if (lower.startsWith('http://') || lower.startsWith('https://')) return trimmed;
       if (lower.startsWith('//')) return `https:${trimmed}`;
-    } catch (e) {
+    } catch {
       return null;
     }
     return `http://localhost:5000${trimmed}`;
@@ -298,7 +297,7 @@ const ActualizarPerfil = ({ NavbarComponent = NavbarUsuario }) => {
 
   return (
     <>
-      <NavbarComponent userData={user} />
+      <NavbarUsuario userData={user} />
       <main className="container" style={{
         paddingTop: "2rem",
         paddingBottom: "4rem",

@@ -15,7 +15,7 @@ const JuegoMemoria = ({ juego, onFinish, onExit }) => {
     if (juegoIniciado && cartasEmparejadas.length === cartas.length && cartas.length > 0) {
       setJuegoCompletado(true);
     }
-  }, [cartasEmparejadas, cartas]);
+  }, [juegoIniciado, cartasEmparejadas, cartas]);
 
   const iniciarJuego = () => {
     // Crear pares de cartas

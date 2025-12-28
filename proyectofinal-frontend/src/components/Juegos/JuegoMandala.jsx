@@ -1,5 +1,5 @@
 // src/components/Juegos/JuegoMandala.jsx
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 
 const JuegoMandala = ({ juego, onFinish, onExit }) => {
   const canvasRef = useRef(null);
@@ -11,7 +11,6 @@ const JuegoMandala = ({ juego, onFinish, onExit }) => {
   const [porcentajeCompletado, setPorcentajeCompletado] = useState(0);
   const [tiempoInicio, setTiempoInicio] = useState(null);
   const [segundos, setSegundos] = useState(0);
-
   const paleta = [
     "#FF6B9D", "#C44569", "#F8B500", "#FFA801",
     "#4ECDC4", "#44A08D", "#6C5CE7", "#A29BFE",
@@ -56,10 +55,10 @@ const JuegoMandala = ({ juego, onFinish, onExit }) => {
   }, [juegoIniciado, tiempoInicio]);
 
   useEffect(() => {
-    if (mandalaSeleccionado && canvasRef.current) {
+    if (canvasRef.current) {
       dibujarMandala();
     }
-  }, [mandalaSeleccionado]);
+  }, [dibujarMandala]);
 
   const iniciarJuego = (mandala) => {
     setMandalaSeleccionado(mandala);
@@ -68,9 +67,9 @@ const JuegoMandala = ({ juego, onFinish, onExit }) => {
     setPorcentajeCompletado(0);
   };
 
-  const dibujarMandala = () => {
+  const dibujarMandala = useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || !mandalaSeleccionado) return;
 
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -87,7 +86,7 @@ const JuegoMandala = ({ juego, onFinish, onExit }) => {
 
     const path = new Path2D(mandalaSeleccionado.svg);
     ctx.stroke(path);
-  };
+  }, [mandalaSeleccionado]);
 
   const obtenerPosicionMouse = (e) => {
     const canvas = canvasRef.current;

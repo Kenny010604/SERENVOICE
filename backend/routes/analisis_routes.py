@@ -3,6 +3,9 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from services.analisis_service import AnalisisService
 from utils.helpers import Helpers
+from utils.seguridad import role_required
+from database.connection import DatabaseConnection
+import traceback
 
 bp = Blueprint('analisis', __name__, url_prefix='/api/analisis')
 
@@ -60,3 +63,20 @@ def get_history():
         data=history,
         status=200
     )
+
+
+@bp.route('/hoy', methods=['GET'])
+@jwt_required()
+@role_required('admin')
+def get_analisis_hoy():
+    """Contar análisis realizados hoy (compatibilidad con frontend)"""
+    try:
+        query = "SELECT COUNT(*) AS total FROM analisis WHERE fecha_analisis = CURRENT_DATE() AND activo = 1"
+        result = DatabaseConnection.execute_query(query)
+        total = result[0]['total'] if result and len(result) > 0 else 0
+
+        return Helpers.format_response(success=True, data={'total': total}, status=200)
+    except Exception as e:
+        tb = traceback.format_exc()
+        print('[ANALISIS] Error en get_analisis_hoy:\n', tb)
+        return Helpers.format_response(False, str(e), status=500)

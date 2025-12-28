@@ -33,6 +33,20 @@ def get_active_alerts():
         status=200
     )
 
+
+@bp.route('/criticas', methods=['GET'])
+@jwt_required()
+@role_required('admin')
+def get_critical_alerts():
+    """Obtener alertas críticas (compatibilidad con frontend)"""
+    alertas = AlertasService.get_critical_alerts()
+
+    return Helpers.format_response(
+        success=True,
+        data=alertas,
+        status=200
+    )
+
 @bp.route('/<int:id_alerta>', methods=['GET'])
 @jwt_required()
 def get_alert(id_alerta):

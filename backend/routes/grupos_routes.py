@@ -357,6 +357,26 @@ def get_group_stats(id_grupo):
         return jsonify({'error': str(e)}), 500
 
 
+@bp.route('/estadisticas', methods=['GET'])
+@jwt_required()
+def get_global_group_stats():
+    """Endpoint de compatibilidad: estadísticas globales de grupos"""
+    try:
+        # Usar la vista o consultas directas para agregar métricas simples
+        from database.connection import DatabaseConnection
+
+        result = DatabaseConnection.execute_query(
+            "SELECT COUNT(*) AS activos FROM grupos WHERE activo = 1"
+        )
+        activos = result[0]['activos'] if result else 0
+
+        return jsonify({'activos': activos}), 200
+    except Exception as e:
+        tb = traceback.format_exc()
+        print('[GRUPOS] Error en get_global_group_stats:\n', tb)
+        return jsonify({'error': str(e), 'trace': tb}), 500
+
+
 # ============================================================
 # ACTIVIDADES - CRUD
 # ============================================================

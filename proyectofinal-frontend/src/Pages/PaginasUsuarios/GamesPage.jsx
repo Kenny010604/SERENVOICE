@@ -1,4 +1,5 @@
 import React, { useState, useContext } from 'react';
+import logger from '../../utils/logger';
 import { useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import "../../global.css";
@@ -22,7 +23,7 @@ const GamesPage = () => {
   const [estadoEmocional] = useState(estadoInicial);
 
   const handleGameComplete = (sesion) => {
-    console.log('Juego completado:', sesion);
+    logger.debug('Juego completado:', sesion);
   };
 
   const { isDark } = useContext(ThemeContext);

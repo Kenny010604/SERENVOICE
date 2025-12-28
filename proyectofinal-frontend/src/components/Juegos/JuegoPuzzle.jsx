@@ -1,5 +1,5 @@
 // src/components/Juegos/JuegoPuzzle.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 const JuegoPuzzle = ({ juego, onFinish, onExit }) => {
   const [piezas, setPiezas] = useState([]);
@@ -21,11 +21,19 @@ const JuegoPuzzle = ({ juego, onFinish, onExit }) => {
     }
   }, [juegoIniciado, juegoCompletado, tiempoInicio]);
 
+  const estaResuelto = useCallback(() => {
+    if (piezas.length === 0) return false;
+    for (let i = 0; i < piezas.length - 1; i++) {
+      if (piezas[i] !== i + 1) return false;
+    }
+    return piezas[piezas.length - 1] === 0;
+  }, [piezas]);
+
   useEffect(() => {
     if (juegoIniciado && estaResuelto()) {
       setJuegoCompletado(true);
     }
-  }, [piezas]);
+  }, [juegoIniciado, estaResuelto]);
 
   const iniciarJuego = () => {
     // Crear array de números del 1 al 8, y un 0 para el espacio vacío
@@ -82,13 +90,7 @@ const JuegoPuzzle = ({ juego, onFinish, onExit }) => {
     }
   };
 
-  const estaResuelto = () => {
-    if (piezas.length === 0) return false;
-    for (let i = 0; i < piezas.length - 1; i++) {
-      if (piezas[i] !== i + 1) return false;
-    }
-    return piezas[piezas.length - 1] === 0;
-  };
+
 
   const calcularPuntuacion = () => {
     const movimientosOptimos = 20;

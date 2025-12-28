@@ -1,6 +1,7 @@
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from services.usuario_service import UsuarioService
+from services.resultados_service import ResultadosService
 from utils.helpers import Helpers
 from utils.seguridad import role_required
 from database.connection import DatabaseConnection, get_db_connection
@@ -141,20 +142,17 @@ def get_usuarios_simple():
 
 
 # ============================================
-# Listar usuarios paginados (admin)
+# Listar usuarios (admin)
 # ============================================
 @bp.route('', methods=['GET'])
 @bp.route('/', methods=['GET'])
 @jwt_required()
 @role_required('admin')
 def get_all_usuarios():
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 20, type=int)
+    # Devolver todos los usuarios (el frontend hace paginación client-side)
+    usuarios = UsuarioService.get_all_usuarios()
 
-    usuarios = UsuarioService.get_all_usuarios(page, per_page)
-
-    return Helpers.format_response(True,
-                                   data=Helpers.paginate_results(usuarios, page, per_page))
+    return Helpers.format_response(True, data=usuarios)
 
 
 # ============================================
@@ -177,6 +175,55 @@ def get_usuario(id_usuario):
     usuario.pop('contrasena', None)
 
     return Helpers.format_response(True, data=usuario)
+
+
+# ============================================
+# Obtener estadísticas de un usuario
+# ============================================
+@bp.route('/<int:id_usuario>/estadisticas', methods=['GET'])
+@jwt_required()
+def get_usuario_estadisticas(id_usuario):
+    current_user_id = get_jwt_identity()
+    current_user = UsuarioService.get_usuario_by_id(current_user_id)
+
+    # Permitir que el propio usuario vea sus estadísticas o que un admin las vea
+    if current_user_id != id_usuario and (not current_user or current_user.get('rol') != 'admin'):
+        return Helpers.format_response(False, "No tienes permisos", 403)
+
+    try:
+        # Conteo de audios del usuario
+        with DatabaseConnection.get_connection() as conn:
+            cursor = conn.cursor(dictionary=True)
+            try:
+                cursor.execute("SELECT COUNT(*) AS total FROM Audio WHERE id_usuario = %s", (id_usuario,))
+                total_audios = cursor.fetchone().get('total', 0)
+            except Exception:
+                total_audios = 0
+            cursor.close()
+
+        # Estadísticas de resultados (stress/anxiety, total, etc.)
+        resultados_stats = ResultadosService.get_estadisticas_usuario(id_usuario) or {}
+        ultimos = ResultadosService.get_ultimos_resultados(id_usuario, 1) or []
+        ultimo_fecha = None
+        if ultimos and isinstance(ultimos, list) and len(ultimos) > 0:
+            ultimo_fecha = ultimos[0].get('fecha_analisis')
+
+        estadisticas_usuario = {
+            'totalAudios': int(total_audios or 0),
+            'totalAnalisis': int(resultados_stats.get('total', 0)),
+            'promedioEstres': float(resultados_stats.get('promedio_estres', 0)),
+            'promedioAnsiedad': float(resultados_stats.get('promedio_ansiedad', 0)),
+            'ultimoAnalisis': str(ultimo_fecha) if ultimo_fecha else None,
+            'totalGrupos': 0,
+            'alertasActivas': 0,
+        }
+
+        return Helpers.format_response(True, data=estadisticas_usuario)
+    except Exception as e:
+        print(f"[ERROR] estadisticas usuario: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return Helpers.format_response(False, str(e), status=500)
 
 
 # ============================================
@@ -215,6 +262,32 @@ def update_usuario(id_usuario):
         return Helpers.format_response(True, message=result['message'])
 
     return Helpers.format_response(False, result.get('error', "Error"), 400)
+
+
+# ============================================
+# Cambiar estado (activar/desactivar) usuario
+# ============================================
+@bp.route('/<int:id_usuario>/estado', methods=['PATCH'])
+@jwt_required()
+@role_required('admin')
+def set_usuario_estado(id_usuario):
+    current_user_id = get_jwt_identity()
+
+    # No permitir que un admin se desactive a sí mismo
+    if current_user_id == id_usuario:
+        return Helpers.format_response(False, "No puedes desactivar tu propia cuenta", 403)
+
+    data = request.json or {}
+    if 'activo' not in data:
+        return Helpers.format_response(False, "Falta el campo 'activo'", 400)
+
+    activo = bool(data.get('activo'))
+    result = UsuarioService.set_estado_usuario(id_usuario, activo)
+
+    if result.get('success'):
+        return Helpers.format_response(True, message=result.get('message', 'Estado actualizado'))
+
+    return Helpers.format_response(False, result.get('error', 'Error actualizando estado'), 400)
 
 
 # ============================================

@@ -2,6 +2,7 @@
 import axios from "axios";
 import apiConfig from "../config/api";
 import authService from './authService';
+import logger from '../utils/logger';
 
 // ==============================
 // CONFIGURACIÓN BASE
@@ -38,11 +39,11 @@ apiClient.interceptors.request.use(
       config.headers['Content-Type'] = 'application/json';
     }
 
-    console.log(`REQUEST: ${config.method.toUpperCase()} ${config.baseURL}${config.url}`);
+    logger.debug(`REQUEST: ${config.method.toUpperCase()} ${config.baseURL}${config.url}`);
     return config;
   },
   (error) => {
-    console.error("REQUEST ERROR:", error);
+    logger.error("REQUEST ERROR:", error);
     return Promise.reject(error);
   }
 );
@@ -52,22 +53,29 @@ apiClient.interceptors.request.use(
 // ==============================
 apiClient.interceptors.response.use(
   (response) => {
-    console.log(`RESPONSE ${response.status}: ${response.config.url}`);
+    logger.debug(`RESPONSE ${response.status}: ${response.config.url}`);
     return response;
   },
   (error) => {
+    // Ignore cancellations (AbortController / axios cancel)
+    const isCanceled = error?.code === 'ERR_CANCELED' || (axios.isCancel && axios.isCancel(error));
     const status = error.response?.status;
     const url = error.config?.url;
 
-    console.error(`ERROR RESPONSE ${status} en ${url}`);
+    if (isCanceled) {
+      logger.debug(`REQUEST CANCELED: ${url}`);
+      return Promise.reject(error);
+    }
+
+    logger.error(`ERROR RESPONSE ${status} en ${url}`);
 
     if (status === 401) {
-      console.warn("Token expirado o inválido");
+      logger.warn("Token expirado o inválido (interceptor)");
       try {
         // Forzar logout local y redirigir al login para obtener credenciales nuevas
         authService.logout();
-      } catch (e) {
-        console.warn('Error during auto-logout:', e);
+      } catch (err) {
+        logger.warn('Error during auto-logout:', err);
       }
       // Redirigir a la página de login
       if (typeof window !== 'undefined') {

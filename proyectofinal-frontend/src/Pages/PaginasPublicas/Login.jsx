@@ -51,7 +51,8 @@ const Login = () => {
           const stored = localStorage.getItem('user');
           const parsed = stored ? JSON.parse(stored) : null;
           rolesFromResp = parsed?.roles ?? null;
-        } catch (e) {
+        } catch (err) {
+          console.debug('Error parsing stored user roles:', err);
           rolesFromResp = null;
         }
       }

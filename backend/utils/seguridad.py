@@ -80,8 +80,9 @@ class Seguridad:
 # ----------------------------
 def role_required(required_role):
     """
-    Decorador para verificar que el usuario tenga el rol requerido
-    Uso: @role_required('admin')
+    Decorador para verificar que el usuario tenga el rol requerido.
+    Acepta un `str` (ej. 'admin') o una lista de roles (ej. ['admin','moderator']).
+    Uso: @role_required('admin') o @role_required(['admin'])
     """
     def decorator(fn):
         @wraps(fn)
@@ -126,11 +127,17 @@ def role_required(required_role):
                         'message': 'El usuario no tiene un rol asignado'
                     }), 403
 
-                # Verificar si el rol requerido está presente
-                if required_role not in roles_list:
+                # Normalizar required_role a lista para permitir comprobar varios roles
+                if isinstance(required_role, (list, tuple, set)):
+                    required_roles = list(required_role)
+                else:
+                    required_roles = [required_role]
+
+                # Verificar si al menos uno de los roles requeridos está presente
+                if not any(r in roles_list for r in required_roles):
                     return jsonify({
                         'success': False,
-                        'message': f'Se requiere rol de {required_role}. Tus roles son: {roles_list}'
+                        'message': f'Se requiere uno de los roles {required_roles}. Tus roles son: {roles_list}'
                     }), 403
                 
                 return fn(*args, **kwargs)

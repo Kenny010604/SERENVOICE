@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
 import authService from "../../services/authService";
+import logger from '../../utils/logger';
 import {
   FaUser,
   FaSignOutAlt,
@@ -47,12 +48,14 @@ const NavbarAdministrador = ({ adminData = {} }) => {
   };
 
   // Prefer prop `adminData`, si está vacío usar authService.getUser()
-  const currentUser = (adminData && Object.keys(adminData).length > 0) ? adminData : authService.getUser() || {};
-  
+  const currentUser = useMemo(() => {
+    return (adminData && Object.keys(adminData).length > 0) ? adminData : authService.getUser() || {};
+  }, [adminData]);
+
   // Debug: Log para verificar los datos del usuario
-  React.useEffect(() => {
-    console.log('[NAVBAR ADMIN] currentUser:', currentUser);
-    console.log('[NAVBAR ADMIN] foto_perfil:', currentUser?.foto_perfil);
+  useEffect(() => {
+    logger.debug('[NAVBAR ADMIN] currentUser:', currentUser);
+    logger.debug('[NAVBAR ADMIN] foto_perfil:', currentUser?.foto_perfil);
   }, [currentUser]);
 
   const makeFotoUrlWithProxy = (path) => {
@@ -119,28 +122,28 @@ const NavbarAdministrador = ({ adminData = {} }) => {
               // Mostrar imagen de perfil si existe, sino el ícono por defecto
               (function renderAvatar() {
                 const foto = currentUser?.foto_perfil;
-                console.log('[NAVBAR ADMIN] Renderizando avatar, foto:', foto);
+                logger.debug('[NAVBAR ADMIN] Renderizando avatar, foto:', foto);
                 if (foto) {
                   try {
                     const src = makeFotoUrlWithProxy(foto);
-                    console.log('[NAVBAR ADMIN] URL de imagen generada:', src);
+                    logger.debug('[NAVBAR ADMIN] URL de imagen generada:', src);
                     return (
                       <img
                         src={src}
                         alt={`${currentUser.nombre || currentUser.nombres || 'Admin'} avatar`}
                         style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', marginRight: 8 }}
                         onError={(e) => {
-                          console.error('[NAVBAR ADMIN] Error cargando imagen:', src);
+                          logger.error('[NAVBAR ADMIN] Error cargando imagen:', src);
                           e.target.style.display = 'none';
                         }}
                       />
                     );
                   } catch (err) {
-                    console.warn('[NAVBAR_ADMIN] avatar render error:', err);
+                    logger.warn('[NAVBAR_ADMIN] avatar render error:', err);
                     return <FaUser />;
                   }
                 }
-                console.log('[NAVBAR ADMIN] No hay foto, mostrando ícono por defecto');
+                logger.debug('[NAVBAR ADMIN] No hay foto, mostrando ícono por defecto');
                 return <FaUser />;
               })()
             }

@@ -13,6 +13,11 @@ class AlertasService:
     def get_active_alerts():
         """Obtener todas las alertas activas del sistema"""
         return AlertaAnalisis.get_active_alerts()
+
+    @staticmethod
+    def get_critical_alerts():
+        """Obtener solo alertas críticas"""
+        return AlertaAnalisis.get_critical_alerts()
     
     @staticmethod
     def get_alert_by_id(id_alerta):

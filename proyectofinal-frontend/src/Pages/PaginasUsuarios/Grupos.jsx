@@ -7,6 +7,7 @@ import '../../global.css';
 import { ThemeContext } from '../../context/themeContextDef';
 import FondoClaro from '../../assets/FondoClaro.svg';
 import FondoOscuro from '../../assets/FondoOscuro.svg';
+import logger from '../../utils/logger';
 
 export default function Grupos() {
   const [grupos, setGrupos] = useState([]);
@@ -22,7 +23,7 @@ export default function Grupos() {
     try {
       const data = await groupsService.listar();
       const all = data || [];
-      console.log('[Grupos] respuesta listar():', all);
+      logger.debug('[Grupos] respuesta listar():', all);
 
       // If query param owner=me, show all groups where user is member or facilitator
       const params = new URLSearchParams(location.search);
