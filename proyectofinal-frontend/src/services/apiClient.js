@@ -2,15 +2,16 @@
 import axios from "axios";
 import apiConfig from "../config/api";
 import authService from './authService';
+const API_URL = import.meta.env.VITE_API_URL;
 
 // ==============================
-// CONFIGURACIÓN BASE
+// CONFIGURACIÓN BASE (EXPO SAFE)
 // ==============================
-const API_BASE_URL = apiConfig?.baseURL || import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_BASE_URL = `${API_URL}/api`;
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: false, // 🔥 Cambiar a true si usas cookies/sesiones
+  withCredentials: false,
 });
 
 // ==============================

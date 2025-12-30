@@ -33,7 +33,7 @@ import { FaUserMd, FaDumbbell, FaPray, FaPause, FaCoffee, FaLeaf } from "react-i
 import { useNavigate } from "react-router-dom";
 
 // API URL
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import { API_URL } from "../../constants/env";
 
 const AnalizarVoz = () => {
   const { isDark } = useContext(ThemeContext);

@@ -50,10 +50,12 @@ import { AuthProvider } from "./context/AuthContext.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import ProtectedRoute from "./utils/ProtectedRoute.jsx";
 import { AlertasProvider } from "./context/AlertasContext.jsx";
+import { GOOGLE_CLIENT_ID } from "./config/api.js";
+
 
 function App() {
 	return (
-		<GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+		<GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>	
 			<ThemeProvider>
 				<AuthProvider>
 					<AlertasProvider>

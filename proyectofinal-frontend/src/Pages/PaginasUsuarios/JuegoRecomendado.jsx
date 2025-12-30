@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import GameHistory from "../../components/Usuario/GameHistory.jsx";
-import { juegosAPI } from "../../services/apiClient.js";
+import { juegosAPI } from "../../services/apiClient";
 
 const JuegoRecomendado = () => {
   const location = useLocation();

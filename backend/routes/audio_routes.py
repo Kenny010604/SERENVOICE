@@ -341,6 +341,7 @@ def analyze_voice():
         # --------------------------------------------------------
         # 6.1) Actualizar niveles en la tabla `audio` (si existen emociones)
         # --------------------------------------------------------
+
         try:
             emotions = results.get('emotions', []) or []
             # Inicializar niveles
@@ -355,12 +356,12 @@ def analyze_voice():
                 'nivel_sorpresa': 0.0,
             }
 
+            # Mapear emociones a columnas
             for e in emotions:
                 name = (e.get('name') or '').strip()
                 val = float(e.get('value') or 0.0)
                 if not name:
                     continue
-                # Mapear nombres esperados a columnas
                 key = None
                 lname = name.lower()
                 if 'felic' in lname:
@@ -379,9 +380,18 @@ def analyze_voice():
                     key = 'nivel_estres'
                 elif 'ansi' in lname:
                     key = 'nivel_ansiedad'
-
                 if key:
                     niveles[key] = val
+
+            # Si no se detectó estrés o ansiedad explícitamente, usar la misma lógica del pipeline
+            if niveles['nivel_estres'] == 0.0:
+                enojo = niveles['nivel_enojo']
+                sorpresa = niveles['nivel_sorpresa']
+                niveles['nivel_estres'] = max(enojo * 0.6, sorpresa * 0.4)
+            if niveles['nivel_ansiedad'] == 0.0:
+                miedo = niveles['nivel_miedo']
+                tristeza = niveles['nivel_tristeza']
+                niveles['nivel_ansiedad'] = max(miedo * 0.6, tristeza * 0.4)
 
             # Ejecutar update solo si tenemos audio_db_id
             if audio_db_id:
@@ -398,7 +408,7 @@ def analyze_voice():
                       procesado_por_ia = 1
                     WHERE id_audio = %s
                 """
-                DatabaseConnection.execute_update(update_query, (
+                update_result = DatabaseConnection.execute_update(update_query, (
                     niveles['nivel_estres'],
                     niveles['nivel_ansiedad'],
                     niveles['nivel_felicidad'],
@@ -409,7 +419,7 @@ def analyze_voice():
                     niveles['nivel_sorpresa'],
                     audio_db_id
                 ))
-                print(f"[audio_routes] Niveles guardados en audio_id={audio_db_id}: {niveles}")
+                print(f"[audio_routes] Niveles guardados en audio_id={audio_db_id}: {niveles} | Resultado update: {update_result}")
 
         except Exception as persist_levels_err:
             print('[audio_routes] Error guardando niveles en tabla audio:', persist_levels_err)

@@ -5,9 +5,44 @@ from models.recomendacion import Recomendacion
 from models.resultado_analisis import ResultadoAnalisis
 from models.analisis import Analisis
 from models.audio import Audio
+from database.connection import DatabaseConnection
 from utils.helpers import Helpers
 
 bp = Blueprint('recomendaciones', __name__, url_prefix='/api/recomendaciones')
+
+@bp.route('', methods=['GET'])
+@jwt_required()
+def get_recomendaciones_usuario():
+    """Obtener todas las recomendaciones del usuario actual"""
+    user_id = get_jwt_identity()
+    
+    try:
+        print(f"[DEBUG] Buscando recomendaciones para user_id: {user_id}")
+        
+        # Query simple sin joins complejos
+        query = """
+            SELECT r.* FROM recomendaciones r
+            WHERE r.activo = 1
+            LIMIT 100
+        """
+        
+        result = DatabaseConnection.execute_query(query, fetch=True)
+        print(f"[DEBUG] Resultado de query: {result}")
+        
+        return Helpers.format_response(
+            success=True,
+            data={'recomendaciones': result or []},
+            status=200
+        )
+    except Exception as e:
+        print(f"[ERROR] get_recomendaciones_usuario: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return Helpers.format_response(
+            success=False,
+            message=f'Error al obtener recomendaciones: {str(e)}',
+            status=500
+        )
 
 @bp.route('/resultado/<int:id_resultado>', methods=['GET'])
 @jwt_required()

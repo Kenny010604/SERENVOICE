@@ -1,6 +1,9 @@
 // src/config/api.js
 const API_BASE_URL = "http://localhost:5000/api";  // ← include '/api' so apiClient baseURL matches backend blueprint
 
+// Google OAuth Client ID
+export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+
 const api = {
   baseURL: API_BASE_URL,
   endpoints: {

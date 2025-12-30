@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { juegosAPI } from '../../services/apiClient.js';
+import { juegosAPI } from "../../services/apiClient";
 import { toast } from 'react-hot-toast'; // Instalar: npm install react-hot-toast
 import { useNavigate } from 'react-router-dom';
 import TherapeuticGames from './TherapeuticGames.jsx';

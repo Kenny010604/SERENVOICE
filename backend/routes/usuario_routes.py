@@ -4,12 +4,185 @@ from services.usuario_service import UsuarioService
 from utils.helpers import Helpers
 from utils.seguridad import role_required
 from database.connection import DatabaseConnection, get_db_connection
+import os
+from werkzeug.utils import secure_filename
 
 bp = Blueprint('usuarios', __name__, url_prefix='/api/usuarios')
 
+UPLOAD_FOLDER = 'uploads/usuarios'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 # ============================================
-# Obtener usuario autenticado
+# ✅ NUEVO: Obtener perfil del usuario autenticado
+# ============================================
+@bp.route('/perfil', methods=['GET'])
+@jwt_required()
+def get_perfil():
+    """Obtiene el perfil completo del usuario autenticado"""
+    try:
+        user_id = get_jwt_identity()
+        print(f"[PERFIL] Obteniendo perfil para usuario ID: {user_id}")
+        
+        usuario = UsuarioService.get_usuario_with_stats(user_id)
+
+        if not usuario:
+            return Helpers.format_response(False, "Usuario no encontrado", status=404)
+
+        # Remover contraseña
+        usuario.pop('contrasena', None)
+        
+        print(f"[PERFIL] Usuario encontrado: {usuario.get('nombre')} {usuario.get('apellido')}")
+
+        return Helpers.format_response(True, data={"usuario": usuario})
+        
+    except Exception as e:
+        print(f"[ERROR] get_perfil: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return Helpers.format_response(False, str(e), status=500)
+
+
+# ============================================
+# ✅ NUEVO: Actualizar perfil del usuario autenticado
+# ============================================
+@bp.route('/perfil', methods=['PUT'])
+@jwt_required()
+def update_perfil():
+    """Actualiza el perfil del usuario autenticado"""
+    try:
+        user_id = get_jwt_identity()
+        print(f"\n{'='*60}")
+        print(f"[UPDATE PERFIL] Actualizando perfil para usuario ID: {user_id}")
+        print(f"{'='*60}")
+        
+        # Obtener usuario actual para validaciones
+        usuario_actual = UsuarioService.get_usuario_by_id(user_id)
+        if not usuario_actual:
+            return Helpers.format_response(False, "Usuario no encontrado", 404)
+        
+        print(f"[UPDATE PERFIL] Usuario actual: {usuario_actual.get('nombre')} - Provider: {usuario_actual.get('auth_provider')}")
+        
+        # Obtener datos del formulario
+        data = {}
+        
+        # Campos de texto
+        if request.form.get('nombre'):
+            data['nombre'] = request.form.get('nombre')
+        if request.form.get('apellido'):
+            data['apellido'] = request.form.get('apellido')
+        if request.form.get('correo'):
+            data['correo'] = request.form.get('correo')
+        if request.form.get('genero'):
+            data['genero'] = request.form.get('genero')
+        if request.form.get('fecha_nacimiento'):
+            data['fecha_nacimiento'] = request.form.get('fecha_nacimiento')
+        if request.form.get('edad'):
+            data['edad'] = int(request.form.get('edad'))
+        
+        # Campos booleanos
+        if request.form.get('usa_medicamentos') is not None:
+            usa_med = request.form.get('usa_medicamentos')
+            data['usa_medicamentos'] = usa_med.lower() in ['true', '1', 'yes'] if isinstance(usa_med, str) else bool(usa_med)
+        
+        if request.form.get('notificaciones') is not None:
+            notif = request.form.get('notificaciones')
+            data['notificaciones'] = notif.lower() in ['true', '1', 'yes'] if isinstance(notif, str) else bool(notif)
+        
+        # VALIDACION DE CONTRASENAS
+        contrasenaActual = request.form.get('contraseñaActual')
+        contrasenaNueva = request.form.get('contraseñaNueva')
+        
+        # Solo procesar contraseñas si el usuario NO es de Google
+        if usuario_actual.get('auth_provider') != 'google':
+            if contrasenaNueva and contrasenaNueva.strip():
+                print(f"[UPDATE PERFIL] Cambio de contrasena solicitado")
+                
+                # Validar que se proporcionó la contraseña actual
+                if not contrasenaActual or not contrasenaActual.strip():
+                    print(f"[UPDATE PERFIL] No se proporciono contrasena actual")
+                    return Helpers.format_response(False, "Debe proporcionar su contraseña actual para cambiarla", 400)
+                
+                # Validar longitud de nueva contraseña
+                if len(contrasenaNueva) < 6:
+                    print(f"[UPDATE PERFIL] Contrasena muy corta")
+                    return Helpers.format_response(False, "La nueva contraseña debe tener al menos 6 caracteres", 400)
+                
+                # Verificar contraseña actual
+                from werkzeug.security import check_password_hash
+                
+                if not check_password_hash(usuario_actual.get('contrasena'), contrasenaActual):
+                    print(f"[UPDATE PERFIL] Contrasena actual incorrecta")
+                    return Helpers.format_response(False, "La contraseña actual es incorrecta", 400)
+                
+                # Si todo está bien, agregar la nueva contraseña
+                data['contrasena'] = contrasenaNueva
+                print(f"[UPDATE PERFIL] Contrasena validada, se actualizara")
+            else:
+                print(f"[UPDATE PERFIL] No se cambio contrasena")
+        else:
+            print(f"[UPDATE PERFIL] Usuario de Google, contrasenas ignoradas")
+        
+        # FOTO DE PERFIL
+        if 'foto_perfil' in request.files:
+            file = request.files['foto_perfil']
+            print(f"[UPDATE PERFIL] Archivo recibido: {file.filename if file else 'None'}")
+            
+            if file and file.filename and allowed_file(file.filename):
+                # Crear directorio si no existe
+                os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+                
+                # Nombre único para el archivo
+                import time
+                timestamp = int(time.time())
+                filename = secure_filename(file.filename)
+                ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else 'jpg'
+                unique_filename = f"user_{user_id}_{timestamp}.{ext}"
+                filepath = os.path.join(UPLOAD_FOLDER, unique_filename)
+                
+                # Guardar archivo
+                file.save(filepath)
+                data['foto_perfil'] = f"/uploads/usuarios/{unique_filename}"
+                print(f"[UPDATE PERFIL] Foto guardada: {data['foto_perfil']}")
+            else:
+                print(f"[UPDATE PERFIL] Archivo no valido o vacio")
+        
+        print(f"[UPDATE PERFIL] Datos a actualizar: {list(data.keys())}")
+        
+        # Actualizar usuario
+        result = UsuarioService.update_usuario(user_id, data)
+        print(f"[UPDATE PERFIL] Resultado del servicio: {result.get('success')}")
+
+        if result.get('success'):
+            # Obtener usuario actualizado
+            usuario_actualizado = UsuarioService.get_usuario_with_stats(user_id)
+            usuario_actualizado.pop('contrasena', None)
+            
+            print(f"[UPDATE PERFIL] Perfil actualizado exitosamente")
+            print(f"{'='*60}\n")
+            
+            return Helpers.format_response(
+                True, 
+                message="Perfil actualizado correctamente",
+                data={"usuario": usuario_actualizado}
+            )
+
+        print(f"[UPDATE PERFIL] Error: {result.get('error')}")
+        print(f"{'='*60}\n")
+        return Helpers.format_response(False, result.get('error', "Error al actualizar"), 400)
+        
+    except Exception as e:
+        print(f"[ERROR] update_perfil: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return Helpers.format_response(False, str(e), status=500)
+
+
+# ============================================
+# Obtener usuario autenticado (alias de /perfil)
 # ============================================
 @bp.route('/me', methods=['GET'])
 @jwt_required()
@@ -20,7 +193,6 @@ def get_current_user():
     if not usuario:
         return Helpers.format_response(False, "Usuario no encontrado", status=404)
 
-    usuario.pop('contrasena', None)
     usuario.pop('contrasena', None)
 
     return Helpers.format_response(True, data=usuario)
@@ -73,7 +245,7 @@ def get_statistics():
 
 
 # ============================================
-# Lista simple (admin) - CON LOGS Y PRUEBA DIRECTA
+# Lista simple (admin)
 # ============================================
 @bp.route('/lista', methods=['GET'])
 @jwt_required()
@@ -94,20 +266,16 @@ def get_usuarios_simple():
 
     print("[OK] Usuario es admin - Procediendo...")
     
-    # ============================================
     # PRUEBA DIRECTA A LA BASE DE DATOS
-    # ============================================
     try:
         print("\n[TEST] INICIANDO PRUEBA DIRECTA A LA BD...")
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         
-        # Contar usuarios
         cursor.execute("SELECT COUNT(*) as total FROM usuario")
         count_result = cursor.fetchone()
         print(f"[TEST] Total usuarios en BD: {count_result['total']}")
         
-        # Obtener primeros 5
         cursor.execute("SELECT * FROM usuario LIMIT 5")
         usuarios_directos = cursor.fetchall()
         
@@ -124,9 +292,7 @@ def get_usuarios_simple():
         import traceback
         traceback.print_exc()
     
-    # ============================================
     # LLAMAR AL SERVICE NORMAL
-    # ============================================
     usuarios = UsuarioService.get_all_usuarios_simple()
     
     print(f"\n[RESPONSE] RESPUESTA FINAL:")
@@ -180,7 +346,7 @@ def get_usuario(id_usuario):
 
 
 # ============================================
-# Buscar usuarios (por nombre / correo) - disponible para usuarios autenticados
+# Buscar usuarios (por nombre / correo)
 # ============================================
 @bp.route('/search', methods=['GET'])
 @jwt_required()
@@ -197,7 +363,7 @@ def search_usuarios():
 
 
 # ============================================
-# Actualizar usuario
+# Actualizar usuario por ID (admin o el mismo usuario)
 # ============================================
 @bp.route('/<int:id_usuario>', methods=['PUT'])
 @jwt_required()

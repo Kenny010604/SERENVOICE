@@ -12,22 +12,20 @@ class UsuarioService:
     def get_all_usuarios_simple():
         try:
             print("\n" + "="*50)
-            print(" INICIANDO get_all_usuarios_simple()")
+            print("INICIANDO get_all_usuarios_simple()")
             print("="*50)
             
-            usuarios = Usuario.get_all()  # este debe leer desde la tabla `usuario`
+            usuarios = Usuario.get_all()
             
-            # ✅ LOGS DE DEPURACIÓN
             print(f"\n Usuarios obtenidos de la BD: {len(usuarios)}")
             if usuarios:
                 print(f" Primer usuario: {usuarios[0]}")
                 print(f" Campos disponibles: {usuarios[0].keys() if usuarios else 'N/A'}")
             else:
-                print("⚠️  NO SE OBTUVIERON USUARIOS DE LA BD")
+                print(" NO SE OBTUVIERON USUARIOS DE LA BD")
 
             usuarios_formatted = []
             for u in usuarios:
-                # Obtener roles asociados al usuario desde la tabla rol_usuario
                 try:
                     roles_rows = RolUsuario.get_user_roles(u.get("id_usuario")) or []
                     roles_list = [r.get("nombre_rol") for r in roles_rows]
@@ -46,9 +44,7 @@ class UsuarioService:
                     "activo": u.get("activo", True),
                 }
                 usuarios_formatted.append(usuario_formateado)
-                print(f" Usuario formateado: {usuario_formateado['id']} - {usuario_formateado['nombre']}")
 
-            # ✅ LOG FINAL
             print(f"\n Total usuarios formateados: {len(usuarios_formatted)}")
             print("="*50 + "\n")
             
@@ -68,6 +64,7 @@ class UsuarioService:
         try:
             with DatabaseConnection.get_connection() as conn:
                 cursor = conn.cursor(dictionary=True)
+                
                 query = """
                     SELECT 
                         id_usuario,
@@ -76,9 +73,12 @@ class UsuarioService:
                         correo,
                         genero,
                         fecha_nacimiento,
+                        edad,
                         usa_medicamentos,
+                        notificaciones,
                         fecha_registro AS fecha_creacion,
-                        foto_perfil
+                        foto_perfil,
+                        auth_provider
                     FROM usuario
                     WHERE id_usuario = %s
                 """
@@ -96,7 +96,6 @@ class UsuarioService:
                 if usuario.get("fecha_creacion"):
                     usuario["fecha_creacion"] = str(usuario["fecha_creacion"])
 
-                # Adjuntar roles desde la tabla rol_usuario
                 try:
                     roles_rows = RolUsuario.get_user_roles(id_usuario) or []
                     roles_list = [r.get("nombre_rol") for r in roles_rows]
@@ -104,12 +103,14 @@ class UsuarioService:
                     roles_list = []
 
                 usuario["roles"] = roles_list
-                usuario["rol"] = roles_list[0] if roles_list else None
+                usuario["rol"] = roles_list[0] if roles_list else "usuario"
 
                 return usuario
 
         except Exception as e:
             print(f"\n Error en get_usuario_with_stats: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return None
 
     # ============================================
@@ -128,7 +129,6 @@ class UsuarioService:
                 if not usuario:
                     return None
 
-                # Adjuntar roles
                 try:
                     roles_rows = RolUsuario.get_user_roles(id_usuario) or []
                     roles_list = [r.get("nombre_rol") for r in roles_rows]
@@ -136,7 +136,7 @@ class UsuarioService:
                     roles_list = []
 
                 usuario["roles"] = roles_list
-                usuario["rol"] = roles_list[0] if roles_list else None
+                usuario["rol"] = roles_list[0] if roles_list else "usuario"
 
                 return usuario
 
@@ -171,7 +171,7 @@ class UsuarioService:
                 usuarios = cursor.fetchall()
 
                 cursor.close()
-                # Para cada usuario, adjuntar roles
+                
                 for u in usuarios:
                     try:
                         roles_rows = RolUsuario.get_user_roles(u.get("id_usuario")) or []
@@ -179,7 +179,7 @@ class UsuarioService:
                     except Exception:
                         u_roles = []
                     u["roles"] = u_roles
-                    u["rol"] = u_roles[0] if u_roles else None
+                    u["rol"] = u_roles[0] if u_roles else "usuario"
 
                 return usuarios
 
@@ -188,51 +188,108 @@ class UsuarioService:
             return []
 
     # ============================================
-    # ACTUALIZAR USUARIO
+    # ACTUALIZAR USUARIO - ✅ VERSIÓN CORREGIDA
     # ============================================
     @staticmethod
     def update_usuario(id_usuario, data):
+        """
+        Actualiza los datos de un usuario
+        Maneja correctamente las contraseñas hasheadas y fotos
+        """
         try:
+            print(f"\n{'='*60}")
+            print(f"[SERVICE] Actualizando usuario ID: {id_usuario}")
+            print(f"[SERVICE] Campos recibidos: {list(data.keys())}")
+            print(f"{'='*60}")
+            
+            # Usar context manager correctamente
             with DatabaseConnection.get_connection() as conn:
                 cursor = conn.cursor()
 
+                # Campos permitidos INCLUYENDO contraseña y foto
                 campos_permitidos = [
                     "nombre",
-                    "apellido",
+                    "apellido", 
                     "correo",
                     "genero",
                     "fecha_nacimiento",
-                    "usa_medicamentos"
+                    "edad",
+                    "usa_medicamentos",
+                    "notificaciones",
+                    "foto_perfil",
+                    "contrasena"
                 ]
-
+                
                 updates = []
                 values = []
 
                 for campo in campos_permitidos:
                     if campo in data:
-                        updates.append(f"{campo} = %s")
-                        values.append(data[campo])
+                        # Hashear contraseña si está presente
+                        if campo == 'contrasena':
+                            from werkzeug.security import generate_password_hash
+                            hashed = generate_password_hash(data[campo])
+                            updates.append(f"{campo} = %s")
+                            values.append(hashed)
+                            print(f"[SERVICE] Contrasena sera actualizada (hasheada)")
+                        else:
+                            updates.append(f"{campo} = %s")
+                            values.append(data[campo])
+                            valor_mostrar = str(data[campo])[:50]
+                            print(f"[SERVICE] Campo '{campo}' = '{valor_mostrar}'")
 
                 if not updates:
-                    return {"success": False, "error": "No hay campos para actualizar"}
+                    print(f"[SERVICE] No hay campos para actualizar")
+                    print(f"{'='*60}\n")
+                    return {
+                        'success': False,
+                        'error': 'No hay datos para actualizar'
+                    }
 
                 values.append(id_usuario)
-
+                
+                # NO incluir fecha_actualizacion si no existe en tu tabla
                 query = f"""
-                    UPDATE usuario
+                    UPDATE usuario 
                     SET {', '.join(updates)}
                     WHERE id_usuario = %s
                 """
-
-                cursor.execute(query, values)
+                
+                print(f"[SERVICE] Query generado con {len(updates)} campos")
+                print(f"[SERVICE] Ejecutando UPDATE...")
+                
+                cursor.execute(query, tuple(values))
                 conn.commit()
+
+                affected_rows = cursor.rowcount
+                print(f"[SERVICE] Filas afectadas: {affected_rows}")
+
                 cursor.close()
 
-                return {"success": True, "message": "Usuario actualizado correctamente"}
+                if affected_rows > 0:
+                    print(f"[SERVICE] Usuario actualizado exitosamente")
+                    print(f"{'='*60}\n")
+                    return {
+                        'success': True,
+                        'message': 'Usuario actualizado correctamente'
+                    }
+                else:
+                    print(f"[SERVICE] No se actualizo ninguna fila")
+                    print(f"{'='*60}\n")
+                    return {
+                        'success': False,
+                        'error': 'No se pudo actualizar el usuario'
+                    }
 
         except Exception as e:
-            print(f"\n Error en update_usuario: {str(e)}")
-            return {"success": False, "error": str(e)}
+            print(f"[SERVICE] Error: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            print(f"{'='*60}\n")
+            return {
+                'success': False,
+                'error': str(e)
+            }
 
     # ============================================
     # ELIMINAR USUARIO
@@ -279,7 +336,6 @@ class UsuarioService:
                 rows = cursor.fetchall()
                 cursor.close()
 
-                # normalize keys
                 results = []
                 for r in rows:
                     results.append({
