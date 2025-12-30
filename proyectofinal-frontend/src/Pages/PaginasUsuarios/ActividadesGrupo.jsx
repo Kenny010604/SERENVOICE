@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import groupsService from '../../services/groupsService';
 
@@ -8,12 +8,12 @@ export default function ActividadesGrupo(){
   const [nuevo, setNuevo] = useState({ titulo:'', descripcion:'' });
   const [loading, setLoading] = useState(true);
 
-  const cargar = async () => {
+  const cargar = useCallback(async () => {
     setLoading(true);
     try{ const data = await groupsService.listarActividades(id); setActividades(data || []); }catch(e){console.error(e)}finally{setLoading(false)}
-  };
+  }, [id]);
 
-  useEffect(()=>{ if (id) cargar(); }, [id]);
+  useEffect(()=>{ if (id) cargar(); }, [id, cargar]);
 
   const crear = async (e) => {
     e.preventDefault();

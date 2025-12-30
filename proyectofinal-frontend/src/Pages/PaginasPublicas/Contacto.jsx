@@ -3,7 +3,6 @@ import { FaUser, FaEnvelope, FaPaperPlane, FaExclamationTriangle, FaPhone, FaClo
 import "../../global.css";
 import NavbarPublic from "../../components/Publico/NavbarPublic";
 import { contactService } from "../../services/contactService";
-import { useAlertas } from "../../context/AlertasContext";
 import { ThemeContext } from "../../context/themeContextDef";
 import PaisajeClaro from "../../assets/PaisajeClaro.svg";
 import PaisajeOscuro from "../../assets/PaisajeOscuro.svg";
@@ -19,7 +18,6 @@ const Contacto = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const { addAlerta } = useAlertas();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -38,13 +36,6 @@ const Contacto = () => {
 
     try {
       await contactService.sendMessage(formData);
-
-      addAlerta({
-        usuario: formData.nombre,
-        tipo: "Mensaje Contacto",
-        severidad: "Alta",
-        mensaje: formData.mensaje,
-      });
 
       setSuccess("¡Mensaje enviado correctamente! Nos pondremos en contacto pronto.");
       setFormData({ nombre: "", correo: "", asunto: "", mensaje: "" });

@@ -92,7 +92,13 @@ def analyze_voice():
         filepath = os.path.join(upload_folder, filename)
         file.save(filepath)
 
-        print(f"[audio_routes] Archivo guardado temporalmente en {filepath}")
+        # Log tamaño del archivo guardado para depuración
+        try:
+            saved_size = os.path.getsize(filepath)
+        except Exception:
+            saved_size = None
+
+        print(f"[audio_routes] Archivo guardado temporalmente en {filepath} (size={saved_size})")
 
         # --------------------------------------------------------
         # 2.1) Convertir a WAV si no lo es
@@ -104,7 +110,7 @@ def analyze_voice():
                 wav_filename = f"{base_stub}.wav"
                 wav_path = os.path.join(upload_folder, wav_filename)
                 audio_seg.export(wav_path, format='wav')
-                # Opcional: borrar el archivo original para evitar duplicados
+                # borrar el archivo original para evitar duplicados
                 try:
                     os.remove(filepath)
                 except Exception:
@@ -112,13 +118,37 @@ def analyze_voice():
                 # actualizar punteros a nuevo archivo
                 filename = wav_filename
                 filepath = wav_path
-                print(f"[audio_routes] Convertido a WAV: {wav_path}")
+                print(f"[audio_routes] Convertido a WAV: {wav_path} (size={os.path.getsize(wav_path) if os.path.exists(wav_path) else 'nop'})")
         except Exception as conv_err:
-            print(f"[audio_routes] Error convirtiendo a WAV, se mantiene original: {conv_err}")
+            print(f"[audio_routes] Error convirtiendo a WAV con pydub: {conv_err}")
+            # Intentar fallback con ffmpeg CLI si está disponible
+            try:
+                import subprocess
+                wav_filename = f"{base_stub}.wav"
+                wav_path = os.path.join(upload_folder, wav_filename)
+                print(f"[audio_routes] Intentando conversión con ffmpeg CLI: {wav_path}")
+                subprocess.run(['ffmpeg', '-y', '-i', filepath, wav_path], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                try:
+                    os.remove(filepath)
+                except Exception:
+                    pass
+                filename = wav_filename
+                filepath = wav_path
+                print(f"[audio_routes] Convertido a WAV con ffmpeg: {wav_path} (size={os.path.getsize(wav_path) if os.path.exists(wav_path) else 'nop'})")
+            except Exception as ff_err:
+                print(f"[audio_routes] Fallback ffmpeg falló: {ff_err}")
 
         # --------------------------------------------------------
         # 3) Analizar audio con IA
         # --------------------------------------------------------
+        # Verificar que el archivo final existe y tiene datos antes de analizar
+        try:
+            if not filepath or not os.path.exists(filepath) or os.path.getsize(filepath) == 0:
+                raise Exception(f"Archivo de audio inexistente o vacío antes de análisis: {filepath}")
+        except Exception as size_check_err:
+            print(f"[audio_routes] Error de integridad del archivo: {size_check_err}")
+            raise
+
         results = service.analyze_audio(filepath, duration)
 
         if not results:
@@ -289,6 +319,22 @@ def analyze_voice():
                         tipo = (tipo_raw or '').strip().lower()  # IMPORTANTE: convertir a minúsculas
                         contenido = (contenido_raw or '').strip()
                         print(f'[audio_routes] DEBUG [{idx+1}/{len(guardadas)}]: tipo_raw={repr(tipo_raw)}, tipo_lower={repr(tipo)}, valido={tipo in TIPOS_VALIDOS}, contenido_len={len(contenido)}')
+
+                        # Si el tipo está vacío en BD pero hay contenido, intentar inferirlo por heurística
+                        if not tipo and contenido:
+                            txt = contenido.lower()
+                            if any(k in txt for k in ('respir', 'respira', 'diafragm')):
+                                tipo = 'respiracion'
+                            elif any(k in txt for k in ('medit', 'mindful', 'visualiz')):
+                                tipo = 'meditacion'
+                            elif any(k in txt for k in ('estir', 'ejerc', 'yoga', 'actividad')):
+                                tipo = 'ejercicio'
+                            elif any(k in txt for k in ('camina', 'paseo', 'descans', 'pausa')):
+                                tipo = 'pausa_activa'
+                            else:
+                                tipo = ''
+                            print(f"[audio_routes] INFO: tipo inferido='{tipo}' para item #{idx+1} desde contenido")
+
                         if tipo in TIPOS_VALIDOS and contenido:
                             recomendaciones_list.append({
                                 'tipo_recomendacion': tipo,

@@ -306,3 +306,191 @@ def resume_notifications():
             message=f'Error: {str(e)}',
             status=500
         )
+
+
+# ============================================
+# GESTIÓN DE PLANTILLAS (ADMIN)
+# ============================================
+from utils.seguridad import role_required
+from database.connection import DatabaseConnection
+
+@bp.route('/plantillas', methods=['GET'])
+@jwt_required()
+@role_required(['admin'])
+def get_plantillas():
+    """Obtener todas las plantillas de notificaciones"""
+    try:
+        conn = DatabaseConnection.get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        cursor.execute("""
+            SELECT * FROM plantillas_notificacion 
+            ORDER BY prioridad_defecto DESC, fecha_creacion DESC
+        """)
+        
+        plantillas = cursor.fetchall()
+        
+        cursor.close()
+        DatabaseConnection.return_connection(conn)
+        
+        return Helpers.format_response(
+            success=True,
+            data=plantillas,
+            status=200
+        )
+    except Exception as e:
+        return Helpers.format_response(
+            success=False,
+            message=f'Error al obtener plantillas: {str(e)}',
+            status=500
+        )
+
+@bp.route('/plantillas', methods=['POST'])
+@jwt_required()
+@role_required(['admin'])
+def create_plantilla():
+    """Crear nueva plantilla de notificación"""
+    try:
+        data = request.json
+        
+        if not data or 'nombre' not in data or 'contenido' not in data:
+            return Helpers.format_response(
+                success=False,
+                message='Nombre y contenido son requeridos',
+                status=400
+            )
+        
+        conn = DatabaseConnection.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            INSERT INTO plantillas_notificacion 
+            (tipo_notificacion, titulo_plantilla, mensaje_plantilla, prioridad_defecto, activa)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (
+            data.get('tipo_notificacion', 'sistema'),
+            data.get('titulo_plantilla', ''),
+            data.get('mensaje_plantilla', ''),
+            data.get('prioridad_defecto', 'media'),
+            data.get('activa', True)
+        ))
+        
+        conn.commit()
+        id_plantilla = cursor.lastrowid
+        
+        cursor.close()
+        DatabaseConnection.return_connection(conn)
+        
+        return Helpers.format_response(
+            success=True,
+            data={'id_plantilla': id_plantilla},
+            message='Plantilla creada correctamente',
+            status=201
+        )
+    except Exception as e:
+        return Helpers.format_response(
+            success=False,
+            message=f'Error al crear plantilla: {str(e)}',
+            status=500
+        )
+
+@bp.route('/plantillas/<int:id_plantilla>', methods=['PUT'])
+@jwt_required()
+@role_required(['admin'])
+def update_plantilla(id_plantilla):
+    """Actualizar plantilla de notificación"""
+    try:
+        data = request.json
+        
+        conn = DatabaseConnection.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            UPDATE plantillas_notificacion
+            SET tipo_notificacion = %s, titulo_plantilla = %s, mensaje_plantilla = %s, prioridad_defecto = %s, activa = %s
+            WHERE id_plantilla = %s
+        """, (
+            data.get('tipo_notificacion'),
+            data.get('titulo_plantilla'),
+            data.get('mensaje_plantilla'),
+            data.get('prioridad_defecto'),
+            data.get('activa'),
+            id_plantilla
+        ))
+        
+        conn.commit()
+        
+        cursor.close()
+        DatabaseConnection.return_connection(conn)
+        
+        return Helpers.format_response(
+            success=True,
+            message='Plantilla actualizada correctamente',
+            status=200
+        )
+    except Exception as e:
+        return Helpers.format_response(
+            success=False,
+            message=f'Error al actualizar plantilla: {str(e)}',
+            status=500
+        )
+
+@bp.route('/plantillas/<int:id_plantilla>', methods=['DELETE'])
+@jwt_required()
+@role_required(['admin'])
+def delete_plantilla(id_plantilla):
+    """Eliminar plantilla de notificación"""
+    try:
+        conn = DatabaseConnection.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("DELETE FROM plantillas_notificacion WHERE id_plantilla = %s", (id_plantilla,))
+        
+        conn.commit()
+        
+        cursor.close()
+        DatabaseConnection.return_connection(conn)
+        
+        return Helpers.format_response(
+            success=True,
+            message='Plantilla eliminada correctamente',
+            status=200
+        )
+    except Exception as e:
+        return Helpers.format_response(
+            success=False,
+            message=f'Error al eliminar plantilla: {str(e)}',
+            status=500
+        )
+
+@bp.route('/plantillas/<int:id_plantilla>/toggle', methods=['PATCH'])
+@jwt_required()
+@role_required(['admin'])
+def toggle_plantilla(id_plantilla):
+    """Activar/desactivar plantilla de notificación"""
+    try:
+        conn = DatabaseConnection.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            UPDATE plantillas_notificacion
+            SET activa = NOT activa
+            WHERE id_plantilla = %s
+        """, (id_plantilla,))
+        
+        conn.commit()
+        
+        cursor.close()
+        DatabaseConnection.return_connection(conn)
+        
+        return Helpers.format_response(
+            success=True,
+            message='Estado de plantilla actualizado',
+            status=200
+        )
+    except Exception as e:
+        return Helpers.format_response(
+            success=False,
+            message=f'Error al cambiar estado: {str(e)}',
+            status=500
+        )

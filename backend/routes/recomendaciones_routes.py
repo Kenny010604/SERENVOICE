@@ -7,6 +7,8 @@ from models.analisis import Analisis
 from models.audio import Audio
 from database.connection import DatabaseConnection
 from utils.helpers import Helpers
+from utils.seguridad import role_required
+from database.connection import DatabaseConnection
 
 bp = Blueprint('recomendaciones', __name__, url_prefix='/api/recomendaciones')
 
@@ -38,9 +40,90 @@ def get_recomendaciones_usuario():
         print(f"[ERROR] get_recomendaciones_usuario: {str(e)}")
         import traceback
         traceback.print_exc()
+@bp.route('/todas', methods=['GET'])
+@jwt_required()
+@role_required(['admin'])
+def get_todas_recomendaciones():
+    """Obtener todas las recomendaciones (solo admin)"""
+    try:
+        conn = DatabaseConnection.get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        query = """
+            SELECT 
+                r.id_recomendacion,
+                r.tipo_recomendacion,
+                r.prioridad,
+                r.contenido,
+                r.aplica,
+                r.fecha_aplica,
+                r.util,
+                r.fecha_generacion,
+                u.nombre as usuario,
+                u.correo as email
+            FROM recomendaciones r
+            LEFT JOIN resultado_analisis ra ON r.id_resultado = ra.id_resultado
+            LEFT JOIN analisis a ON ra.id_analisis = a.id_analisis
+            LEFT JOIN audio au ON a.id_audio = au.id_audio
+            LEFT JOIN usuario u ON au.id_usuario = u.id_usuario
+            ORDER BY r.fecha_generacion DESC
+        """
+        
+        cursor.execute(query)
+        recomendaciones = cursor.fetchall()
+        
+        cursor.close()
+        DatabaseConnection.return_connection(conn)
+        
+        return Helpers.format_response(
+            success=True,
+            data=recomendaciones,
+            status=200
+        )
+    except Exception as e:
         return Helpers.format_response(
             success=False,
             message=f'Error al obtener recomendaciones: {str(e)}',
+            status=500
+        )
+
+@bp.route('/estadisticas', methods=['GET'])
+@jwt_required()
+@role_required(['admin'])
+def get_estadisticas_recomendaciones():
+    """Obtener estadísticas de recomendaciones (solo admin)"""
+    try:
+        conn = DatabaseConnection.get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Total de recomendaciones
+        cursor.execute("SELECT COUNT(*) as total FROM recomendaciones")
+        total = cursor.fetchone()['total']
+        
+        # Recomendaciones aplicadas
+        cursor.execute("SELECT COUNT(*) as aplicadas FROM recomendaciones WHERE aplica = TRUE")
+        aplicadas = cursor.fetchone()['aplicadas']
+        
+        # Recomendaciones útiles
+        cursor.execute("SELECT COUNT(*) as utiles FROM recomendaciones WHERE util = TRUE")
+        utiles = cursor.fetchone()['utiles']
+        
+        cursor.close()
+        DatabaseConnection.return_connection(conn)
+        
+        return Helpers.format_response(
+            success=True,
+            data={
+                'total': total,
+                'aplicadas': aplicadas,
+                'utiles': utiles
+            },
+            status=200
+        )
+    except Exception as e:
+        return Helpers.format_response(
+            success=False,
+            message=f'Error al obtener estadísticas: {str(e)}',
             status=500
         )
 

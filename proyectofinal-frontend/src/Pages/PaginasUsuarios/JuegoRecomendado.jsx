@@ -1,5 +1,5 @@
 // src/Pages/PaginasUsuarios/JuegoRecomendado.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import GameHistory from "../../components/Usuario/GameHistory.jsx";
 import { juegosAPI } from "../../services/apiClient";
@@ -11,17 +11,13 @@ const JuegoRecomendado = () => {
   // Estado emocional que viene desde ProbarVoz
   const estadoInicial = location.state?.estado || "estable";
 
-  const [estadoEmocional, setEstadoEmocional] = useState(estadoInicial);
+  const [estadoEmocional, _setEstadoEmocional] = useState(estadoInicial);
   const [showHistory, setShowHistory] = useState(false);
   const [juegos, setJuegos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    cargarJuegosRecomendados();
-  }, [estadoEmocional]);
-
-  const cargarJuegosRecomendados = async () => {
+  const cargarJuegosRecomendados = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -39,7 +35,11 @@ const JuegoRecomendado = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [estadoEmocional]);
+
+  useEffect(() => {
+    cargarJuegosRecomendados();
+  }, [cargarJuegosRecomendados]);
 
   const getEstadoEmoji = (estado) => {
     const emojis = {

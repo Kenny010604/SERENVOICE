@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { juegosAPI } from "../../services/apiClient";
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { juegosAPI } from '../../services/apiClient.js';
+
 import { toast } from 'react-hot-toast'; // Instalar: npm install react-hot-toast
 import { useNavigate } from 'react-router-dom';
 import TherapeuticGames from './TherapeuticGames.jsx';
 
-const GameIntegration = ({ estadoEmocionalUsuario = 'estable', onGameComplete }) => {
-  const [sesionActual, setSesionActual] = useState(null);
+const GameIntegration = ({ estadoEmocionalUsuario = 'estable' }) => {
   const [juegosRecomendados, setJuegosRecomendados] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    cargarJuegosRecomendados();
-  }, [estadoEmocionalUsuario]);
-
-  const cargarJuegosRecomendados = async () => {
+  const cargarJuegosRecomendados = useCallback(async () => {
     try {
       const data = await juegosAPI.recomendados(estadoEmocionalUsuario);
       if (data.success) {
@@ -23,7 +22,11 @@ const GameIntegration = ({ estadoEmocionalUsuario = 'estable', onGameComplete })
       console.error('Error al cargar juegos recomendados:', error);
       toast.error('Error al cargar juegos recomendados');
     }
-  };
+  }, [estadoEmocionalUsuario]);
+
+  useEffect(() => {
+    cargarJuegosRecomendados();
+  }, [cargarJuegosRecomendados]);
 
   const handleIniciarJuego = async (juegoId) => {
     setLoading(true);
@@ -31,7 +34,6 @@ const GameIntegration = ({ estadoEmocionalUsuario = 'estable', onGameComplete })
       const data = await juegosAPI.iniciar(juegoId, estadoEmocionalUsuario);
       
       if (data.success) {
-        setSesionActual(data.sesion_id);
         toast.success('¡Juego iniciado! Diviértete 🎮');
         return data.sesion_id;
       }
@@ -44,36 +46,7 @@ const GameIntegration = ({ estadoEmocionalUsuario = 'estable', onGameComplete })
     }
   };
 
-  const handleFinalizarJuego = async (resultado) => {
-    if (!sesionActual) {
-      console.warn('No hay sesión activa');
-      return;
-    }
-
-    try {
-      const data = await juegosAPI.finalizar(sesionActual, {
-        puntuacion: resultado.puntuacion || 0,
-        completado: resultado.completado || false,
-        estadoDespues: resultado.estadoDespues || null,
-        mejora: resultado.mejora || null,
-        notas: resultado.notas || '',
-      });
-
-      if (data.success) {
-        toast.success(`¡Bien hecho! Obtuviste ${resultado.puntuacion} puntos 🎉`);
-        
-        // Llamar callback si existe
-        if (onGameComplete) {
-          onGameComplete(data.sesion);
-        }
-        
-        setSesionActual(null);
-      }
-    } catch (error) {
-      console.error('Error al finalizar juego:', error);
-      toast.error('Error al guardar los resultados');
-    }
-  };
+  // `handleFinalizarJuego` removed — not used by this component. Finalization is managed elsewhere.
 
   const navigate = useNavigate();
 

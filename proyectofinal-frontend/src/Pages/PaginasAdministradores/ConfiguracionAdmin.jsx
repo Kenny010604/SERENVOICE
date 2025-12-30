@@ -19,6 +19,7 @@ const ConfiguracionAdmin = () => {
       <main 
         className="container" 
         style={{ 
+          paddingTop: "2rem",
           paddingBottom: "100px",
           backgroundImage: `url(${isDark ? FondoOscuro : FondoClaro})`,
           backgroundRepeat: "no-repeat",

@@ -2,13 +2,14 @@
 import apiClient from "./apiClient";
 import api from "../config/api";
 import sesionesService from "./sesionesService";
+import logger from '../utils/logger';
 
 const authService = {
   publicMode: false, // activar para pruebas públicas
 
   async login(email, password) {
     if (this.publicMode) {
-      console.log("[authService] Modo público activado: login ignorado");
+      logger.log("[authService] Modo público activado: login ignorado");
       return { token: null, user: null };
     }
 
@@ -37,7 +38,7 @@ const authService = {
 
   async register(userData) {
     if (this.publicMode) {
-      console.log("[authService] Modo público activado: registro ignorado");
+      logger.log("[authService] Modo público activado: registro ignorado");
       return { token: null, user: null };
     }
 
@@ -63,7 +64,7 @@ const authService = {
 
   async registerWithPhoto(formData) {
     if (this.publicMode) {
-      console.log("[authService] Modo público activado: registro ignorado");
+      logger.log("[authService] Modo público activado: registro ignorado");
       return { token: null, user: null };
     }
 
@@ -83,22 +84,22 @@ const authService = {
     if (this.publicMode) return;
     try {
       const sessionId = localStorage.getItem("session_id");
-      console.debug('[authService] logout called, session_id=', sessionId);
+      logger.debug('[authService] logout called, session_id=', sessionId);
       if (sessionId) {
         try {
-          console.debug('[authService] attempting to close remote session', sessionId);
+          logger.debug('[authService] attempting to close remote session', sessionId);
           await sesionesService.closeSession(sessionId);
-          console.debug('[authService] remote session closed successfully');
+          logger.debug('[authService] remote session closed successfully');
         } catch (e) {
-          console.warn("Error cerrando sesión remota:", e);
+          logger.warn("Error cerrando sesión remota:", e);
         }
       } else {
-        console.debug('[authService] no session_id found in localStorage — attempting to close all active sessions');
+        logger.debug('[authService] no session_id found in localStorage — attempting to close all active sessions');
         try {
           await sesionesService.closeAllSessions();
-          console.debug('[authService] closeAllSessions succeeded');
+          logger.debug('[authService] closeAllSessions succeeded');
         } catch (e) {
-          console.warn('[authService] closeAllSessions failed:', e);
+          logger.warn('[authService] closeAllSessions failed:', e);
         }
       }
     } finally {
@@ -140,7 +141,7 @@ const authService = {
   // Método para autenticación con Google
   async googleAuth(googleData) {
     if (this.publicMode) {
-      console.log("[authService] Modo público activado: Google Auth ignorado");
+      logger.log("[authService] Modo público activado: Google Auth ignorado");
       return { token: null, user: null };
     }
 

@@ -1,5 +1,5 @@
 // src/components/Juegos/JuegoMindfulness.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
 const JuegoMindfulness = ({ juego, onFinish, onExit }) => {
   const [jardin, setJardin] = useState([]);
@@ -12,7 +12,7 @@ const JuegoMindfulness = ({ juego, onFinish, onExit }) => {
   const [mensaje, setMensaje] = useState("");
   const [nivelJardin, setNivelJardin] = useState(1);
 
-  const plantas = [
+  const plantas = useMemo(() => [
     { id: "flor1", emoji: "🌸", nombre: "Flor de Cerezo", costo: { agua: 10, sol: 15 }, puntos: 10 },
     { id: "flor2", emoji: "🌺", nombre: "Hibisco", costo: { agua: 15, sol: 10 }, puntos: 15 },
     { id: "flor3", emoji: "🌻", nombre: "Girasol", costo: { agua: 20, sol: 25 }, puntos: 20 },
@@ -21,9 +21,9 @@ const JuegoMindfulness = ({ juego, onFinish, onExit }) => {
     { id: "arbol2", emoji: "🌲", nombre: "Pino", costo: { agua: 25, sol: 35 }, puntos: 25 },
     { id: "cactus", emoji: "🌵", nombre: "Cactus", costo: { agua: 5, sol: 40 }, puntos: 15 },
     { id: "hongo", emoji: "🍄", nombre: "Hongo Mágico", costo: { agua: 8, sol: 5 }, puntos: 8 }
-  ];
+  ], []);
 
-  const decoraciones = [
+  const _decoraciones = [
     { id: "mariposa", emoji: "🦋", nombre: "Mariposa" },
     { id: "abeja", emoji: "🐝", nombre: "Abeja" },
     { id: "piedra", emoji: "🪨", nombre: "Piedra" },
@@ -33,17 +33,18 @@ const JuegoMindfulness = ({ juego, onFinish, onExit }) => {
   useEffect(() => {
     if (juegoIniciado && tiempoInicio) {
       const timer = setInterval(() => {
-        setSegundos(Math.floor((Date.now() - tiempoInicio) / 1000));
-        
+        const secs = Math.floor((Date.now() - tiempoInicio) / 1000);
+        setSegundos(secs);
+
         // Recuperar recursos cada 5 segundos
-        if (segundos % 5 === 0) {
+        if (secs % 5 === 0) {
           setAgua(prev => Math.min(100, prev + 5));
           setSol(prev => Math.min(100, prev + 5));
         }
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [juegoIniciado, tiempoInicio, segundos]);
+  }, [juegoIniciado, tiempoInicio]);
 
   useEffect(() => {
     // Calcular nivel del jardín basado en puntos
@@ -57,7 +58,7 @@ const JuegoMindfulness = ({ juego, onFinish, onExit }) => {
       setNivelJardin(nuevoNivel);
       mostrarMensaje(`¡Nivel ${nuevoNivel} alcanzado! 🎉`);
     }
-  }, [jardin]);
+  }, [jardin, nivelJardin, plantas]);
 
   const iniciarJuego = () => {
     setJuegoIniciado(true);

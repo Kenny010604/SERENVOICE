@@ -11,7 +11,7 @@ import {
   FaExclamationTriangle,
   FaHeartbeat
 } from "react-icons/fa";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import { API_URL } from "../../constants/env";
 
@@ -24,9 +24,10 @@ const ProbarVozUsuario = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [mediaSupported, setMediaSupported] = useState(true);
   const [audioURL, setAudioURL] = useState(null);
-  const [chunks, setChunks] = useState([]);
+  const audioURLRef = useRef(null);
+  const [_chunks, setChunks] = useState([]);
   const mediaChunksRef = useRef([]);
-  const [recTime, setRecTime] = useState(0);
+  const [_recTime, setRecTime] = useState(0);
   const [analysis, setAnalysis] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState(null);
@@ -36,7 +37,7 @@ const ProbarVozUsuario = () => {
 
   useEffect(() => {
     if (!userId || !token) navigate("/login");
-  }, []);
+  }, [navigate, token, userId]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -49,13 +50,13 @@ const ProbarVozUsuario = () => {
 
         const data = await resp.json();
         setUser(data);
-      } catch (err) {
+      } catch {
         navigate("/login");
       }
     };
 
     if (token) fetchUser();
-  }, []);
+  }, [token, navigate]);
 
   useEffect(() => {
     const checkMediaSupport = async () => {
@@ -78,7 +79,7 @@ const ProbarVozUsuario = () => {
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
-      if (audioURL) URL.revokeObjectURL(audioURL);
+      if (audioURLRef.current) URL.revokeObjectURL(audioURLRef.current);
     };
   }, []);
 
@@ -109,8 +110,9 @@ const ProbarVozUsuario = () => {
 
       mr.onstop = () => {
         const blob = new Blob(mediaChunksRef.current, { type: mr.mimeType });
-        if (audioURL) URL.revokeObjectURL(audioURL);
+        if (audioURLRef.current) URL.revokeObjectURL(audioURLRef.current);
         const url = URL.createObjectURL(blob);
+        audioURLRef.current = url;
         setAudioURL(url);
         setChunks([...mediaChunksRef.current]);
         stream.getTracks().forEach((t) => t.stop());
@@ -239,6 +241,12 @@ const ProbarVozUsuario = () => {
           )}
 
           <h2>Análisis emocional por voz</h2>
+
+          {error && (
+            <div style={{ background: '#fee', color: '#900', padding: '0.75rem', borderRadius: 8, marginBottom: 12 }}>
+              {error}
+            </div>
+          )}
 
           {/* --- CONTROLES --- */}
           <div style={{ display: "flex", gap: 10 }}>

@@ -48,6 +48,7 @@ class Notificacion:
         if only_unread:
             conditions.append("leida = 0")
         elif not include_read:
+            # Usar la columna `fecha_leida` (nombre en la base de datos)
             conditions.append("(leida = 0 OR fecha_leida >= DATE_SUB(NOW(), INTERVAL 7 DAY))")
         
         conditions.append("(fecha_expiracion IS NULL OR fecha_expiracion > NOW())")
@@ -82,6 +83,7 @@ class Notificacion:
         """Marcar notificación como leída"""
         query = """
             UPDATE notificaciones 
+            # Marcar como leída y registrar fecha de lectura
             SET leida = 1, fecha_leida = NOW()
             WHERE id_notificacion = %s AND id_usuario = %s
         """
@@ -92,6 +94,7 @@ class Notificacion:
         """Marcar todas las notificaciones como leídas"""
         query = """
             UPDATE notificaciones 
+            # Marcar todas como leídas y registrar fecha de lectura
             SET leida = 1, fecha_leida = NOW()
             WHERE id_usuario = %s AND leida = 0
         """

@@ -1,5 +1,6 @@
 export const dashboardStyles = {
   main: {
+    paddingTop: "2rem",
     paddingBottom: "100px",
   },
   

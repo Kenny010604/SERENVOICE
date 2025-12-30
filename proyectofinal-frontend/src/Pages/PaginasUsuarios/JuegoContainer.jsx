@@ -1,6 +1,7 @@
 // src/Pages/PaginasUsuarios/JuegoContainer.jsx
 import React, { useState, useEffect } from "react";
-import { useParams, useLocation, useNavigate } from "react-router-dom";
+import logger from '../../utils/logger';
+import { useLocation, useNavigate } from "react-router-dom";
 import JuegoRespiracion from "../../components/Juegos/JuegoRespiracion";
 import JuegoPuzzle from "../../components/Juegos/JuegoPuzzle";
 import JuegoMemoria from "../../components/Juegos/JuegoMemoria";
@@ -8,13 +9,9 @@ import JuegoMandala from "../../components/Juegos/JuegoMandala";
 import JuegoMindfulness from "../../components/Juegos/JuegoMindfulness";
 
 const JuegoContainer = () => {
-  const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-
   const { juego, estadoAntes } = location.state || {};
-  const [juegoIniciado, setJuegoIniciado] = useState(false);
-  const [sesionId, setSesionId] = useState(null);
   const [tiempoInicio, setTiempoInicio] = useState(null);
 
   useEffect(() => {
@@ -24,21 +21,15 @@ const JuegoContainer = () => {
     }
 
     // Iniciar sesión de juego
-    iniciarSesion();
-  }, []);
-
-  const iniciarSesion = () => {
-    setJuegoIniciado(true);
     setTiempoInicio(Date.now());
-    // Aquí podrías llamar a la API para iniciar sesión si quieres guardar en BD
-    console.log("Sesión de juego iniciada");
-  };
+    logger.debug("Sesión de juego iniciada");
+  }, [juego, navigate]);
 
   const finalizarJuego = (puntuacion = 0, completado = true) => {
     const duracionSegundos = Math.floor((Date.now() - tiempoInicio) / 1000);
     
     // Aquí podrías llamar a la API para guardar la sesión
-    console.log("Juego finalizado:", {
+    logger.debug("Juego finalizado:", {
       juegoId: juego.id,
       estadoAntes,
       duracionSegundos,

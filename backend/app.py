@@ -182,6 +182,33 @@ def create_app():
     app.register_blueprint(alertas_bp)
     app.register_blueprint(notificaciones_bp)
 
+
+    print("[ROUTES] OK - Blueprint de notificaciones registrado en /api/notificaciones")
+    
+    # Blueprint de reportes de admin
+    try:
+        from routes.admin_reportes_routes import bp as admin_reportes_bp
+        app.register_blueprint(admin_reportes_bp)
+        print("[ROUTES] OK - Blueprint de reportes admin registrado en /api/admin/reportes")
+    except ImportError as e:
+        print(f"[ROUTES] ADVERTENCIA - No se pudo importar admin_reportes_routes: {e}")
+    
+    # Nuevos blueprints para admin
+    try:
+        from routes.auditoria_routes import bp as auditoria_bp
+        app.register_blueprint(auditoria_bp)
+        print("[ROUTES] OK - Blueprint de auditoría registrado en /api/auditoria")
+    except ImportError as e:
+        print(f"[ROUTES] ADVERTENCIA - No se pudo importar auditoria_routes: {e}")
+    
+    try:
+        from routes.sesiones_juego_routes import bp as sesiones_juego_bp
+        app.register_blueprint(sesiones_juego_bp)
+        print("[ROUTES] OK - Blueprint de sesiones de juego registrado en /api/sesiones-juego")
+    except ImportError as e:
+        print(f"[ROUTES] ADVERTENCIA - No se pudo importar sesiones_juego_routes: {e}")
+    
+    # Grupos - Nuevo
     try:
         from routes.grupos_routes import bp as grupos_bp
         app.register_blueprint(grupos_bp)

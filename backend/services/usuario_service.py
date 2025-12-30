@@ -37,6 +37,8 @@ class UsuarioService:
                     "nombre": u.get("nombre"),
                     "apellido": u.get("apellido"),
                     "email": u.get("correo"),
+                    "foto_perfil": u.get("foto_perfil"),
+                    "auth_provider": u.get("auth_provider", "local"),
                     "roles": roles_list or ["usuario"],
                     "ultimoAcceso": u.get("ultima_sesion", "N/A"),
                     "genero": u.get("genero"),
@@ -148,38 +150,67 @@ class UsuarioService:
     # LISTAR USUARIOS CON PAGINACIÓN
     # ============================================
     @staticmethod
-    def get_all_usuarios(page=1, per_page=20):
+    def get_all_usuarios(page=None, per_page=None):
         try:
             with DatabaseConnection.get_connection() as conn:
                 cursor = conn.cursor(dictionary=True)
 
-                offset = (page - 1) * per_page
+                # Si se especifica paginación
+                if page is not None and per_page is not None:
+                    offset = (page - 1) * per_page
+                    query = """
+                        SELECT 
+                            id_usuario AS id,
+                            nombre,
+                            apellido,
+                            correo AS email,
+                            foto_perfil,
+                            auth_provider,
+                            fecha_registro,
+                            fecha_nacimiento,
+                            genero,
+                            activo
+                        FROM usuario
+                        ORDER BY fecha_registro DESC
+                        LIMIT %s OFFSET %s
+                    """
+                    cursor.execute(query, (per_page, offset))
+                else:
+                    # Devolver todos los usuarios
+                    query = """
+                        SELECT 
+                            id_usuario AS id,
+                            nombre,
+                            apellido,
+                            correo AS email,
+                            foto_perfil,
+                            auth_provider,
+                            fecha_registro,
+                            fecha_nacimiento,
+                            genero,
+                            activo
+                        FROM usuario
+                        ORDER BY fecha_registro DESC
+                    """
+                    cursor.execute(query)
 
-                query = """
-                    SELECT 
-                        id_usuario,
-                        nombre,
-                        apellido,
-                        correo,
-                        fecha_registro AS fecha_creacion
-                    FROM usuario
-                    ORDER BY fecha_registro DESC
-                    LIMIT %s OFFSET %s
-                """
-
-                cursor.execute(query, (per_page, offset))
                 usuarios = cursor.fetchall()
-
                 cursor.close()
                 
+                # Para cada usuario, adjuntar roles
                 for u in usuarios:
                     try:
-                        roles_rows = RolUsuario.get_user_roles(u.get("id_usuario")) or []
+                        roles_rows = RolUsuario.get_user_roles(u.get("id")) or []
                         u_roles = [r.get("nombre_rol") for r in roles_rows]
                     except Exception:
                         u_roles = []
                     u["roles"] = u_roles
                     u["rol"] = u_roles[0] if u_roles else "usuario"
+                    u["rol"] = u_roles[0] if u_roles else None
+                    
+                    # Formatear fecha de último acceso
+                    if u.get("fecha_registro"):
+                        u["ultimoAcceso"] = str(u["fecha_registro"])
 
                 return usuarios
 
@@ -349,3 +380,19 @@ class UsuarioService:
         except Exception as e:
             print(f"\n Error en search_users: {str(e)}")
             return []
+
+    # ============================================
+    # CAMBIAR ESTADO (activo) DE UN USUARIO
+    # ============================================
+    @staticmethod
+    def set_estado_usuario(id_usuario, activo):
+        try:
+            with DatabaseConnection.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("UPDATE usuario SET activo = %s WHERE id_usuario = %s", (1 if activo else 0, id_usuario))
+                conn.commit()
+                cursor.close()
+                return {"success": True, "message": "Estado de usuario actualizado"}
+        except Exception as e:
+            print(f"\n Error en set_estado_usuario: {str(e)}")
+            return {"success": False, "error": str(e)}
