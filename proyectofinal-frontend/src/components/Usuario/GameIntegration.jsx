@@ -1,5 +1,3 @@
-import React, { useState, useEffect } from 'react';
-import { juegosAPI } from "../../services/apiClient";
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { juegosAPI } from '../../services/apiClient.js';
