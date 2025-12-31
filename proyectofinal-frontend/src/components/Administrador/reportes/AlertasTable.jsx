@@ -44,7 +44,7 @@ const AlertasTable = ({ data = [], onViewDetails }) => {
 
   if (!data || data.length === 0) {
     return (
-      <div className="card">
+      <div>
         <div className="flex items-center gap-2 mb-4">
           <AlertTriangle className="w-5 h-5 text-orange-500" />
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -61,7 +61,7 @@ const AlertasTable = ({ data = [], onViewDetails }) => {
   }
 
   return (
-    <div className="card">
+    <div>
       <div className="mb-4">
         <div className="flex items-center gap-2">
           <AlertTriangle className="w-5 h-5 text-red-500" />
@@ -129,6 +129,7 @@ const AlertasTable = ({ data = [], onViewDetails }) => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   <button
+                    type="button"
                     onClick={() => onViewDetails && onViewDetails(alerta)}
                     className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
                     aria-label={`Ver detalles de alerta de ${alerta.nombre} ${alerta.apellido}`}

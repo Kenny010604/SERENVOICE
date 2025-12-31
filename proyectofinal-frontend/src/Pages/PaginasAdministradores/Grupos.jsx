@@ -7,6 +7,7 @@ import FondoClaro from "../../assets/FondoClaro.svg";
 import FondoOscuro from "../../assets/FondoOscuro.svg";
 import { FaUserFriends, FaChartBar, FaUsers, FaClipboardList, FaFilter, FaPlus, FaDownload } from "react-icons/fa";
 import apiClient from '../../services/apiClient';
+import api from "../../config/api";
 import "../../global.css";
 
 export default function Grupos() {
@@ -23,7 +24,7 @@ export default function Grupos() {
   const cargar = async () => {
     setLoading(true);
     try {
-      const res = await apiClient.get('/grupos/estadisticas');
+      const res = await apiClient.get(api.endpoints.grupos.estadisticas);
       const data = res.data?.data || [];
       setGrupos(data);
       setFilteredGrupos(data);
@@ -46,7 +47,7 @@ export default function Grupos() {
 
   const toggleEstado = async (id, activo) => {
     try {
-      await apiClient.patch(`/grupos/${id}/estado`, { activo: !activo });
+      await apiClient.patch(api.endpoints.grupos.estado(id), { activo: !activo });
       setMsg(`Grupo ${!activo ? 'activado' : 'desactivado'} correctamente`);
       cargar();
     } catch (e) {
@@ -57,7 +58,7 @@ export default function Grupos() {
 
   const viewGrupoStats = async (grupo) => {
     try {
-      await apiClient.get(`/grupos/${grupo.id_grupo}/estadisticas-detalladas`);
+      await apiClient.get(api.endpoints.grupos.estadisticasDetalladas(grupo.id_grupo));
       setSelectedGrupo(grupo);
       setShowModal(true);
     } catch (error) {

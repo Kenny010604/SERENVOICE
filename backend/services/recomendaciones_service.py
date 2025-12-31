@@ -33,10 +33,10 @@ class RecomendacionesService:
         
         query = """
             SELECT r.*, ra.nivel_estres, ra.nivel_ansiedad, a.fecha_analisis
-            FROM Recomendaciones r
-            JOIN Resultado_analisis ra ON r.id_resultado = ra.id_resultado
-            JOIN Analisis a ON ra.id_analisis = a.id_analisis
-            JOIN Audio au ON a.id_audio = au.id_audio
+            FROM recomendaciones r
+            JOIN resultado_analisis ra ON r.id_resultado = ra.id_resultado
+            JOIN analisis a ON ra.id_analisis = a.id_analisis
+            JOIN audio au ON a.id_audio = au.id_audio
             WHERE au.id_usuario = %s
             ORDER BY r.fecha_generacion DESC
             LIMIT %s
@@ -60,10 +60,10 @@ class RecomendacionesService:
         
         query = """
             SELECT r.*, ra.nivel_estres, ra.nivel_ansiedad
-            FROM Recomendaciones r
-            JOIN Resultado_analisis ra ON r.id_resultado = ra.id_resultado
-            JOIN Analisis a ON ra.id_analisis = a.id_analisis
-            JOIN Audio au ON a.id_audio = au.id_audio
+            FROM recomendaciones r
+            JOIN resultado_analisis ra ON r.id_resultado = ra.id_resultado
+            JOIN analisis a ON ra.id_analisis = a.id_analisis
+            JOIN audio au ON a.id_audio = au.id_audio
             WHERE au.id_usuario = %s AND r.tipo_recomendacion = %s
             ORDER BY r.fecha_generacion DESC
         """
@@ -114,10 +114,10 @@ class RecomendacionesService:
         
         query = """
             SELECT r.*, ra.nivel_estres, ra.nivel_ansiedad, a.fecha_analisis
-            FROM Recomendaciones r
-            JOIN Resultado_analisis ra ON r.id_resultado = ra.id_resultado
-            JOIN Analisis a ON ra.id_analisis = a.id_analisis
-            JOIN Audio au ON a.id_audio = au.id_audio
+            FROM recomendaciones r
+            JOIN resultado_analisis ra ON r.id_resultado = ra.id_resultado
+            JOIN analisis a ON ra.id_analisis = a.id_analisis
+            JOIN audio au ON a.id_audio = au.id_audio
             WHERE au.id_usuario = %s 
             AND r.fecha_generacion >= DATE_SUB(CURDATE(), INTERVAL %s DAY)
             ORDER BY r.fecha_generacion DESC
@@ -144,10 +144,10 @@ class RecomendacionesService:
                 COUNT(*) as total,
                 COUNT(CASE WHEN ra.nivel_estres >= 70 THEN 1 END) as estres_alto,
                 COUNT(CASE WHEN ra.nivel_ansiedad >= 70 THEN 1 END) as ansiedad_alta
-            FROM Recomendaciones r
-            JOIN Resultado_analisis ra ON r.id_resultado = ra.id_resultado
-            JOIN Analisis a ON ra.id_analisis = a.id_analisis
-            JOIN Audio au ON a.id_audio = au.id_audio
+            FROM recomendaciones r
+            JOIN resultado_analisis ra ON r.id_resultado = ra.id_resultado
+            JOIN analisis a ON ra.id_analisis = a.id_analisis
+            JOIN audio au ON a.id_audio = au.id_audio
             WHERE au.id_usuario = %s
             GROUP BY r.tipo_recomendacion
         """

@@ -36,9 +36,9 @@ class AnalisisService:
             SELECT a.id_analisis, a.fecha_analisis, a.estado_analisis,
                    au.nombre_archivo, au.duracion, au.fecha_grabacion,
                    ra.nivel_estres, ra.nivel_ansiedad, ra.clasificacion, ra.confianza_modelo
-            FROM Analisis a
-            JOIN Audio au ON a.id_audio = au.id_audio
-            LEFT JOIN Resultado_analisis ra ON a.id_analisis = ra.id_analisis
+            FROM analisis a
+            JOIN audio au ON a.id_audio = au.id_audio
+            LEFT JOIN resultado_analisis ra ON a.id_analisis = ra.id_analisis
             WHERE au.id_usuario = %s
             ORDER BY a.fecha_analisis DESC
             LIMIT %s

@@ -2464,3 +2464,14 @@ input[type="password"]::-webkit-clear-button {
 @media (max-width: 540px) {
   .stats-grid { grid-template-columns: 1fr; }
 }
+
+/* Localized vertical spacing and width for Reportes page cards */
+.reportes-page .card {
+  margin: 1.5rem 0;
+  max-width: 1100px;
+}
+
+/* Localized vertical spacing for Reportes page cards */
+.reportes-page .card {
+  margin: 1.5rem 0;
+}

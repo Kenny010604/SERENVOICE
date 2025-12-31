@@ -25,6 +25,7 @@ import {
   FaCamera,
   FaTrash,
 } from "react-icons/fa";
+import { makeFotoUrlWithProxy } from '../../utils/avatar';
 
 // Estilos inline para el input bloqueado de Google
 const googleLockedStyles = `
@@ -99,30 +100,6 @@ const ActualizarPerfil = () => {
     confirm: false,
   });
   const [fotoPerfil, setFotoPerfil] = useState(null);
-  const makeFotoUrl = (path) => {
-    if (!path) return null;
-    const trimmed = String(path).trim();
-    try {
-      const lower = trimmed.toLowerCase();
-      if (lower.startsWith('http://') || lower.startsWith('https://')) return trimmed;
-      if (lower.startsWith('//')) return `https:${trimmed}`;
-    } catch {
-      return null;
-    }
-    return `http://localhost:5000${trimmed}`;
-  };
-
-  const makeFotoUrlWithProxy = (path) => {
-    if (!path) return null;
-    const trimmed = String(path).trim();
-    const lower = trimmed.toLowerCase();
-    // Si viene de Google profile (googleusercontent), usar proxy del backend
-    if (lower.includes('googleusercontent.com') || lower.includes('lh3.googleusercontent.com')) {
-      return `/api/auth/proxy_image?url=${encodeURIComponent(trimmed)}`;
-    }
-    return makeFotoUrl(trimmed);
-  };
-
   const [fotoPreview, setFotoPreview] = useState(
     makeFotoUrlWithProxy(user?.foto_perfil) || null
   );

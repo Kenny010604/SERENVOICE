@@ -18,6 +18,7 @@ import NavbarAdministrador from "../../components/Administrador/NavbarAdministra
 import AdminCard from "../../components/Administrador/AdminCard";
 import { dashboardStyles } from "../../styles/StylesAdmin/DashboardAdmin.styles";
 import apiClient from "../../services/apiClient";
+import api from "../../config/api";
 import { ThemeContext } from "../../context/themeContextDef";
 import FondoClaro from "../../assets/FondoClaro.svg";
 import FondoOscuro from "../../assets/FondoOscuro.svg";
@@ -47,11 +48,11 @@ const DashboardAdmin = () => {
       try {
         // Usar las rutas de /api/usuarios
         const [statsRes, profileRes, alertasRes, gruposRes, analisisRes] = await Promise.all([
-          apiClient.get("/usuarios/statistics"),
-          apiClient.get("/usuarios/me"),
-          apiClient.get("/alertas/criticas").catch(() => ({ data: { data: [] } })),
-          apiClient.get("/grupos/estadisticas").catch(() => ({ data: { data: { activos: 0 } } })),
-          apiClient.get("/analisis/hoy").catch(() => ({ data: { data: { total: 0 } } })),
+          apiClient.get(api.endpoints.usuarios.statistics),
+          apiClient.get(api.endpoints.users.me),
+          apiClient.get(api.endpoints.alertas.criticas).catch(() => ({ data: { data: [] } })),
+          apiClient.get(api.endpoints.grupos.estadisticas).catch(() => ({ data: { data: { activos: 0 } } })),
+          apiClient.get(api.endpoints.analisis.today).catch(() => ({ data: { data: { total: 0 } } })),
         ]);
 
         // Verificar estructura de respuesta

@@ -1,11 +1,12 @@
 // src/services/reportesService.js
 import apiClient from "./apiClient";
+import api from "../config/api";
 
 const reportesService = {
   // Generar nuevo reporte
   async generateReport(fecha_inicio, fecha_fin, formato = 'pdf') {
     try {
-      const response = await apiClient.post('/reportes/generate', {
+      const response = await apiClient.post(api.endpoints.reportes.generate, {
         fecha_inicio,
         fecha_fin,
         formato
@@ -23,7 +24,7 @@ const reportesService = {
   // Obtener reportes del usuario actual
   async getMyReports() {
     try {
-      const response = await apiClient.get('/reportes/my-reports');
+      const response = await apiClient.get(api.endpoints.reportes.myReports);
       return response.data;
     } catch (error) {
       throw new Error(
@@ -37,7 +38,7 @@ const reportesService = {
   // Obtener detalles de un reporte
   async getReportById(id_reporte) {
     try {
-      const response = await apiClient.get(`/reportes/${id_reporte}`);
+      const response = await apiClient.get(api.endpoints.reportes.byId(id_reporte));
       return response.data;
     } catch (error) {
       throw new Error(
@@ -50,3 +51,64 @@ const reportesService = {
 };
 
 export default reportesService;
+
+// --- ADMIN / REPORTES HELPERS (moved from src/utils/api.js)
+export const fetchReporteGeneral = async (filtros = {}) => {
+  const response = await apiClient.get(api.endpoints.admin.reportes.resumenGeneral, { params: filtros });
+  return response.data;
+};
+
+export const fetchTendencias = async (filtros = {}) => {
+  const response = await apiClient.get(api.endpoints.admin.reportes.tendencias, { params: filtros });
+  return response.data;
+};
+
+export const fetchDistribucionEmociones = async (filtros = {}) => {
+  const response = await apiClient.get(api.endpoints.admin.reportes.distribucionEmociones, { params: filtros });
+  return response.data;
+};
+
+export const fetchClasificaciones = async (filtros = {}) => {
+  const response = await apiClient.get(api.endpoints.admin.reportes.clasificaciones, { params: filtros });
+  return response.data;
+};
+
+export const fetchGruposActividad = async (filtros = {}) => {
+  const response = await apiClient.get(api.endpoints.admin.reportes.gruposActividad, { params: filtros });
+  return response.data;
+};
+
+export const fetchEfectividadRecomendaciones = async (filtros = {}) => {
+  const response = await apiClient.get(api.endpoints.admin.reportes.efectividadRecomendaciones, { params: filtros });
+  return response.data;
+};
+
+export const fetchAlertasCriticas = async (filtros = {}) => {
+  const response = await apiClient.get(api.endpoints.admin.reportes.alertasCriticas, { params: filtros });
+  return response.data;
+};
+
+export const fetchUsuariosEstadisticas = async (filtros = {}) => {
+  const response = await apiClient.get(api.endpoints.admin.reportes.usuariosEstadisticas, { params: filtros });
+  return response.data;
+};
+
+export const exportarReporteAdmin = async ({ tipo, formato, filtros }) => {
+  const response = await apiClient.post(
+    api.endpoints.admin.reportes.exportar,
+    { tipo, formato, filtros },
+    { responseType: 'blob' }
+  );
+  return response.data;
+};
+
+// attach to default export for convenience
+reportesService.fetchReporteGeneral = fetchReporteGeneral;
+reportesService.fetchTendencias = fetchTendencias;
+reportesService.fetchDistribucionEmociones = fetchDistribucionEmociones;
+reportesService.fetchClasificaciones = fetchClasificaciones;
+reportesService.fetchGruposActividad = fetchGruposActividad;
+reportesService.fetchEfectividadRecomendaciones = fetchEfectividadRecomendaciones;
+reportesService.fetchAlertasCriticas = fetchAlertasCriticas;
+reportesService.fetchUsuariosEstadisticas = fetchUsuariosEstadisticas;
+reportesService.exportarReporte = exportarReporteAdmin;

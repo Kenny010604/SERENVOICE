@@ -4,6 +4,7 @@ import { ThemeContext } from "../../context/themeContextDef";
 import FondoClaro from "../../assets/FondoClaro.svg";
 import FondoOscuro from "../../assets/FondoOscuro.svg";
 import apiClient from "../../services/apiClient";
+import api from "../../config/api";
 import { FaShieldAlt, FaFilter, FaExclamationTriangle, FaDownload, FaEye } from "react-icons/fa";
 import "../../global.css";
 
@@ -27,9 +28,9 @@ const Auditoria = () => {
   const cargarDatos = async () => {
     try {
       const [sesionesRes, rolesRes, sospechosaRes] = await Promise.all([
-        apiClient.get("/auditoria/sesiones"),
-        apiClient.get("/auditoria/cambios-roles"),
-        apiClient.get("/auditoria/actividad-sospechosa")
+        apiClient.get(api.endpoints.auditoria.sesiones),
+        apiClient.get(`${api.endpoints.auditoria.sesiones}/cambios-roles`),
+        apiClient.get(`${api.endpoints.auditoria.sesiones}/actividad-sospechosa`),
       ]);
 
       setSesiones(sesionesRes.data?.data || []);

@@ -1,7 +1,8 @@
 import apiClient from './apiClient';
+import api from '../config/api';
 
-// Use backend blueprint prefix (apiClient already includes '/api')
-const base = '/grupos';
+// Use configured endpoints
+const base = api.endpoints.grupos.list;
 
 const groupsService = {
   listar: async () => {

@@ -9,13 +9,18 @@ import { ThemeContext } from '../../../context/themeContextDef';
  * @param {Array} props.data - Array de objetos con fecha y valores de métricas
  * @param {string} props.periodo - Periodo de tiempo mostrado
  */
-const TendenciasChart = ({ data = [], periodo = '30d' }) => {
+const TendenciasChart = ({ data = [], periodo = '30d', emocionesSeleccionadas = null }) => {
   const { isDark } = useContext(ThemeContext);
 
   const chartColors = {
     estres: '#f97316',
     ansiedad: '#ef4444',
     felicidad: '#10b981',
+    tristeza: '#6366f1',
+    miedo: '#8b5cf6',
+    enojo: '#dc2626',
+    neutral: '#6b7280',
+    sorpresa: '#f59e0b',
   };
 
   const axisColor = isDark ? '#9ca3af' : '#6b7280';
@@ -39,7 +44,7 @@ const TendenciasChart = ({ data = [], periodo = '30d' }) => {
 
   if (!data || data.length === 0) {
     return (
-      <div className="card">
+      <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           Tendencias Emocionales
         </h3>
@@ -53,7 +58,7 @@ const TendenciasChart = ({ data = [], periodo = '30d' }) => {
   }
 
   return (
-    <div className="card">
+    <div>
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
         Tendencias Emocionales - Últimos {periodo === '7d' ? '7 días' : periodo === '30d' ? '30 días' : '90 días'}
       </h3>
@@ -75,33 +80,20 @@ const TendenciasChart = ({ data = [], periodo = '30d' }) => {
             wrapperStyle={{ paddingTop: '20px' }}
             iconType="line"
           />
-          <Line
-            type="monotone"
-            dataKey="estres"
-            name="Estrés"
-            stroke={chartColors.estres}
-            strokeWidth={2}
-            dot={{ r: 4 }}
-            activeDot={{ r: 6 }}
-          />
-          <Line
-            type="monotone"
-            dataKey="ansiedad"
-            name="Ansiedad"
-            stroke={chartColors.ansiedad}
-            strokeWidth={2}
-            dot={{ r: 4 }}
-            activeDot={{ r: 6 }}
-          />
-          <Line
-            type="monotone"
-            dataKey="felicidad"
-            name="Felicidad"
-            stroke={chartColors.felicidad}
-            strokeWidth={2}
-            dot={{ r: 4 }}
-            activeDot={{ r: 6 }}
-          />
+          {Object.keys(chartColors)
+            .filter((key) => !emocionesSeleccionadas || emocionesSeleccionadas.length === 0 ? true : emocionesSeleccionadas.includes(key))
+            .map((key) => (
+              <Line
+                key={key}
+                type="monotone"
+                dataKey={key}
+                name={key.charAt(0).toUpperCase() + key.slice(1)}
+                stroke={chartColors[key]}
+                strokeWidth={2}
+                dot={{ r: 4 }}
+                activeDot={{ r: 6 }}
+              />
+            ))}
         </LineChart>
       </ResponsiveContainer>
     </div>
@@ -115,9 +107,15 @@ TendenciasChart.propTypes = {
       estres: PropTypes.number,
       ansiedad: PropTypes.number,
       felicidad: PropTypes.number,
+      tristeza: PropTypes.number,
+      miedo: PropTypes.number,
+      enojo: PropTypes.number,
+      neutral: PropTypes.number,
+      sorpresa: PropTypes.number,
     })
   ),
   periodo: PropTypes.oneOf(['7d', '30d', '90d']),
+  emocionesSeleccionadas: PropTypes.arrayOf(PropTypes.string),
 };
 
 export default TendenciasChart;

@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import NavbarPublic from "../../components/Publico/NavbarPublic";
+import apiClient from "../../services/apiClient";
+import api from "../../config/api";
 import "../../global.css";
 import Spinner from "../../components/Publico/Spinner";
 import {
@@ -13,7 +15,7 @@ import {
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
-import { API_URL } from "../../constants/env";
+// Use api.baseURL via config when needed
 
 const ProbarVozUsuario = () => {
   const navigate = useNavigate();
@@ -42,13 +44,8 @@ const ProbarVozUsuario = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const resp = await fetch(`${API_URL}/usuarios/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!resp.ok) throw new Error("Error cargando usuario");
-
-        const data = await resp.json();
+        const resp = await apiClient.get(api.endpoints.users.me);
+        const data = resp.data?.data ?? resp.data;
         setUser(data);
       } catch {
         navigate("/login");
@@ -144,15 +141,8 @@ const ProbarVozUsuario = () => {
       formData.append("audio", blob, "grabacion.webm");
       formData.append("userId", userId);
 
-      const response = await fetch(`${API_URL}/audio/analyze`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
-
-      if (!response.ok) throw new Error("Error del servidor");
-
-      const data = await response.json();
+      const response = await apiClient.post(api.endpoints.audio.analyze, formData);
+      const data = response.data?.data ?? response.data;
       setAnalysis(data);
     } catch (err) {
       setError(err.message);

@@ -31,9 +31,9 @@ class ResultadosService:
         """
         query = """
             SELECT ra.*, a.fecha_analisis, au.nombre_archivo
-            FROM Resultado_analisis ra
-            JOIN Analisis a ON ra.id_analisis = a.id_analisis
-            JOIN Audio au ON a.id_audio = au.id_audio
+            FROM resultado_analisis ra
+            JOIN analisis a ON ra.id_analisis = a.id_analisis
+            JOIN audio au ON a.id_audio = au.id_audio
             WHERE au.id_usuario = %s
             ORDER BY a.fecha_analisis DESC
             LIMIT %s
@@ -55,9 +55,9 @@ class ResultadosService:
         """
         query = """
             SELECT ra.*, a.fecha_analisis, au.nombre_archivo
-            FROM Resultado_analisis ra
-            JOIN Analisis a ON ra.id_analisis = a.id_analisis
-            JOIN Audio au ON a.id_audio = au.id_audio
+            FROM resultado_analisis ra
+            JOIN analisis a ON ra.id_analisis = a.id_analisis
+            JOIN audio au ON a.id_audio = au.id_audio
             WHERE au.id_usuario = %s AND ra.clasificacion = %s
             ORDER BY a.fecha_analisis DESC
         """
@@ -79,9 +79,9 @@ class ResultadosService:
         
         query = """
             SELECT ra.nivel_estres, ra.nivel_ansiedad, ra.clasificacion
-            FROM Resultado_analisis ra
-            JOIN Analisis a ON ra.id_analisis = a.id_analisis
-            JOIN Audio au ON a.id_audio = au.id_audio
+            FROM resultado_analisis ra
+            JOIN analisis a ON ra.id_analisis = a.id_analisis
+            JOIN audio au ON a.id_audio = au.id_audio
             WHERE au.id_usuario = %s
         """
         
@@ -139,9 +139,9 @@ class ResultadosService:
                 AVG(ra.nivel_estres) as promedio_estres,
                 AVG(ra.nivel_ansiedad) as promedio_ansiedad,
                 COUNT(*) as total_analisis
-            FROM Resultado_analisis ra
-            JOIN Analisis a ON ra.id_analisis = a.id_analisis
-            JOIN Audio au ON a.id_audio = au.id_audio
+            FROM resultado_analisis ra
+            JOIN analisis a ON ra.id_analisis = a.id_analisis
+            JOIN audio au ON a.id_audio = au.id_audio
             WHERE au.id_usuario = %s
             AND a.fecha_analisis >= DATE_SUB(CURDATE(), INTERVAL %s MONTH)
             GROUP BY DATE_FORMAT(a.fecha_analisis, '%Y-%m')
@@ -164,9 +164,9 @@ class ResultadosService:
         """
         query = """
             SELECT ra.*, a.fecha_analisis, au.nombre_archivo
-            FROM Resultado_analisis ra
-            JOIN Analisis a ON ra.id_analisis = a.id_analisis
-            JOIN Audio au ON a.id_audio = au.id_audio
+            FROM resultado_analisis ra
+            JOIN analisis a ON ra.id_analisis = a.id_analisis
+            JOIN audio au ON a.id_audio = au.id_audio
             WHERE au.id_usuario = %s
             ORDER BY a.fecha_analisis DESC
             LIMIT %s

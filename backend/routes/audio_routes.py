@@ -180,14 +180,14 @@ def analyze_voice():
             conn.commit()
             audio_db_id = cursor.lastrowid
             cursor.close()
-            DatabaseConnection.release_connection(conn)
+            DatabaseConnection.return_connection(conn)
 
             print(f"[audio_routes] Audio guardado en BD con ID {audio_db_id}")
 
         except Exception as db_err:
             print("[audio_routes] Error guardando en BD:", db_err)
             try:
-                DatabaseConnection.release_connection(conn)
+                DatabaseConnection.return_connection(conn)
             except Exception:
                 pass
 

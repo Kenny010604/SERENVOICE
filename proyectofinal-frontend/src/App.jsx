@@ -5,7 +5,7 @@ import "./global.css";
 
 // Páginas públicas
 import Inicio from "./Pages/PaginasPublicas/Inicio.jsx";
-import Login from "./Pages/PaginasPublicas/login.jsx";
+import Login from "./Pages/PaginasPublicas/Login.jsx";
 import Registro from "./Pages/PaginasPublicas/Registro.jsx";
 import Sobre from "./Pages/PaginasPublicas/Sobre.jsx";
 import Contacto from "./Pages/PaginasPublicas/Contacto.jsx";

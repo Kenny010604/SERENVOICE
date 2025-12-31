@@ -65,3 +65,46 @@ def get_alert(id_alerta):
         data=alerta,
         status=200
     )
+
+
+@bp.route('/<int:id_alerta>/asignar', methods=['PATCH'])
+@jwt_required()
+@role_required('admin')
+def assign_alert(id_alerta):
+    """Asignar una alerta al admin que realiza la petición"""
+    admin_id = get_jwt_identity()
+    success = AlertasService.assign_alert(id_alerta, admin_id)
+    if success:
+        return Helpers.format_response(success=True, message='Alerta asignada', status=200)
+    return Helpers.format_response(success=False, message='No se pudo asignar la alerta', status=500)
+
+
+@bp.route('/<int:id_alerta>/resolver', methods=['PATCH'])
+@jwt_required()
+@role_required('admin')
+def resolve_alert(id_alerta):
+    """Marcar alerta como revisada"""
+    data = request.get_json(silent=True) or {}
+    notas = data.get('notas')
+    admin_id = get_jwt_identity()
+    try:
+        ok = AlertasService.resolve_alert(id_alerta, admin_id, notas)
+        if ok:
+            return Helpers.format_response(success=True, message='Alerta marcada como resuelta', status=200)
+        return Helpers.format_response(success=False, message='No se pudo marcar como resuelta', status=500)
+    except Exception as e:
+        print(f"[ERROR] Al marcar resuelta: {e}")
+        return Helpers.format_response(success=False, message=str(e), status=500)
+
+
+@bp.route('/<int:id_alerta>/historial', methods=['GET'])
+@jwt_required()
+@role_required('admin')
+def get_historial(id_alerta):
+    """Obtener historial de acciones para una alerta"""
+    try:
+        historial = AlertasService.get_historial(id_alerta)
+        return Helpers.format_response(success=True, data=historial, status=200)
+    except Exception as e:
+        print(f"[ERROR] Al obtener historial: {e}")
+        return Helpers.format_response(success=False, message=str(e), status=500)

@@ -33,9 +33,8 @@ import {
   FaLightbulb,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-
-// API URL
-import { API_URL } from "../../constants/env";
+import apiClient from '../../services/apiClient';
+import api from '../../config/api';
 
 const ProbarVoz = () => {
   const navigate = useNavigate();
@@ -190,10 +189,10 @@ const ProbarVoz = () => {
       const formData = new FormData();
       formData.append("audio", blob, "grabacion.webm");
 
-      const res = await fetch(`${API_URL}/api/audio/analyze`, { method: "POST", body: formData });
-      if (!res.ok) throw new Error("Error del servidor: " + res.status);
-      const data = await res.json();
-      setAnalysis(data);
+      const res = await apiClient.post(api.endpoints.audio.analyze, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setAnalysis(res.data);
     } catch (err) {
       console.error("Error analyzing audio:", err);
       setError(err.message || "Error al analizar el audio");

@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useCallback, useContext } from 'react';
+import React, { useState, useEffect, useCallback, useContext, useRef } from 'react';
 import { BarChart3, Users, Brain, AlertTriangle, Activity, RefreshCw, Info } from 'lucide-react';
 import NavbarAdministrador from '../../components/Administrador/NavbarAdministrador';
+import apiClient from '../../services/apiClient';
+import api from '../../config/api';
 import { ThemeContext } from '../../context/themeContextDef';
 import FondoClaro from '../../assets/FondoClaro.svg';
 import FondoOscuro from '../../assets/FondoOscuro.svg';
@@ -14,9 +16,10 @@ import EfectividadRecomendacionesChart from '../../components/Administrador/repo
 import AlertasTable from '../../components/Administrador/reportes/AlertasTable';
 import TopUsuariosTable from '../../components/Administrador/reportes/TopUsuariosTable';
 import FiltrosFechas from '../../components/Administrador/reportes/FiltrosFechas';
+import GraficasFiltros from '../../components/Administrador/reportes/GraficasFiltros';
 import ExportButton from '../../components/Administrador/reportes/ExportButton';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+// Use centralized api endpoints and client
 
 /**
  * Página principal de reportes y estadísticas del panel de administración
@@ -45,71 +48,77 @@ const Reportes = () => {
   const [efectividadRecomendaciones, setEfectividadRecomendaciones] = useState([]);
   const [alertasCriticas, setAlertasCriticas] = useState([]);
   const [topUsuarios, setTopUsuarios] = useState([]);
+  const [graficaFiltros, setGraficaFiltros] = useState({
+    emotions: ['ansiedad','estres','felicidad','tristeza','miedo','enojo','neutral','sorpresa'],
+    metric: 'promedio_ansiedad',
+    granularity: 'auto',
+    topN: 10,
+    threshold: 0,
+    compare: false,
+    normalize: false,
+    smoothing: false,
+  });
+
+  // Usar un único conjunto de filtros `graficaFiltros` para todas las gráficas
+
+  const controllerRef = useRef(null);
+
+  // `graficaFiltros` es el único origen de verdad para los filtros de las gráficas
 
   /**
    * Carga todos los datos del reporte
    */
-  const cargarDatos = useCallback(async () => {
+  const cargarDatos = useCallback(async (extraGraficaFiltros = null) => {
     try {
       setLoading(true);
       setError(null);
 
-      const token = localStorage.getItem('token');
-      const headers = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      };
-
-      const params = new URLSearchParams();
-      if (filtros.fecha_inicio) params.append('fecha_inicio', filtros.fecha_inicio);
-      if (filtros.fecha_fin) params.append('fecha_fin', filtros.fecha_fin);
-      if (filtros.periodo) params.append('periodo', filtros.periodo);
-
-      const queryString = params.toString();
-
-      // Helper para manejar respuestas con errores
-      const handleResponse = async (response, defaultValue = []) => {
-        if (!response.ok) {
-          console.error(`Error ${response.status} en ${response.url}`);
-          return defaultValue;
-        }
+      // Build params object for axios
+      const params = {};
+      if (filtros.fecha_inicio) params.fecha_inicio = filtros.fecha_inicio;
+      if (filtros.fecha_fin) params.fecha_fin = filtros.fecha_fin;
+      if (filtros.periodo) params.periodo = filtros.periodo;
+      // Attach grafica filters as JSON if provided (backend may accept this for server-side aggregation)
+      if (extraGraficaFiltros) {
         try {
-          const data = await response.json();
-          return data.data !== undefined ? data.data : data;
+          params.graficaFiltros = JSON.stringify(extraGraficaFiltros);
         } catch {
-          return defaultValue;
+          params.graficaFiltros = String(extraGraficaFiltros);
         }
-      };
+      }
 
-      // Realizar las peticiones de forma secuencial para evitar agotar el pool de conexiones
-      const resumenRes = await fetch(`${API_BASE_URL}/api/admin/reportes/resumen-general?${queryString}`, { headers });
-      const resumenData = await handleResponse(resumenRes, {
-        usuarios_activos: 0,
-        total_analisis: 0,
-        promedio_ansiedad: 0,
-        alertas_criticas: 0
-      });
+      // cancel previous request if any
+      if (controllerRef.current) {
+        try { controllerRef.current.abort(); } catch { /* ignore */ }
+      }
+      controllerRef.current = new AbortController();
+      const signal = controllerRef.current.signal;
 
-      const tendenciasRes = await fetch(`${API_BASE_URL}/api/admin/reportes/tendencias-emocionales?${queryString}`, { headers });
-      const tendenciasData = await handleResponse(tendenciasRes, []);
+      const getData = (res, defaultValue = []) => (res?.data?.data !== undefined ? res.data.data : res?.data ?? defaultValue);
 
-      const emocionesRes = await fetch(`${API_BASE_URL}/api/admin/reportes/distribucion-emociones?${queryString}`, { headers });
-      const emocionesData = await handleResponse(emocionesRes, []);
+      const resumenRes = await apiClient.get(api.endpoints.admin.reportes.resumenGeneral, { params, skipAuthRedirect: true, signal });
+      const resumenData = getData(resumenRes, { usuarios_activos: 0, total_analisis: 0, promedio_ansiedad: 0, alertas_criticas: 0 });
 
-      const clasificacionesRes = await fetch(`${API_BASE_URL}/api/admin/reportes/clasificaciones?${queryString}`, { headers });
-      const clasificacionesData = await handleResponse(clasificacionesRes, []);
+      const tendenciasRes = await apiClient.get(api.endpoints.admin.reportes.tendencias, { params, skipAuthRedirect: true, signal });
+      const tendenciasData = getData(tendenciasRes, []);
 
-      const gruposRes = await fetch(`${API_BASE_URL}/api/admin/reportes/grupos-actividad?${queryString}`, { headers });
-      const gruposData = await handleResponse(gruposRes, []);
+      const emocionesRes = await apiClient.get(api.endpoints.admin.reportes.distribucionEmociones, { params, skipAuthRedirect: true, signal });
+      const emocionesData = getData(emocionesRes, []);
 
-      const recomendacionesRes = await fetch(`${API_BASE_URL}/api/admin/reportes/efectividad-recomendaciones?${queryString}`, { headers });
-      const recomendacionesData = await handleResponse(recomendacionesRes, []);
+      const clasificacionesRes = await apiClient.get(api.endpoints.admin.reportes.clasificaciones, { params, skipAuthRedirect: true, signal });
+      const clasificacionesData = getData(clasificacionesRes, []);
 
-      const alertasRes = await fetch(`${API_BASE_URL}/api/admin/reportes/alertas-criticas?${queryString}`, { headers });
-      const alertasData = await handleResponse(alertasRes, []);
+      const gruposRes = await apiClient.get(api.endpoints.admin.reportes.gruposActividad, { params, skipAuthRedirect: true, signal });
+      const gruposData = getData(gruposRes, []);
 
-      const usuariosRes = await fetch(`${API_BASE_URL}/api/admin/reportes/usuarios-estadisticas?${queryString}`, { headers });
-      const usuariosData = await handleResponse(usuariosRes, []);
+      const recomendacionesRes = await apiClient.get(api.endpoints.admin.reportes.efectividadRecomendaciones, { params, skipAuthRedirect: true, signal });
+      const recomendacionesData = getData(recomendacionesRes, []);
+
+      const alertasRes = await apiClient.get(api.endpoints.admin.reportes.alertasCriticas, { params, skipAuthRedirect: true, signal });
+      const alertasData = getData(alertasRes, []);
+
+      const usuariosRes = await apiClient.get(api.endpoints.admin.reportes.usuariosEstadisticas, { params, skipAuthRedirect: true, signal });
+      const usuariosData = getData(usuariosRes, []);
 
       setResumen(resumenData);
       setTendencias(tendenciasData);
@@ -121,12 +130,28 @@ const Reportes = () => {
       setTopUsuarios(usuariosData);
 
     } catch (err) {
-      setError('Error al cargar los datos del reporte. Por favor, intente nuevamente.');
-      console.error('Error cargando reportes:', err);
+      // If request was canceled (AbortController), do not treat as an error
+      if (err?.code === 'ERR_CANCELED' || err?.name === 'CanceledError') {
+        // debug log only, avoid setting UI error state
+        console.debug('Request canceled while loading reportes:', err?.message || err);
+      } else {
+        setError('Error al cargar los datos del reporte. Por favor, intente nuevamente.');
+        console.error('Error cargando reportes:', err);
+      }
     } finally {
       setLoading(false);
     }
   }, [filtros]);
+
+  // Debounced server sync when global graficaFiltros change
+  useEffect(() => {
+    const t = setTimeout(() => {
+      cargarDatos({ scope: 'global', graficaFiltros });
+    }, 600);
+    return () => clearTimeout(t);
+  }, [graficaFiltros, cargarDatos]);
+
+  // No hay efectos por tarjeta: la carga se dispara por `graficaFiltros` global (más abajo)
 
   useEffect(() => {
     const calcularFechasIniciales = () => {
@@ -162,25 +187,8 @@ const Reportes = () => {
    */
   const handleExportar = useCallback(async ({ formato, tipo, filtros: filtrosExport }) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/admin/reportes/exportar`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          tipo,
-          formato,
-          filtros: filtrosExport,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al exportar el reporte');
-      }
-
-      const blob = await response.blob();
+      const response = await apiClient.post(api.endpoints.admin.reportes.exportar, { tipo, formato, filtros: filtrosExport }, { responseType: 'blob' });
+      const blob = response.data instanceof Blob ? response.data : new Blob([response.data]);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -211,14 +219,14 @@ const Reportes = () => {
   }, [cargarDatos]);
 
   const skeletonCard = (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700 animate-pulse">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md py-8 sm:py-10 px-6 sm:px-8 border border-gray-200 dark:border-gray-700 animate-pulse">
       <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-4"></div>
       <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
     </div>
   );
 
   const skeletonChart = (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700 animate-pulse">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md py-8 sm:py-10 px-6 sm:px-8 border border-gray-200 dark:border-gray-700 animate-pulse">
       <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-4"></div>
       <div className="h-80 bg-gray-200 dark:bg-gray-700 rounded"></div>
     </div>
@@ -240,9 +248,9 @@ const Reportes = () => {
           backgroundAttachment: 'fixed'
         }}
       >
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="max-w-7xl mx-auto px-4 reportes-page">
           {/* Header */}
-          <div className="card mb-6">
+          <div className="card mb-6 py-6 sm:py-8 md:py-10 lg:py-12 px-4 sm:px-6 md:px-8 lg:px-10">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
@@ -273,11 +281,26 @@ const Reportes = () => {
           </div>
 
           {/* Filtros */}
-          <div className="card mb-6">
+          <div className="card mb-6 py-6 sm:py-8 md:py-10 lg:py-12 px-4 sm:px-6 md:px-8 lg:px-10">
             <FiltrosFechas
               onFiltroChange={handleFiltroChange}
               filtrosIniciales={filtros}
             />
+            <div className="mt-4">
+              <GraficasFiltros
+                initial={graficaFiltros}
+                onChange={(nuevo) => setGraficaFiltros((prev) => {
+                  try {
+                    const prevStr = JSON.stringify(prev);
+                    const nuevoStr = JSON.stringify(nuevo);
+                    if (prevStr === nuevoStr) return prev;
+                  } catch {
+                    // fallback: if stringify fails, still set
+                  }
+                  return nuevo;
+                })}
+              />
+            </div>
           </div>
 
           {/* Error State */}
@@ -332,12 +355,18 @@ const Reportes = () => {
 
                 <AdminCard
                   variant="stat"
-                  title="Promedio Ansiedad"
-                  value={resumen.promedio_ansiedad ? `${resumen.promedio_ansiedad.toFixed(1)}%` : 'N/A'}
+                  title="Promedio Emociones"
+                  value={
+                    distribucionEmociones && distribucionEmociones.length === 8
+                      ? `${(
+                          distribucionEmociones.reduce((s, e) => s + (e.porcentaje || 0), 0) / 8
+                        ).toFixed(1)}%`
+                      : resumen.promedio_ansiedad ? `${resumen.promedio_ansiedad.toFixed(1)}%` : 'N/A'
+                  }
                   icon={Activity}
                   color="#ff6b6b"
                   gradient={isDark ? 'linear-gradient(135deg, rgba(31,41,55,0.9), rgba(31,41,55,0.9))' : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(255,255,255,0.98))'}
-                  subtitle="nivel promedio"
+                  subtitle="promedio de 8 emociones"
                 />
 
                 <AdminCard
@@ -355,7 +384,7 @@ const Reportes = () => {
 
           {/* Info Banner */}
           {!loading && (
-            <div className="card mb-6 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+            <div className="card mb-6 py-6 sm:py-8 md:py-10 lg:py-12 px-4 sm:px-6 md:px-8 lg:px-10 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
               <div className="flex items-start gap-3">
                 <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
@@ -379,8 +408,42 @@ const Reportes = () => {
               </>
             ) : (
               <>
-                <TendenciasChart data={tendencias} periodo={filtros.periodo} />
-                <DistribucionEmocionalChart data={distribucionEmociones} />
+                <div className="card py-6 sm:py-8 md:py-10 lg:py-12 px-4 sm:px-6 md:px-8 lg:px-10">
+                      <div className="mb-4">
+                        <GraficasFiltros
+                          initial={graficaFiltros}
+                          onChange={(nuevo) => setGraficaFiltros((prev) => {
+                            try {
+                              const prevStr = JSON.stringify(prev);
+                              const nuevoStr = JSON.stringify(nuevo);
+                              if (prevStr === nuevoStr) return prev;
+                            } catch {
+                              // fallback
+                            }
+                            return nuevo;
+                          })}
+                        />
+                      </div>
+                      <TendenciasChart data={tendencias} periodo={filtros.periodo} emocionesSeleccionadas={graficaFiltros.emotions} metric={graficaFiltros.metric} granularidad={graficaFiltros.granularity} smoothing={graficaFiltros.smoothing} />
+                </div>
+                <div className="card py-6 sm:py-8 md:py-10 lg:py-12 px-4 sm:px-6 md:px-8 lg:px-10">
+                  <div className="mb-4">
+                    <GraficasFiltros
+                      initial={graficaFiltros}
+                      onChange={(nuevo) => setGraficaFiltros((prev) => {
+                        try {
+                          const prevStr = JSON.stringify(prev);
+                          const nuevoStr = JSON.stringify(nuevo);
+                          if (prevStr === nuevoStr) return prev;
+                        } catch {
+                          // fallback
+                        }
+                        return nuevo;
+                      })}
+                    />
+                  </div>
+                  <DistribucionEmocionalChart data={distribucionEmociones} emocionesSeleccionadas={graficaFiltros.emotions} normalize={graficaFiltros.normalize} />
+                </div>
               </>
             )}
           </div>
@@ -394,8 +457,42 @@ const Reportes = () => {
               </>
             ) : (
               <>
-                <ClasificacionChart data={clasificaciones} />
-                <GruposActividadChart data={gruposActividad} />
+                <div className="card py-6 sm:py-8 md:py-10 lg:py-12 px-4 sm:px-6 md:px-8 lg:px-10">
+                  <div className="mb-4">
+                    <GraficasFiltros
+                      initial={graficaFiltros}
+                      onChange={(nuevo) => setGraficaFiltros((prev) => {
+                        try {
+                          const prevStr = JSON.stringify(prev);
+                          const nuevoStr = JSON.stringify(nuevo);
+                          if (prevStr === nuevoStr) return prev;
+                        } catch {
+                          // fallback
+                        }
+                        return nuevo;
+                      })}
+                    />
+                  </div>
+                  <ClasificacionChart data={clasificaciones} emocionesSeleccionadas={graficaFiltros.emotions} />
+                </div>
+                <div className="card py-6 sm:py-8 md:py-10 lg:py-12 px-4 sm:px-6 md:px-8 lg:px-10">
+                  <div className="mb-4">
+                    <GraficasFiltros
+                      initial={graficaFiltros}
+                      onChange={(nuevo) => setGraficaFiltros((prev) => {
+                        try {
+                          const prevStr = JSON.stringify(prev);
+                          const nuevoStr = JSON.stringify(nuevo);
+                          if (prevStr === nuevoStr) return prev;
+                        } catch {
+                          // fallback
+                        }
+                        return nuevo;
+                      })}
+                    />
+                  </div>
+                  <GruposActividadChart data={gruposActividad} emocionesSeleccionadas={graficaFiltros.emotions} />
+                </div>
               </>
             )}
           </div>
@@ -405,7 +502,24 @@ const Reportes = () => {
             {loading ? (
               skeletonChart
             ) : (
-              <EfectividadRecomendacionesChart data={efectividadRecomendaciones} />
+                <div className="card py-6 sm:py-8 md:py-10 lg:py-12 px-4 sm:px-6 md:px-8 lg:px-10">
+                  <div className="mb-4">
+                    <GraficasFiltros
+                      initial={graficaFiltros}
+                      onChange={(nuevo) => setGraficaFiltros((prev) => {
+                        try {
+                          const prevStr = JSON.stringify(prev);
+                          const nuevoStr = JSON.stringify(nuevo);
+                          if (prevStr === nuevoStr) return prev;
+                        } catch {
+                          // fallback
+                        }
+                        return nuevo;
+                      })}
+                    />
+                  </div>
+                  <EfectividadRecomendacionesChart data={efectividadRecomendaciones} emocionesSeleccionadas={graficaFiltros.emotions} />
+              </div>
             )}
           </div>
 
@@ -418,14 +532,34 @@ const Reportes = () => {
               </>
             ) : (
               <>
-                <AlertasTable
-                  data={alertasCriticas}
-                  onViewDetails={handleVerDetallesAlerta}
-                />
-                <TopUsuariosTable
-                  data={topUsuarios}
-                  metric="ansiedad"
-                />
+                <div className="card py-6 sm:py-8 md:py-10 lg:py-12 px-4 sm:px-6 md:px-8 lg:px-10">
+                  <AlertasTable
+                    data={alertasCriticas}
+                    onViewDetails={handleVerDetallesAlerta}
+                  />
+                </div>
+                <div className="card py-6 sm:py-8 md:py-10 lg:py-12 px-4 sm:px-6 md:px-8 lg:px-10">
+                  <div className="mb-4">
+                    <GraficasFiltros
+                      initial={graficaFiltros}
+                      onChange={(nuevo) => setGraficaFiltros((prev) => {
+                        try {
+                          const prevStr = JSON.stringify(prev);
+                          const nuevoStr = JSON.stringify(nuevo);
+                          if (prevStr === nuevoStr) return prev;
+                        } catch {
+                          // fallback
+                        }
+                        return nuevo;
+                      })}
+                    />
+                  </div>
+                  <TopUsuariosTable
+                    data={topUsuarios}
+                    metric="ansiedad"
+                    topN={graficaFiltros.topN}
+                  />
+                </div>
               </>
             )}
           </div>

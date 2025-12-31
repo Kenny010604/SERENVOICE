@@ -7,7 +7,7 @@ export default function HomeScreen() {
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    const URL = "http://192.168.1.56:5000/";
+    const URL = "http://localhost:5000/";
 
     axios
       .get(URL)

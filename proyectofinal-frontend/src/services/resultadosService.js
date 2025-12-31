@@ -1,11 +1,12 @@
 // src/services/resultadosService.js
 import apiClient from "./apiClient";
+import api from '../config/api';
 
 const resultadosService = {
   // Obtener resultado por ID
   async getById(id_resultado) {
     try {
-      const response = await apiClient.get(`/resultados/${id_resultado}`);
+      const response = await apiClient.get(api.endpoints.resultados.byId(id_resultado));
       return response.data;
     } catch (error) {
       throw new Error(

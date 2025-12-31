@@ -17,6 +17,7 @@ import {
   FaLightbulb,
 } from "react-icons/fa";
 import logo from "../../assets/Logo.svg";
+import { makeFotoUrlWithProxy } from '../../utils/avatar';
 
 const NavbarUsuario = ({ userData = {} }) => {
   const navigate = useNavigate();
@@ -136,19 +137,7 @@ const NavbarUsuario = ({ userData = {} }) => {
   // Prefer prop `userData`, si está vacío usar authService.getUser() para reflejar cambios en localStorage
   const currentUser = (userData && Object.keys(userData).length > 0) ? userData : authService.getUser() || {};
 
-  const makeFotoUrlWithProxy = (path) => {
-    if (!path) return null;
-    const trimmed = String(path).trim();
-    const lower = trimmed.toLowerCase();
-    // Si viene de Google profile (googleusercontent), usar proxy del backend
-    if (lower.includes('googleusercontent.com') || lower.includes('lh3.googleusercontent.com')) {
-      return `/api/auth/proxy_image?url=${encodeURIComponent(trimmed)}`;
-    }
-    if (lower.startsWith('http://') || lower.startsWith('https://')) return trimmed;
-    if (lower.startsWith('//')) return `https:${trimmed}`;
-    // Ruta relativa almacenada en la base: prefijar host del backend
-    return `http://localhost:5000${trimmed}`;
-  };
+  // use makeFotoUrlWithProxy util
 
   return (
     <nav className="navbar user-navbar">

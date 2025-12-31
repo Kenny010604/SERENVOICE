@@ -75,12 +75,12 @@ def resumen_general():
             INNER JOIN resultado_analisis ra ON aa.id_resultado = ra.id_resultado
             INNER JOIN analisis a ON ra.id_analisis = a.id_analisis
             WHERE DATE(aa.fecha) BETWEEN %s AND %s
-            AND aa.tipo_alerta IN ('riesgo_alto', 'patron_anormal')
+            AND aa.tipo_alerta IN ('alta', 'critica')
         """, (fecha_inicio, fecha_fin))
         alertas_criticas = cursor.fetchone()['total'] or 0
         
         cursor.close()
-        DatabaseConnection.release_connection(conn)
+        DatabaseConnection.return_connection(conn)
         
         return jsonify({
             'success': True,
@@ -149,7 +149,7 @@ def tendencias_emocionales():
             })
         
         cursor.close()
-        DatabaseConnection.release_connection(conn)
+        DatabaseConnection.return_connection(conn)
         
         return jsonify({
             'success': True,
@@ -203,7 +203,7 @@ def distribucion_emociones():
             })
         
         cursor.close()
-        DatabaseConnection.release_connection(conn)
+        DatabaseConnection.return_connection(conn)
         
         return jsonify({
             'success': True,
@@ -261,7 +261,7 @@ def clasificaciones():
         ]
         
         cursor.close()
-        DatabaseConnection.release_connection(conn)
+        DatabaseConnection.return_connection(conn)
         
         return jsonify({
             'success': True,
@@ -297,7 +297,7 @@ def grupos_actividad():
             tabla = cursor.fetchone()
             if not tabla:
                 cursor.close()
-                DatabaseConnection.release_connection(conn)
+                DatabaseConnection.return_connection(conn)
                 return jsonify({
                     'success': True,
                     'data': [],
@@ -333,7 +333,7 @@ def grupos_actividad():
             print(f"[ERROR] Error en grupos actividad: {msg}")
             if '1146' in msg or "doesn't exist" in msg or 'no existe' in msg:
                 cursor.close()
-                DatabaseConnection.release_connection(conn)
+                DatabaseConnection.return_connection(conn)
                 return jsonify({
                     'success': True,
                     'data': [],
@@ -352,7 +352,7 @@ def grupos_actividad():
             })
         
         cursor.close()
-        DatabaseConnection.release_connection(conn)
+        DatabaseConnection.return_connection(conn)
         
         return jsonify({
             'success': True,
@@ -407,7 +407,7 @@ def efectividad_recomendaciones():
         ]
         
         cursor.close()
-        DatabaseConnection.release_connection(conn)
+        DatabaseConnection.return_connection(conn)
         
         return jsonify({
             'success': True,
@@ -456,7 +456,7 @@ def alertas_criticas():
             INNER JOIN audio au ON a.id_audio = au.id_audio
             INNER JOIN usuario u ON au.id_usuario = u.id_usuario
             WHERE DATE(aa.fecha) BETWEEN %s AND %s
-            AND aa.tipo_alerta IN ('riesgo_alto', 'patron_anormal', 'empeoramiento')
+            AND aa.tipo_alerta IN ('alta', 'critica')
             ORDER BY aa.fecha DESC
             LIMIT 20
         """, (fecha_inicio, fecha_fin))
@@ -480,7 +480,7 @@ def alertas_criticas():
             })
         
         cursor.close()
-        DatabaseConnection.release_connection(conn)
+        DatabaseConnection.return_connection(conn)
         
         return jsonify({
             'success': True,
@@ -547,7 +547,7 @@ def usuarios_estadisticas():
             })
         
         cursor.close()
-        DatabaseConnection.release_connection(conn)
+        DatabaseConnection.return_connection(conn)
         
         return jsonify({
             'success': True,

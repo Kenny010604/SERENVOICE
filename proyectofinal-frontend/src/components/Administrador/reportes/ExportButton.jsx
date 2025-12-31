@@ -81,6 +81,7 @@ const ExportButton = ({ onExport, filtros = {}, disabled = false }) => {
     <>
       <div className="relative">
         <button
+          type="button"
           onClick={() => setShowMenu(!showMenu)}
           disabled={disabled}
           className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors shadow-md hover:shadow-lg"
@@ -97,6 +98,7 @@ const ExportButton = ({ onExport, filtros = {}, disabled = false }) => {
                 const IconComponent = fmt.icon;
                 return (
                   <button
+                    type="button"
                     key={fmt.value}
                     onClick={() => handleFormatoClick(fmt.value)}
                     className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
@@ -147,6 +149,7 @@ const ExportButton = ({ onExport, filtros = {}, disabled = false }) => {
                     const IconComponent = fmt.icon;
                     return (
                       <button
+                        type="button"
                         key={fmt.value}
                         onClick={() => setFormato(fmt.value)}
                         disabled={loading}
@@ -222,6 +225,7 @@ const ExportButton = ({ onExport, filtros = {}, disabled = false }) => {
 
             <div className="flex gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
               <button
+                type="button"
                 onClick={handleCloseModal}
                 disabled={loading}
                 className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -229,6 +233,7 @@ const ExportButton = ({ onExport, filtros = {}, disabled = false }) => {
                 Cancelar
               </button>
               <button
+                type="button"
                 onClick={handleExportar}
                 disabled={loading}
                 className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"

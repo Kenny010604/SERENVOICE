@@ -1,164 +1,63 @@
 // proyectofinal-frontend/src/services/notificacionesService.js
-import axios from 'axios';
-import authService from './authService';
-
-const API_URL = 'http://localhost:5000/api/notificaciones';
+import apiClient from './apiClient';
+import api from '../config/api';
 
 class NotificacionesService {
   async getNotificaciones(limit = 50, onlyUnread = false) {
-    try {
-      const token = authService.getToken();
-      const response = await axios.get(API_URL, {
-        headers: { Authorization: `Bearer ${token}` },
-        params: { limit, only_unread: onlyUnread }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error al obtener notificaciones:', error);
-      throw error;
-    }
+    const res = await apiClient.get(api.endpoints.notificaciones.base, {
+      params: { limit, only_unread: onlyUnread },
+    });
+    return res.data;
   }
 
   async getUnreadCount() {
-    try {
-      const token = authService.getToken();
-      const response = await axios.get(`${API_URL}/count`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      return response.data?.data?.count || 0;
-    } catch (error) {
-      console.error('Error al obtener contador:', error);
-      return 0;
-    }
+    const res = await apiClient.get(`${api.endpoints.notificaciones.base}/count`);
+    return res.data?.data?.count || 0;
   }
 
   async markAsRead(idNotificacion) {
-    try {
-      const token = authService.getToken();
-      const response = await axios.put(
-        `${API_URL}/${idNotificacion}/read`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Error al marcar como leída:', error);
-      throw error;
-    }
+    const res = await apiClient.put(`${api.endpoints.notificaciones.base}/${idNotificacion}/read`);
+    return res.data;
   }
 
   async markAllAsRead() {
-    try {
-      const token = authService.getToken();
-      const response = await axios.put(
-        `${API_URL}/read-all`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Error al marcar todas como leídas:', error);
-      throw error;
-    }
+    const res = await apiClient.put(`${api.endpoints.notificaciones.base}/read-all`);
+    return res.data;
   }
 
   async archiveNotificacion(idNotificacion) {
-    try {
-      const token = authService.getToken();
-      const response = await axios.put(
-        `${API_URL}/${idNotificacion}/archive`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Error al archivar:', error);
-      throw error;
-    }
+    const res = await apiClient.put(`${api.endpoints.notificaciones.base}/${idNotificacion}/archive`);
+    return res.data;
   }
 
   async deleteNotificacion(idNotificacion) {
-    try {
-      const token = authService.getToken();
-      const response = await axios.delete(`${API_URL}/${idNotificacion}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error al eliminar:', error);
-      throw error;
-    }
+    const res = await apiClient.delete(`${api.endpoints.notificaciones.base}/${idNotificacion}`);
+    return res.data;
   }
 
   async getUrgentNotifications() {
-    try {
-      const token = authService.getToken();
-      const response = await axios.get(`${API_URL}/urgent`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error al obtener urgentes:', error);
-      throw error;
-    }
+    const res = await apiClient.get(`${api.endpoints.notificaciones.base}/urgent`);
+    return res.data;
   }
 
   async getPreferences() {
-    try {
-      const token = authService.getToken();
-      const response = await axios.get(`${API_URL}/preferences`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error al obtener preferencias:', error);
-      throw error;
-    }
+    const res = await apiClient.get(`${api.endpoints.notificaciones.base}/preferences`);
+    return res.data;
   }
 
   async updatePreferences(preferences) {
-    try {
-      const token = authService.getToken();
-      const response = await axios.put(
-        `${API_URL}/preferences`,
-        preferences,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Error al actualizar preferencias:', error);
-      throw error;
-    }
+    const res = await apiClient.put(`${api.endpoints.notificaciones.base}/preferences`, preferences);
+    return res.data;
   }
 
   async pauseNotifications(horas = null) {
-    try {
-      const token = authService.getToken();
-      const response = await axios.post(
-        `${API_URL}/pause`,
-        { horas },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Error al pausar notificaciones:', error);
-      throw error;
-    }
+    const res = await apiClient.post(`${api.endpoints.notificaciones.base}/pause`, { horas });
+    return res.data;
   }
 
   async resumeNotifications() {
-    try {
-      const token = authService.getToken();
-      const response = await axios.post(
-        `${API_URL}/resume`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Error al reanudar notificaciones:', error);
-      throw error;
-    }
+    const res = await apiClient.post(`${api.endpoints.notificaciones.base}/resume`);
+    return res.data;
   }
 }
 

@@ -4,6 +4,7 @@ import { ThemeContext } from "../../context/themeContextDef";
 import FondoClaro from "../../assets/FondoClaro.svg";
 import FondoOscuro from "../../assets/FondoOscuro.svg";
 import apiClient from "../../services/apiClient";
+import api from "../../config/api";
 import { FaBell, FaEdit, FaPlus, FaSave, FaTimes, FaTrash } from "react-icons/fa";
 import "../../global.css";
 
@@ -29,7 +30,7 @@ const Notificaciones = () => {
 
   const cargarPlantillas = async () => {
     try {
-      const res = await apiClient.get("/notificaciones/plantillas");
+      const res = await apiClient.get(api.endpoints.notificaciones.plantillas);
       setPlantillas(res.data?.data || []);
     } catch (error) {
       console.error("Error al cargar plantillas:", error);
@@ -69,10 +70,10 @@ const Notificaciones = () => {
     e.preventDefault();
     try {
       if (editingTemplate) {
-        await apiClient.put(`/notificaciones/plantillas/${editingTemplate.id_plantilla}`, formData);
+        await apiClient.put(`${api.endpoints.notificaciones.plantillas}/${editingTemplate.id_plantilla}`, formData);
         setMsg("Plantilla actualizada correctamente");
       } else {
-        await apiClient.post("/notificaciones/plantillas", formData);
+        await apiClient.post(api.endpoints.notificaciones.plantillas, formData);
         setMsg("Plantilla creada correctamente");
       }
       setShowModal(false);
@@ -86,7 +87,7 @@ const Notificaciones = () => {
   const handleDelete = async (id) => {
     if (!confirm("¿Eliminar esta plantilla?")) return;
     try {
-      await apiClient.delete(`/notificaciones/plantillas/${id}`);
+      await apiClient.delete(`${api.endpoints.notificaciones.plantillas}/${id}`);
       setMsg("Plantilla eliminada correctamente");
       cargarPlantillas();
     } catch (error) {
@@ -97,7 +98,7 @@ const Notificaciones = () => {
 
   const toggleEstado = async (id, activa) => {
     try {
-      await apiClient.patch(`/notificaciones/plantillas/${id}/estado`, { activa: !activa });
+      await apiClient.patch(`${api.endpoints.notificaciones.plantillas}/${id}/estado`, { activa: !activa });
       setMsg(`Plantilla ${!activa ? 'activada' : 'desactivada'} correctamente`);
       cargarPlantillas();
     } catch (error) {

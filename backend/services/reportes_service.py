@@ -26,9 +26,9 @@ class ReportesService:
         query = """
             SELECT ra.id_resultado, ra.nivel_estres, ra.nivel_ansiedad, 
                    a.fecha_analisis, au.nombre_archivo
-            FROM Resultado_analisis ra
-            JOIN Analisis a ON ra.id_analisis = a.id_analisis
-            JOIN Audio au ON a.id_audio = au.id_audio
+            FROM resultado_analisis ra
+            JOIN analisis a ON ra.id_analisis = a.id_analisis
+            JOIN audio au ON a.id_audio = au.id_audio
             WHERE au.id_usuario = %s
             AND a.fecha_analisis BETWEEN %s AND %s
             ORDER BY a.fecha_analisis

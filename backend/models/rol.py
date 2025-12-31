@@ -60,12 +60,3 @@ class Rol:
         query = "UPDATE rol SET activo = 0 WHERE id_rol = %s"
         DatabaseConnection.execute_query(query, (id_rol,), fetch=False)
         return True
-        DatabaseConnection.execute_query(query, tuple(params), fetch=False)
-        return True
-    
-    @staticmethod
-    def delete(id_rol):
-        """Eliminar rol"""
-        query = "DELETE FROM Rol WHERE id_rol = %s"
-        DatabaseConnection.execute_query(query, (id_rol,), fetch=False)
-        return True

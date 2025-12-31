@@ -4,6 +4,7 @@ import { ThemeContext } from "../../context/themeContextDef";
 import FondoClaro from "../../assets/FondoClaro.svg";
 import FondoOscuro from "../../assets/FondoOscuro.svg";
 import apiClient from "../../services/apiClient";
+import api from "../../config/api";
 import { FaGamepad, FaFilter, FaChartBar, FaDownload, FaEye } from "react-icons/fa";
 import "../../global.css";
 
@@ -25,8 +26,8 @@ const SesionesJuego = () => {
   const cargarSesiones = async () => {
     try {
       const [sesionesRes, statsRes] = await Promise.all([
-        apiClient.get("/sesiones-juego/todas"),
-        apiClient.get("/sesiones-juego/estadisticas")
+        apiClient.get(api.endpoints.sesionesJuego.todas),
+        apiClient.get(api.endpoints.sesionesJuego.estadisticas),
       ]);
       setSesiones(sesionesRes.data?.data || []);
       setFilteredSesiones(sesionesRes.data?.data || []);

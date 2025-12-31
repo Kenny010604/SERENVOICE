@@ -8,7 +8,7 @@ import { Users, ExternalLink, ArrowUpDown } from 'lucide-react';
  * @param {Array} props.data - Array de objetos con datos de usuarios
  * @param {string} props.metric - Métrica a mostrar ('ansiedad' o 'estres')
  */
-const TopUsuariosTable = ({ data = [], metric = 'ansiedad' }) => {
+const TopUsuariosTable = ({ data = [], metric = 'ansiedad', topN = 10 }) => {
   const [sortOrder, setSortOrder] = useState('desc');
 
   const sortedData = [...data].sort((a, b) => {
@@ -17,7 +17,7 @@ const TopUsuariosTable = ({ data = [], metric = 'ansiedad' }) => {
     return sortOrder === 'desc' ? bValue - aValue : aValue - bValue;
   });
 
-  const topData = sortedData.slice(0, 10);
+  const topData = sortedData.slice(0, (typeof topN === 'number' && topN > 0) ? topN : 10);
 
   const toggleSort = () => {
     setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
@@ -57,7 +57,7 @@ const TopUsuariosTable = ({ data = [], metric = 'ansiedad' }) => {
 
   if (!data || data.length === 0) {
     return (
-      <div className="card">
+      <div>
         <div className="flex items-center gap-2 mb-4">
           <Users className="w-5 h-5 text-blue-500" />
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -74,7 +74,7 @@ const TopUsuariosTable = ({ data = [], metric = 'ansiedad' }) => {
   }
 
   return (
-    <div className="card">
+    <div>
       <div className="mb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -84,6 +84,7 @@ const TopUsuariosTable = ({ data = [], metric = 'ansiedad' }) => {
             </h3>
           </div>
           <button
+            type="button"
             onClick={toggleSort}
             className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
             aria-label="Cambiar orden"
@@ -203,6 +204,7 @@ TopUsuariosTable.propTypes = {
     })
   ),
   metric: PropTypes.oneOf(['ansiedad', 'estres']),
+  topN: PropTypes.number,
 };
 
 export default TopUsuariosTable;

@@ -2,14 +2,19 @@
 import axios from "axios";
 import apiConfig from "../config/api";
 import authService from './authService';
-const API_URL = import.meta.env.VITE_API_URL;
-
 import logger from '../utils/logger';
 
 // ==============================
 // CONFIGURACIÓN BASE (EXPO SAFE)
 // ==============================
-const API_BASE_URL = `${API_URL}/api`;
+const deriveBaseUrl = () => {
+  if (apiConfig?.baseURL) return apiConfig.baseURL;
+  const raw = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const normalized = String(raw).replace(/\/+$/, "");
+  return `${normalized}/api`;
+};
+
+const API_BASE_URL = deriveBaseUrl();
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -73,6 +78,16 @@ apiClient.interceptors.response.use(
 
     if (status === 401) {
       logger.warn("Token expirado o inválido (interceptor)");
+
+      // Si la petición incluyó el header `X-Skip-Auth-Redirect`, no forzamos
+      // la redirección automática. Esto permite llamadas de polling/filtrado
+      // que no deben interrumpir la experiencia del usuario.
+      const skipRedirect = error.config?.headers?.['X-Skip-Auth-Redirect'] || error.config?.skipAuthRedirect;
+      if (skipRedirect) {
+        logger.debug('Skipping auto-redirect for request due to X-Skip-Auth-Redirect header');
+        return Promise.reject(error);
+      }
+
       try {
         // Forzar logout local y redirigir al login para obtener credenciales nuevas
         authService.logout();
@@ -94,17 +109,17 @@ apiClient.interceptors.response.use(
 // ==============================
 export const juegosAPI = {
   listar: async () => {
-    const response = await apiClient.get("/juegos");
+    const response = await apiClient.get(apiConfig.endpoints.juegos.list);
     return response.data;
   },
 
   recomendados: async (estado) => {
-    const response = await apiClient.get(`/juegos/recomendados?estado=${estado}`);
+    const response = await apiClient.get(apiConfig.endpoints.juegos.recomendados, { params: { estado } });
     return response.data;
   },
 
   iniciar: async (juegoId, estadoAntes = null) => {
-    const response = await apiClient.post("/juegos/iniciar", {
+    const response = await apiClient.post(apiConfig.endpoints.juegos.iniciar, {
       juego_id: juegoId,
       estado_antes: estadoAntes,
     });
@@ -112,7 +127,7 @@ export const juegosAPI = {
   },
 
   finalizar: async (sesionId, datos) => {
-    const response = await apiClient.post("/juegos/finalizar", {
+    const response = await apiClient.post(apiConfig.endpoints.juegos.finalizar, {
       sesion_id: sesionId,
       puntuacion: datos.puntuacion,
       completado: datos.completado,
@@ -124,12 +139,12 @@ export const juegosAPI = {
   },
 
   estadisticas: async () => {
-    const response = await apiClient.get("/juegos/estadisticas");
+    const response = await apiClient.get(apiConfig.endpoints.juegos.estadisticas);
     return response.data;
   },
 
   historial: async (limit = 20) => {
-    const response = await apiClient.get(`/juegos/historial?limit=${limit}`);
+    const response = await apiClient.get(apiConfig.endpoints.juegos.historial, { params: { limit } });
     return response.data;
   },
 };

@@ -1,3 +1,5 @@
+import api from '../config/api';
+
 export function makeFotoUrl(path) {
   if (!path) return null;
   const trimmed = String(path).trim();
@@ -8,7 +10,7 @@ export function makeFotoUrl(path) {
   } catch {
     return null;
   }
-  return `http://localhost:5000${trimmed}`;
+  return `${api.baseURL}${trimmed}`;
 }
 
 export function makeFotoUrlWithProxy(path) {
@@ -16,7 +18,7 @@ export function makeFotoUrlWithProxy(path) {
   const trimmed = String(path).trim();
   const lower = trimmed.toLowerCase();
   if (lower.includes('googleusercontent.com') || lower.includes('lh3.googleusercontent.com')) {
-    return `/api/auth/proxy_image?url=${encodeURIComponent(trimmed)}`;
+    return `${api.baseURL}${api.endpoints.auth.proxyImage}?url=${encodeURIComponent(trimmed)}`;
   }
   return makeFotoUrl(trimmed);
 }

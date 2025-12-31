@@ -1,11 +1,12 @@
 // src/services/recomendacionesService.js
 import apiClient from "./apiClient";
+import api from '../config/api';
 
 const recomendacionesService = {
   // Obtener recomendaciones de un resultado
   async getByResultado(id_resultado) {
     try {
-      const response = await apiClient.get(`/recomendaciones/resultado/${id_resultado}`);
+      const response = await apiClient.get(api.endpoints.recomendaciones.byResultado(id_resultado));
       return response.data;
     } catch (error) {
       throw new Error(
@@ -19,7 +20,7 @@ const recomendacionesService = {
   // Obtener una recomendación específica
   async getById(id_recomendacion) {
     try {
-      const response = await apiClient.get(`/recomendaciones/${id_recomendacion}`);
+      const response = await apiClient.get(api.endpoints.recomendaciones.byId(id_recomendacion));
       return response.data;
     } catch (error) {
       throw new Error(

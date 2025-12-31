@@ -29,10 +29,26 @@ class Recomendacion:
             (r['id_resultado'], r['tipo_recomendacion'], r['contenido'], date.today())
             for r in recomendaciones
         ]
-        
-        with DatabaseConnection.get_cursor() as cursor:
+        # Usar el pool de conexiones para ejecutar ejecutemany de forma segura
+        conn = None
+        cursor = None
+        try:
+            conn = DatabaseConnection.get_connection()
+            cursor = conn.cursor()
             cursor.executemany(query, params_list)
+            conn.commit()
             return cursor.rowcount
+        finally:
+            if cursor:
+                try:
+                    cursor.close()
+                except Exception:
+                    pass
+            if conn:
+                try:
+                    DatabaseConnection.return_connection(conn)
+                except Exception:
+                    pass
     
     @staticmethod
     def get_by_result(id_resultado):

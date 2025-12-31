@@ -25,7 +25,8 @@ import {
   FaLeaf
 } from "react-icons/fa";
 
-import { API_URL } from "../../constants/env";
+import apiClient from '../../services/apiClient';
+import api from '../../config/api';
 
 const ResultadoDetallado = () => {
   const { id } = useParams();
@@ -41,18 +42,11 @@ const ResultadoDetallado = () => {
       setLoading(true);
       setError(null);
       try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          navigate("/login");
-          return;
-        }
-        const res = await fetch(`${API_URL}/api/analisis/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const json = await res.json();
+        const response = await apiClient.get(api.endpoints.analisis.get(id));
+        const json = response.data;
         console.debug('[ResultadoDetallado] payload', json);
-        if (!res.ok || json.success === false) {
-          throw new Error(json.message || `Error ${res.status}`);
+        if (json?.success === false) {
+          throw new Error(json.message || 'Error al obtener detalle');
         }
         const payload = json.data || { analisis: null, resultado: null, recomendaciones: [] };
         setData(payload);
@@ -70,16 +64,8 @@ const ResultadoDetallado = () => {
     let objectUrl = null;
     const fetchAudio = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-        const res = await fetch(`${API_URL}/api/analisis/${id}/audio`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) {
-          console.debug('[ResultadoDetallado] audio fetch failed', res.status);
-          return;
-        }
-        const blob = await res.blob();
+        const res = await apiClient.get(api.endpoints.analisis.audio(id), { responseType: 'blob' });
+        const blob = res.data instanceof Blob ? res.data : await res.data.blob?.();
         objectUrl = URL.createObjectURL(blob);
         if (!cancelled) setAudioUrl(objectUrl);
       } catch (e) {

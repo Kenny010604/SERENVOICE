@@ -42,7 +42,24 @@ class DatabaseConnection:
                 "El pool no ha sido inicializado. Llama a DatabaseConnection.initialize_pool() primero."
             )
         try:
-            return DatabaseConnection.pool.get_connection()
+            raw_conn = DatabaseConnection.pool.get_connection()
+
+            # Wrapper que permite usar `with DatabaseConnection.get_connection() as conn:`
+            # sin forzar a que el objeto devuelto sea el tipo original de mysql.connector.
+            class _ConnectionContext:
+                def __init__(self, inner):
+                    self._inner = inner
+
+                def __enter__(self):
+                    return self._inner
+
+                def __exit__(self, exc_type, exc, tb):
+                    DatabaseConnection.release_connection(self._inner)
+
+                def __getattr__(self, name):
+                    return getattr(self._inner, name)
+
+            return _ConnectionContext(raw_conn)
         except Error as e:
             print(f"[DB] Error obteniendo conexión del pool: {e}")
             raise
@@ -54,6 +71,14 @@ class DatabaseConnection:
     def release_connection(conn):
         if conn:
             conn.close()
+
+    @staticmethod
+    def return_connection(conn):
+        """
+        Compatibilidad: alias para devolver una conexión al pool.
+        Mantiene compatibilidad con llamadas antiguas a `return_connection`.
+        """
+        DatabaseConnection.release_connection(conn)
 
     # ------------------------------------------------------------
     # Probar conexión

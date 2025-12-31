@@ -4,6 +4,7 @@ import { ThemeContext } from "../../context/themeContextDef";
 import FondoClaro from "../../assets/FondoClaro.svg";
 import FondoOscuro from "../../assets/FondoOscuro.svg";
 import apiClient from "../../services/apiClient";
+import api from "../../config/api";
 import { FaLightbulb, FaFilter, FaChartPie, FaDownload, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 import "../../global.css";
 
@@ -23,8 +24,8 @@ const Recomendaciones = () => {
   const cargarRecomendaciones = async () => {
     try {
       const [recsRes, statsRes] = await Promise.all([
-        apiClient.get("/recomendaciones/todas"),
-        apiClient.get("/recomendaciones/estadisticas")
+        apiClient.get(api.endpoints.recomendaciones.todas),
+        apiClient.get(api.endpoints.recomendaciones.estadisticas),
       ]);
       setRecomendaciones(recsRes.data?.data || []);
       setFilteredRecs(recsRes.data?.data || []);

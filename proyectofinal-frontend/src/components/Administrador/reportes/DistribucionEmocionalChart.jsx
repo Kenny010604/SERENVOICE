@@ -63,7 +63,7 @@ const DistribucionEmocionalChart = ({ data = [] }) => {
 
   if (!data || data.length === 0) {
     return (
-      <div className="card">
+      <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           Distribución de Emociones Dominantes
         </h3>
@@ -75,9 +75,8 @@ const DistribucionEmocionalChart = ({ data = [] }) => {
       </div>
     );
   }
-
   return (
-    <div className="card">
+    <div>
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
         Distribución de Emociones Dominantes
       </h3>
@@ -126,6 +125,8 @@ DistribucionEmocionalChart.propTypes = {
       porcentaje: PropTypes.number,
     })
   ),
+  emocionesSeleccionadas: PropTypes.arrayOf(PropTypes.string),
+  normalize: PropTypes.bool,
 };
 
 export default DistribucionEmocionalChart;

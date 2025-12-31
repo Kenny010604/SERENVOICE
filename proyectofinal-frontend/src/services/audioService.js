@@ -1,5 +1,5 @@
-/* global process */
-const API_URL = (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_URL) || 'http://localhost:5000';
+import apiClient from './apiClient';
+import api from '../config/api';
 
 class AudioService {
   // Analiza el audio y envía userId
@@ -10,17 +10,11 @@ class AudioService {
       formData.append('duration', duration);
       formData.append('user_id', userId); // <-- enviar id del usuario
 
-      const response = await fetch(`${API_URL}/audio/analyze`, {
-        method: 'POST',
-        body: formData,
+      const response = await apiClient.post(api.endpoints.audio.analyze, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Error al analizar audio');
-      }
-
-      return await response.json();
+      return response.data;
     } catch (error) {
       console.error('Error en análisis de audio:', error);
       throw error;
@@ -30,8 +24,8 @@ class AudioService {
   // Verificar estado del servicio
   async checkHealth() {
     try {
-      const response = await fetch(`${API_URL}/audio/health`);
-      return await response.json();
+      const res = await apiClient.get(api.endpoints.audio.health);
+      return res.data;
     } catch (error) {
       console.error('Error verificando servicio:', error);
       return { status: 'error' };
@@ -41,8 +35,8 @@ class AudioService {
   // Obtener estadísticas de entrenamiento
   async getTrainingStats() {
     try {
-      const response = await fetch(`${API_URL}/audio/training-stats`);
-      return await response.json();
+      const res = await apiClient.get(api.endpoints.audio.trainingStats);
+      return res.data;
     } catch (error) {
       console.error('Error obteniendo estadísticas:', error);
       return { error: error.message };
@@ -52,10 +46,8 @@ class AudioService {
   // Reentrenar modelo manualmente
   async retrainModel() {
     try {
-      const response = await fetch(`${API_URL}/audio/retrain`, {
-        method: 'POST',
-      });
-      return await response.json();
+      const res = await apiClient.post(api.endpoints.audio.retrain);
+      return res.data;
     } catch (error) {
       console.error('Error reentrenando modelo:', error);
       return { error: error.message };

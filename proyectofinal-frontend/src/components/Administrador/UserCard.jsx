@@ -1,4 +1,5 @@
 import React from 'react';
+import { makeFotoUrlWithProxy } from '../../utils/avatar';
 import { FaUser, FaEnvelope, FaPhone, FaBirthdayCake, FaMapMarkerAlt, FaCalendar, FaChartLine, FaUserShield, FaUserTimes } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
 
@@ -29,19 +30,19 @@ export default function UserCard({ user, isDark, currentUserId, onViewStats, onE
           justifyContent: 'center',
           flexShrink: 0
         }}>
-          {user.foto_perfil ? (
-            <img
-              src={user.foto_perfil.startsWith('http') ? user.foto_perfil : `http://localhost:5000${user.foto_perfil}`}
-              alt={`${user.nombre} ${user.apellido}`}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.parentElement.innerHTML = '<div style="font-size: 35px; color: var(--color-primary)">👤</div>';
-              }}
-            />
-          ) : (
-            <FaUser size={35} color="var(--color-primary)" />
-          )}
+          {(() => {
+            const fotoUrl = makeFotoUrlWithProxy(user.foto_perfil);
+            return fotoUrl ? (
+              <img
+                src={fotoUrl}
+                alt={`${user.nombre} ${user.apellido}`}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+              />
+            ) : (
+              <FaUser size={35} color="var(--color-primary)" />
+            );
+          })()}
         </div>
 
         <div style={{ flex: 1 }}>

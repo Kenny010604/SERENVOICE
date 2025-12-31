@@ -171,7 +171,7 @@ def generar_reporte():
             data['historico'] = cursor.fetchall()
         
         cursor.close()
-        DatabaseConnection.release_connection(conn)
+        DatabaseConnection.return_connection(conn)
         
         return Helpers.format_response(
             success=True,

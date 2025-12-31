@@ -31,9 +31,8 @@ import {
 } from "react-icons/fa";
 import { FaUserMd, FaDumbbell, FaPray, FaPause, FaCoffee, FaLeaf } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-
-// API URL
-import { API_URL } from "../../constants/env";
+import apiClient from '../../services/apiClient';
+import api from '../../config/api';
 
 const AnalizarVoz = () => {
   const { isDark } = useContext(ThemeContext);
@@ -291,7 +290,7 @@ const AnalizarVoz = () => {
     const token = localStorage.getItem("token") || "";
     const analisisId = analysis?.analisis_id || analysis?.data?.analisis_id;
     if (analysis && analisisId) {
-      fileUrl = `${API_URL}/api/analisis/${analisisId}/audio?token=${encodeURIComponent(token)}`;
+      fileUrl = `${api.baseURL}${api.endpoints.analisis.audio(analisisId)}?token=${encodeURIComponent(token)}`;
     } else {
       fileUrl = wavURL || audioURL;
       if (!fileUrl) {
@@ -352,32 +351,14 @@ const AnalizarVoz = () => {
         return;
       }
 
-      const response = await fetch(`${API_URL}/api/audio/analyze`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-        },
-        body: formData,
+      const res = await apiClient.post(api.endpoints.audio.analyze, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
-
-      if (!response.ok) {
-        // Intentar parsear JSON, si falla mostrar texto plano
-        let msg = `Error del servidor: ${response.status}`;
-        try {
-          const body = await response.json();
-          if (body && (body.message || body.error)) msg = body.message || body.error;
-        } catch {
-          try {
-            const text = await response.text();
-            if (text) msg = text;
-          } catch (err) {
-            console.warn('Failed to read error response text', err);
-          }
-        }
+      const data = res.data;
+      if (res.status >= 400 || data?.success === false) {
+        const msg = data?.message || data?.error || `Error del servidor: ${res.status}`;
         throw new Error(msg);
       }
-
-      const data = await response.json();
       // Aceptar ambos formatos: { success:true, emotions: [...] } o { data: {...} }
       setAnalysis(data);
       setSavedSuccess(true);
@@ -547,7 +528,7 @@ const AnalizarVoz = () => {
           {(() => {
             const token = localStorage.getItem("token") || "";
             const fileUrl = (analysis && analysis.analisis_id)
-              ? `${API_URL}/api/analisis/${analysis.analisis_id}/audio?token=${encodeURIComponent(token)}`
+              ? `${api.baseURL}${api.endpoints.analisis.audio(analysis.analisis_id)}?token=${encodeURIComponent(token)}`
               : wavURL;
             const playableUrl = audioURL || fileUrl;
             return (

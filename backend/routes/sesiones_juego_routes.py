@@ -38,7 +38,7 @@ def get_todas_sesiones():
                 sj.notas
             FROM sesiones_juego sj
             LEFT JOIN usuario u ON sj.id_usuario = u.id_usuario
-            LEFT JOIN juegos_terapeuticos jt ON sj.id_juego = jt.id_juego
+            LEFT JOIN juegos_terapeuticos jt ON sj.id_juego = jt.id
             ORDER BY sj.fecha_inicio DESC
             LIMIT 500
         """
@@ -86,16 +86,16 @@ def get_estadisticas():
         """)
         duracion_promedio = cursor.fetchone()['duracion_promedio'] or 0
         
-        # Puntuación promedio
+        # Puntuación promedio (columna `puntuacion` en el esquema)
         cursor.execute("""
-            SELECT AVG(puntuacion_final) as puntuacion_promedio 
+            SELECT AVG(puntuacion) as puntuacion_promedio 
             FROM sesiones_juego 
-            WHERE puntuacion_final IS NOT NULL
+            WHERE puntuacion IS NOT NULL
         """)
         puntuacion_promedio = cursor.fetchone()['puntuacion_promedio'] or 0
-        
-        # Juegos disponibles
-        cursor.execute("SELECT id_juego as id, nombre FROM juegos_terapeuticos WHERE activo = TRUE")
+
+        # Juegos disponibles (usar PK `id` de la tabla juegos_terapeuticos)
+        cursor.execute("SELECT id as id, nombre FROM juegos_terapeuticos WHERE activo = TRUE")
         juegos = cursor.fetchall()
         
         cursor.close()
@@ -140,7 +140,7 @@ def get_sesiones_usuario(id_usuario):
                 jt.nombre as nombre_juego,
                 jt.descripcion as descripcion_juego
             FROM sesiones_juego sj
-            LEFT JOIN juegos_terapeuticos jt ON sj.id_juego = jt.id_juego
+            LEFT JOIN juegos_terapeuticos jt ON sj.id_juego = jt.id
             WHERE sj.id_usuario = %s
             ORDER BY sj.fecha_inicio DESC
         """

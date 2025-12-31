@@ -1,11 +1,14 @@
 import React, { useRef, useState, useEffect, useContext } from "react";
 import NavbarAdministrador from "../../components/Administrador/NavbarAdministrador";
-import { FaBell, FaCheck, FaExclamationTriangle, FaUser, FaFilter, FaDownload } from "react-icons/fa";
+import { FaBell, FaCheck, FaExclamationTriangle, FaUser, FaFilter, FaDownload, FaCheckCircle } from "react-icons/fa";
+import "../../global.css";
 import { useAlertas } from "../../context/AlertasContext";
 import { ThemeContext } from "../../context/themeContextDef";
 import FondoClaro from "../../assets/FondoClaro.svg";
 import FondoOscuro from "../../assets/FondoOscuro.svg";
 import apiClient from "../../services/apiClient";
+import api from "../../config/api";
+import alertasService from "../../services/alertasService";
 
 const Alertas = () => {
   const { isDark } = useContext(ThemeContext);
@@ -17,6 +20,12 @@ const Alertas = () => {
   const [filter, setFilter] = useState({ tipo: "todas", severidad: "todas", estado: "activas" });
   const [selectedAlert, setSelectedAlert] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showResolveModal, setShowResolveModal] = useState(false);
+  const [admins, setAdmins] = useState([]);
+  const [selectedAdmin, setSelectedAdmin] = useState(null);
+  const [resolveNotes, setResolveNotes] = useState("");
+  const [historial, setHistorial] = useState([]);
   const cardRef = useRef(null);
 
   useEffect(() => {
@@ -28,11 +37,13 @@ const Alertas = () => {
   useEffect(() => {
     const fetchAlertas = async () => {
       try {
-        const res = await apiClient.get("/alertas");
+        // backend expone /api/alertas/active para alertas activas (admin)
+        const res = await apiClient.get(api.endpoints.alertas.active);
         setAlerts(res.data?.data || []);
         setFilteredAlerts(res.data?.data || []);
       } catch (error) {
         console.error("Error al cargar alertas:", error);
+        // fallback al contexto local si la API falla
         setAlerts(contextAlerts);
         setFilteredAlerts(contextAlerts);
       } finally {
@@ -51,7 +62,8 @@ const Alertas = () => {
     }
 
     if (filter.severidad !== "todas") {
-      filtered = filtered.filter(a => a.tipo_alerta === filter.severidad);
+      // la severidad viene como "tipo_recomendacion" desde el backend
+      filtered = filtered.filter(a => (a.tipo_recomendacion || a.severidad || a.tipo_alerta) === filter.severidad);
     }
 
     if (filter.estado === "activas") {
@@ -64,31 +76,76 @@ const Alertas = () => {
   }, [filter, alerts]);
 
   const handleAssign = async (id) => {
+    // open assign modal and load admins
     try {
-      await apiClient.patch(`/alertas/${id}/asignar`);
-      assignToMe(id);
-      setMsg("Alerta asignada correctamente");
+      setSelectedAlert(alerts.find(a => (a.id_alerta || a.id) === id) || null);
+      setShowAssignModal(true);
+      // fetch admins (use admin users endpoint that returns only admins)
+      const res = await apiClient.get(api.endpoints.admin.usuarios.list);
+      // backend may return { success: true, usuarios: [...] } or { success: true, data: [...] }
+      const adminsList = res.data?.usuarios || res.data?.data || res.data || [];
+      setAdmins(adminsList);
+      setSelectedAdmin(null);
     } catch (error) {
-      console.error("Error al asignar alerta:", error);
-      setMsg("Error al asignar alerta");
+      console.error('Error cargando administradores:', error);
+      setMsg('Error cargando administradores');
     }
   };
 
   const handleResolve = async (id) => {
+    // open resolve modal
+    setSelectedAlert(alerts.find(a => (a.id_alerta || a.id) === id) || null);
+    setResolveNotes("");
+    setShowResolveModal(true);
+  };
+
+  const viewAlertDetail = async (alerta) => {
+    setSelectedAlert(alerta);
+    setShowModal(true);
     try {
-      await apiClient.patch(`/alertas/${id}/resolver`);
-      resolveAlerta(id);
-      setAlerts(prev => prev.map(a => a.id === id ? { ...a, fecha_revision: new Date().toISOString() } : a));
-      setMsg("Alerta resuelta correctamente");
-    } catch (error) {
-      console.error("Error al resolver alerta:", error);
-      setMsg("Error al resolver alerta");
+      const id = alerta.id_alerta || alerta.id;
+      const res = await apiClient.get(api.endpoints.alertas.historial(id));
+      setHistorial(res.data?.data || []);
+    } catch (err) {
+      console.error('Error cargando historial:', err);
+      setHistorial([]);
     }
   };
 
-  const viewAlertDetail = (alerta) => {
-    setSelectedAlert(alerta);
-    setShowModal(true);
+  const confirmAssign = async () => {
+    if (!selectedAlert) return;
+    if (!selectedAdmin) {
+      setMsg('Selecciona un administrador antes de confirmar');
+      return;
+    }
+    const id = selectedAlert.id_alerta || selectedAlert.id;
+    try {
+      const payload = { id_usuario_asignado: Number(selectedAdmin) };
+      await alertasService.asignarAlert(id, payload);
+      assignToMe(id);
+      setAlerts(prev => prev.map(a => (a.id_alerta === id || a.id === id) ? { ...a, id_usuario_asignado: selectedAdmin } : a));
+      setMsg('Alerta asignada correctamente');
+      setShowAssignModal(false);
+    } catch (err) {
+      console.error('Error asignando alerta:', err);
+      setMsg('Error al asignar alerta');
+    }
+  };
+
+  const confirmResolve = async () => {
+    if (!selectedAlert) return;
+    const id = selectedAlert.id_alerta || selectedAlert.id;
+    try {
+      const payload = { notas: resolveNotes };
+      await alertasService.resolverAlert(id, payload);
+      resolveAlerta(id);
+      setAlerts(prev => prev.map(a => (a.id_alerta === id || a.id === id) ? { ...a, fecha_revision: new Date().toISOString(), fecha_resolucion: new Date().toISOString() } : a));
+      setMsg('Alerta resuelta correctamente');
+      setShowResolveModal(false);
+    } catch (err) {
+      console.error('Error resolviendo alerta:', err);
+      setMsg('Error al resolver alerta');
+    }
   };
 
   const getSeverityColor = (tipo) => {
@@ -152,27 +209,53 @@ const Alertas = () => {
 
           {/* Filtros */}
           <div style={{ marginTop: "1rem", display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "end" }}>
-            <div className="form-group" style={{ minWidth: "150px" }}>
-              <label>Tipo de Alerta</label>
-              <select value={filter.tipo} onChange={(e) => setFilter({ ...filter, tipo: e.target.value })}>
-                <option value="todas">Todas</option>
-                <option value="baja">Baja</option>
-                <option value="media">Media</option>
-                <option value="alta">Alta</option>
-                <option value="critica">Crítica</option>
-              </select>
+            <div className="form-group" style={{ minWidth: "180px" }}>
+              <div className="input-labels">
+                <label><FaFilter /> Tipo de Alerta</label>
+              </div>
+              <div className="input-group flush">
+                <span className="input-icon" />
+                <select value={filter.tipo} onChange={(e) => setFilter({ ...filter, tipo: e.target.value })}>
+                  <option value="todas">Todas</option>
+                  <option value="baja">Baja</option>
+                  <option value="media">Media</option>
+                  <option value="alta">Alta</option>
+                  <option value="critica">Crítica</option>
+                </select>
+              </div>
             </div>
 
-            <div className="form-group" style={{ minWidth: "150px" }}>
-              <label>Estado</label>
-              <select value={filter.estado} onChange={(e) => setFilter({ ...filter, estado: e.target.value })}>
-                <option value="activas">Activas</option>
-                <option value="resueltas">Resueltas</option>
-                <option value="todas">Todas</option>
-              </select>
+            <div className="form-group" style={{ minWidth: "180px" }}>
+              <div className="input-labels">
+                <label><FaFilter /> Severidad</label>
+              </div>
+              <div className="input-group flush">
+                <span className="input-icon" />
+                <select value={filter.severidad} onChange={(e) => setFilter({ ...filter, severidad: e.target.value })}>
+                  <option value="todas">Todas</option>
+                  <option value="baja">Baja</option>
+                  <option value="media">Media</option>
+                  <option value="alta">Alta</option>
+                  <option value="critica">Crítica</option>
+                </select>
+              </div>
             </div>
 
-            <button onClick={exportAlertas} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <div className="form-group" style={{ minWidth: "180px" }}>
+              <div className="input-labels">
+                <label><FaCheckCircle /> Estado</label>
+              </div>
+              <div className="input-group flush">
+                <span className="input-icon" />
+                <select value={filter.estado} onChange={(e) => setFilter({ ...filter, estado: e.target.value })}>
+                  <option value="activas">Activas</option>
+                  <option value="resueltas">Resueltas</option>
+                  <option value="todas">Todas</option>
+                </select>
+              </div>
+            </div>
+
+            <button onClick={exportAlertas} className="auth-button" style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "auto" }}>
               <FaDownload /> Exportar
             </button>
           </div>
@@ -298,6 +381,100 @@ const Alertas = () => {
         </div>
 
         {/* Modal de detalles de alerta */}
+        {/* Modal Asignar administrador */}
+        {showAssignModal && selectedAlert && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 1000,
+            }}
+            onClick={() => setShowAssignModal(false)}
+          >
+            <div
+              className="card"
+              style={{
+                maxWidth: "600px",
+                width: "90%",
+                padding: "1.5rem",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3>Asignar Alerta</h3>
+              <p>Alerta: <strong>{selectedAlert.titulo}</strong></p>
+              <div style={{ marginTop: "1rem" }}>
+                <label>Seleccionar administrador</label>
+                <div className="input-group no-icon" style={{ marginTop: "0.5rem", width: "100%" }}>
+                  <select value={selectedAdmin || ""} onChange={(e) => setSelectedAdmin(e.target.value)}>
+                    <option value="">-- Seleccionar --</option>
+                    {admins.map(u => (
+                      <option key={u.id_usuario || u.id} value={u.id_usuario || u.id}>{u.nombre} {u.apellido} {u.correo ? `(${u.correo})` : ''}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem" }}>
+                <button onClick={confirmAssign} className="auth-button" disabled={!selectedAdmin} style={{ opacity: !selectedAdmin ? 0.6 : 1, cursor: !selectedAdmin ? 'not-allowed' : 'pointer' }}>Confirmar</button>
+                <button onClick={() => setShowAssignModal(false)}>Cancelar</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Resolver alerta con notas */}
+        {showResolveModal && selectedAlert && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 1000,
+            }}
+            onClick={() => setShowResolveModal(false)}
+          >
+            <div
+              className="card"
+              style={{
+                maxWidth: "600px",
+                width: "90%",
+                padding: "1.5rem",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3>Resolver Alerta</h3>
+              <p>Alerta: <strong>{selectedAlert.titulo}</strong></p>
+              <div style={{ marginTop: "1rem" }}>
+                <label>Notas de resolución (opcional)</label>
+                <div className="input-group no-icon" style={{ marginTop: "0.5rem" }}>
+                  <textarea
+                    value={resolveNotes}
+                    onChange={(e) => setResolveNotes(e.target.value)}
+                    rows={6}
+                    className="input-textarea"
+                    placeholder="Notas de resolución (opcional)"
+                  />
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem" }}>
+                <button onClick={confirmResolve} className="auth-button" style={{ background: "#4caf50", color: "#fff" }}>Resolver</button>
+                <button onClick={() => setShowResolveModal(false)}>Cancelar</button>
+              </div>
+            </div>
+          </div>
+        )}
         {showModal && selectedAlert && (
           <div
             style={{
@@ -372,6 +549,23 @@ const Alertas = () => {
                   <strong>Fecha de Creación:</strong> {new Date(selectedAlert.fecha || selectedAlert.fecha_creacion).toLocaleString()}
                 </div>
 
+                  {historial && historial.length > 0 && (
+                    <div className="card" style={{ padding: "1rem", marginBottom: "0.75rem" }}>
+                      <strong>Historial de acciones:</strong>
+                      <ul style={{ marginTop: '0.5rem', maxHeight: '200px', overflow: 'auto' }}>
+                        {historial.map((h) => (
+                          <li key={h.id_historial || h.id} style={{ marginBottom: '0.5rem' }}>
+                            <div style={{ fontSize: '0.9rem' }}>
+                              <strong>{h.accion}</strong> — {h.detalles || ''}
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>
+                              {h.usuario_responsable ? `Por: ${h.usuario_responsable}` : ''} {h.fecha_accion ? `• ${new Date(h.fecha_accion).toLocaleString()}` : ''}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 {selectedAlert.fecha_revision && (
                   <div className="card" style={{ padding: "1rem", marginBottom: "0.75rem", backgroundColor: "#4caf5010" }}>
                     <strong>Estado:</strong> Resuelta el {new Date(selectedAlert.fecha_revision).toLocaleString()}

@@ -92,7 +92,7 @@ class Usuario:
         cursor = conn.cursor(dictionary=True)
 
         # Obtener contraseña actual para validar si desea cambiarla
-        cursor.execute("SELECT contrasena FROM usuarios WHERE id_usuario = %s", (id_usuario,))
+        cursor.execute("SELECT contrasena FROM usuario WHERE id_usuario = %s", (id_usuario,))
         row = cursor.fetchone()
 
         if not row:
@@ -110,7 +110,7 @@ class Usuario:
         edad = Usuario.calcular_edad(fecha_nacimiento) if fecha_nacimiento else None
 
         cursor.execute("""
-            UPDATE usuarios
+            UPDATE usuario
             SET nombre=%s,
                 apellido=%s,
                 correo=%s,

@@ -6,6 +6,9 @@ __pycache__/
 node_modules/
 *.log
 
+# IDEs and editors
+.github/instructions/instructions.instructions.md
+
 # React / Expo
 dist/
 .expo/
@@ -13,27 +16,20 @@ dist/
 
 # Docker
 db_data/
-*.sql
 
 # OS
 .DS_Store
 Thumbs.db
 
 # Environment
-.env
-.env.*
-backend/.env
 proyectofinal-frontend/.env
 proyectofinal-mobile/.env
 
-.venv/
-venv/
 __pycache__/
 
 # Backend local data
 backend/uploads/
 backend/.pytest_cache/
-backend/.venv/
 
 # Frontend
 proyectofinal-frontend/node_modules/

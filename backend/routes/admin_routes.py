@@ -5,8 +5,9 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.connection import DatabaseConnection
 from services.usuario_service import UsuarioService
 from models.rol_usuario import RolUsuario
+from models.rol import Rol
 
-bp = Blueprint('admin', __name__, url_prefix='/admin')
+bp = Blueprint('admin', __name__, url_prefix='/api/admin')
 
 # ======================================================
 # 🛡️ VALIDAR SI EL USUARIO ES ADMIN
@@ -60,16 +61,16 @@ def statistics():
         cursor.execute("SELECT COUNT(*) AS total FROM usuario WHERE usa_medicamentos = TRUE")
         total_medicamentos = cursor.fetchone()["total"]
 
-        # Total audios
+        # Total audios (tabla `audio` en el esquema)
         try:
-            cursor.execute("SELECT COUNT(*) AS total FROM audio_registro")
+            cursor.execute("SELECT COUNT(*) AS total FROM audio")
             total_audios = cursor.fetchone()["total"]
         except:
             total_audios = 0
 
-        # Total registros de estrés
+        # Total alertas de análisis (reemplaza tablas inexistentes como deteccion_estres)
         try:
-            cursor.execute("SELECT COUNT(*) AS total FROM deteccion_estres")
+            cursor.execute("SELECT COUNT(*) AS total FROM alerta_analisis")
             total_estres = cursor.fetchone()["total"]
         except:
             total_estres = 0
@@ -177,13 +178,30 @@ def get_usuarios():
                 'error': 'Acceso no autorizado. Se requiere rol administrador.'
             }), 403
 
-        # Delegar a UsuarioService que ya devuelve la lista con roles
-        usuarios = UsuarioService.get_all_usuarios_simple()
+        # Obtener el rol 'admin' y listar solo usuarios con ese rol
+        try:
+            rol_admin = Rol.get_by_name('admin')
+            if not rol_admin:
+                return jsonify({'success': True, 'usuarios': []}), 200
 
-        return jsonify({
-            'success': True,
-            'usuarios': usuarios
-        }), 200
+            usuarios_raw = RolUsuario.get_users_by_role(rol_admin.get('id_rol')) or []
+            # Formatear salida para frontend (coincidente con get_all_usuarios_simple)
+            usuarios = []
+            for u in usuarios_raw:
+                usuarios.append({
+                    'id': u.get('id_usuario'),
+                    'nombre': u.get('nombre'),
+                    'apellido': u.get('apellido'),
+                    'email': u.get('correo'),
+                    'foto_perfil': u.get('foto_perfil'),
+                    'roles': ['admin'],
+                    'activo': u.get('activo', True)
+                })
+
+            return jsonify({'success': True, 'usuarios': usuarios}), 200
+        except Exception as e:
+            print(f"[ERROR] obtener usuarios admin: {e}")
+            return jsonify({'success': False, 'error': str(e)}), 500
 
     except Exception as e:
         print(f"❌ Error en get_usuarios: {str(e)}")

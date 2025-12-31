@@ -17,6 +17,7 @@ import {
   FaTimes,
 } from "react-icons/fa";
 import logo from "../../assets/Logo.svg";
+import { makeFotoUrlWithProxy } from '../../utils/avatar';
 
 const NavbarAdministrador = ({ adminData = {} }) => {
   const navigate = useNavigate();
@@ -58,19 +59,7 @@ const NavbarAdministrador = ({ adminData = {} }) => {
     logger.debug('[NAVBAR ADMIN] foto_perfil:', currentUser?.foto_perfil);
   }, [currentUser]);
 
-  const makeFotoUrlWithProxy = (path) => {
-    if (!path) return null;
-    const trimmed = String(path).trim();
-    const lower = trimmed.toLowerCase();
-    // Si viene de Google profile (googleusercontent), usar proxy del backend
-    if (lower.includes('googleusercontent.com') || lower.includes('lh3.googleusercontent.com')) {
-      return `/api/auth/proxy_image?url=${encodeURIComponent(trimmed)}`;
-    }
-    if (lower.startsWith('http://') || lower.startsWith('https://')) return trimmed;
-    if (lower.startsWith('//')) return `https:${trimmed}`;
-    // Ruta relativa almacenada en la base: prefijar host del backend
-    return `http://localhost:5000${trimmed}`;
-  };
+  // use shared makeFotoUrlWithProxy util
 
   return (
     <nav className="navbar admin-navbar">

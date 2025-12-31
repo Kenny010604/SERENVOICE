@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import NavbarAdministrador from "../../components/Administrador/NavbarAdministrador";
 import apiClient from "../../services/apiClient";
+import api from "../../config/api";
 import authService from "../../services/authService";
 import { ThemeContext } from "../../context/themeContextDef";
 import FondoClaro from "../../assets/FondoClaro.svg";
@@ -32,7 +33,7 @@ const Usuarios = () => {
     const load = async () => {
       try {
         setLoading(true);
-        const res = await apiClient.get('/usuarios');
+        const res = await apiClient.get(api.endpoints.usuarios.list);
         const data = res.data?.data || res.data || [];
         setUsers(data);
         setFilteredUsers(data);
@@ -100,7 +101,7 @@ const Usuarios = () => {
     }
 
     try {
-      await apiClient.post(`/usuarios/${id}/roles`, { role });
+      await apiClient.post(`${api.endpoints.usuarios.detail(id)}/roles`, { role });
       setUsers((prev) =>
         prev.map((u) =>
           u.id === id
@@ -126,7 +127,7 @@ const Usuarios = () => {
     }
 
     try {
-      await apiClient.delete(`/usuarios/${id}/roles/${role}`);
+      await apiClient.delete(`${api.endpoints.usuarios.detail(id)}/roles/${role}`);
       setUsers((prev) =>
         prev.map((u) =>
           u.id === id
@@ -162,7 +163,7 @@ const Usuarios = () => {
     }
 
     try {
-      await apiClient.patch(`/usuarios/${id}/estado`, { activo: !currentStatus });
+      await apiClient.patch(`${api.endpoints.usuarios.detail(id)}/estado`, { activo: !currentStatus });
       setUsers((prev) =>
         prev.map((u) => (u.id === id ? { ...u, activo: !currentStatus } : u))
       );
@@ -175,7 +176,7 @@ const Usuarios = () => {
 
   const viewUserStats = async (user) => {
     try {
-      const res = await apiClient.get(`/usuarios/${user.id}/estadisticas`);
+      const res = await apiClient.get(`${api.endpoints.usuarios.detail(user.id)}/estadisticas`);
       setEstadisticas(res.data?.data || null);
       setSelectedUser(user);
       setShowModal(true);
@@ -378,9 +379,11 @@ const Usuarios = () => {
                 <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage >= Math.max(1, Math.ceil(filteredUsers.length / perPage))}>Siguiente ›</button>
                 <button onClick={() => setCurrentPage(Math.max(1, Math.ceil(filteredUsers.length / perPage)))} disabled={currentPage >= Math.max(1, Math.ceil(filteredUsers.length / perPage))}>Último »</button>
 
-                <select value={perPage} onChange={(e) => { setPerPage(Number(e.target.value)); setCurrentPage(1); }} style={{ marginLeft: '0.5rem' }}>
-                  {[5,10,20,50].map(n => <option key={n} value={n}>{n} / pág</option>)}
-                </select>
+                <div className="input-group no-icon" style={{ marginLeft: '0.5rem' }}>
+                  <select value={perPage} onChange={(e) => { setPerPage(Number(e.target.value)); setCurrentPage(1); }}>
+                    {[5,10,20,50].map(n => <option key={n} value={n}>{n} / pág</option>)}
+                  </select>
+                </div>
               </div>
             </div>
             </>

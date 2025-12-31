@@ -362,7 +362,7 @@ def get_usuario_estadisticas(id_usuario):
         with DatabaseConnection.get_connection() as conn:
             cursor = conn.cursor(dictionary=True)
             try:
-                cursor.execute("SELECT COUNT(*) AS total FROM Audio WHERE id_usuario = %s", (id_usuario,))
+                cursor.execute("SELECT COUNT(*) AS total FROM audio WHERE id_usuario = %s", (id_usuario,))
                 total_audios = cursor.fetchone().get('total', 0)
             except Exception:
                 total_audios = 0

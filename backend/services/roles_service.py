@@ -151,8 +151,8 @@ class RolesService:
         
         query = """
             SELECT r.nombre_rol, r.descripcion, COUNT(ru.id_usuario) as total_usuarios
-            FROM Rol r
-            LEFT JOIN Rol_Usuario ru ON r.id_rol = ru.id_rol
+            FROM rol r
+            LEFT JOIN rol_usuario ru ON r.id_rol = ru.id_rol
             GROUP BY r.id_rol, r.nombre_rol, r.descripcion
         """
         

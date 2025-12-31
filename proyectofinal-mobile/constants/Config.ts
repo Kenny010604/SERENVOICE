@@ -1,5 +1,5 @@
 const Config = {
-  API_URL: "http://192.168.1.56:5000", // ← Cambia a la IP correcta (sin /api)
+  API_URL: "http://localhost:5000", // ← Localhost para desarrollo web
 };
 
 export default Config;

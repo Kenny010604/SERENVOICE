@@ -81,13 +81,18 @@ def create_app():
     # ===============================
     # ✅ CORS SIMPLIFICADO Y CORREGIDO
     # ===============================
+    # Habilitar CORS para rutas API y para el blueprint de juegos (/juegos/*)
     CORS(
         app,
-        resources={r"/*": {"origins": "*"}},
-        allow_headers=["Content-Type", "Authorization", "Accept"],
-        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+        resources={
+            r"/api/*": {"origins": "*"},
+            r"/juegos/*": {"origins": "*"},
+            r"/grupos*": {"origins": "*"}
+        },
         supports_credentials=True,
-        max_age=3600
+        methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=["Content-Type", "Authorization"],
+        expose_headers=["Content-Type", "Authorization"]
     )
 
     # ===============================
@@ -109,18 +114,9 @@ def create_app():
     # ===============================
     app.audio_service = AudioService()
     print("[AUDIO] AudioService OK")
-
     # ===============================
-    # DATABASE
+    # DATABASE (la inicialización de pool se hace más abajo con manejo de errores)
     # ===============================
-    try:
-        DatabaseConnection.initialize_pool()
-        DatabaseConnection.test_connection()
-        app.config["DB_CONNECTED"] = True
-        print("[DB] MySQL conectado")
-    except Exception as e:
-        app.config["DB_CONNECTED"] = False
-        print(f"[DB] ERROR: {e}")
 
     # ===============================
     # SQLALCHEMY (SI EXISTE)
@@ -146,7 +142,21 @@ def create_app():
             sql_jwt.init_app(app)
             print("[EXT] SQLAlchemy OK")
         except Exception as e:
-            print(f"[EXT] SQLAlchemy ERROR: {e}")
+            print(f"[EXT] ADVERTENCIA: error preparando configuración SQLAlchemy: {e}")
+            # No intentar init_app de nuevo aquí; ya se intentó dentro del bloque try
+
+    # ===============================
+    # POOL DE CONEXIONES MYSQL (manejar fallos en entorno local)
+    # ===============================
+    print("[DB] Inicializando Pool de MySQL...")
+    try:
+        DatabaseConnection.initialize_pool()
+        DatabaseConnection.test_connection()
+        app.config['DB_CONNECTED'] = True
+    except Exception as e:
+        # No detener la aplicación sólo por falta de DB en desarrollo local
+        print(f"[DB] ADVERTENCIA: no se pudo inicializar el pool de MySQL: {e}")
+        app.config['DB_CONNECTED'] = False
 
     # ===============================
     # SWAGGER
@@ -233,28 +243,67 @@ def create_app():
     # ===============================
     # HEALTH
     # ===============================
-    @app.route("/api/health")
-    def health():
-        ok = DatabaseConnection.test_connection()
-        return jsonify({
-            "status": "ok" if ok else "error",
-            "database": "connected" if ok else "disconnected"
-        }), 200 if ok else 500
+    @app.route('/api/contacto', methods=['POST'])
+    def contacto_directo():
+        data = request.get_json()
+        if not data:
+            return jsonify({"ok": False, "error": "No se recibió JSON"}), 400
+
+        nombre = data.get("nombre", "")
+        email = data.get("email", "")
+        mensaje = data.get("mensaje", "")
+
+        print("[CONTACTO DIRECTO] Datos recibidos:")
+        print("Nombre:", nombre)
+        print("Email:", email)
+        print("Mensaje:", mensaje)
+
+        return jsonify({"ok": True, "message": "Mensaje recibido"}), 200
 
     # ===============================
     # HOME
     # ===============================
-    @app.route("/")
-    def home():
-        return jsonify({
-            "message": "MindVoice API",
-            "version": "2.0.0",
-            "docs": "/api/docs",
-            "health": "/api/health"
-        })
+    @app.route('/api/health', methods=['GET'])
+    def health_check():
+        db_status = DatabaseConnection.test_connection()
+        return {
+            'status': 'ok' if db_status else 'error',
+            'database': 'connected' if db_status else 'disconnected',
+            'message': 'MindVoice API funcionando correctamente'
+        }, 200 if db_status else 500
 
-    os.makedirs("uploads/audios", exist_ok=True)
-    os.makedirs("models", exist_ok=True)
+    @app.route('/', methods=['GET'])
+    def home():
+        return {
+            'message': 'Bienvenido a MindVoice API',
+            'version': '2.0.0',
+            'endpoints': {
+                'health': '/api/health',
+                'docs': '/api/docs',
+                'auth': '/api/auth',
+                'usuario': '/api/usuario',
+                'admin': '/api/admin',
+                'audio': '/api/audio',
+                'contacto': '/api/contacto'
+            }
+        }
+
+    # Crear directorios necesarios
+    os.makedirs('uploads', exist_ok=True)
+    os.makedirs(os.path.join('uploads','audios'), exist_ok=True)
+    os.makedirs('models', exist_ok=True)
+
+    # ===============================
+    # MOSTRAR TODAS LAS RUTAS REGISTRADAS
+    # ===============================
+    print("\n" + "="*60)
+    print("RUTAS REGISTRADAS EN LA APLICACION:")
+    print("="*60)
+    for rule in app.url_map.iter_rules():
+        if rule.endpoint != 'static':
+            # Usar -> en lugar de → para evitar problemas de encoding en Windows
+            print(f"  {rule.rule:50s} -> {rule.endpoint}")
+    print("="*60 + "\n")
 
     return app
 

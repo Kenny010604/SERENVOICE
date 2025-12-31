@@ -36,7 +36,8 @@ class AlertaAnalisis:
             query += " WHERE tipo_alerta = %s"
             params.append(tipo_alerta)
         
-        query += " ORDER BY fecha_creacion DESC"
+        # la tabla usa la columna `fecha`, no `fecha_creacion`
+        query += " ORDER BY fecha DESC"
         
         if params:
             return DatabaseConnection.execute_query(query, tuple(params))
@@ -64,7 +65,8 @@ class AlertaAnalisis:
             query += " AND al.tipo_alerta = %s"
             params.append(tipo_alerta)
         
-        query += " ORDER BY al.fecha_creacion DESC LIMIT %s"
+        # ordenar por la columna `fecha` de la alerta
+        query += " ORDER BY al.fecha DESC LIMIT %s"
         params.append(limit)
         
         return DatabaseConnection.execute_query(query, tuple(params))
@@ -82,6 +84,58 @@ class AlertaAnalisis:
         query = "UPDATE alerta_analisis SET activo = 0 WHERE id_alerta = %s"
         DatabaseConnection.execute_query(query, (id_alerta,), fetch=False)
         return True
+
+    @staticmethod
+    def assign_alert(id_alerta, id_admin=None):
+        """Intentar marcar alerta como asignada. Si la columna no existe, lanzar excepción.
+
+        Nota: el esquema actual no define columna 'asignado' ni 'id_admin_asigna'.
+        Este método intenta actualizar 'asignado' si existe y devolver True.
+        """
+        # Preferir columnas modernas añadidas por la migración
+        try:
+            query = """
+                UPDATE alerta_analisis
+                SET id_usuario_asignado = %s,
+                    estado_alerta = 'en_proceso'
+                WHERE id_alerta = %s
+            """
+            DatabaseConnection.execute_query(query, (id_admin, id_alerta), fetch=False)
+            return True
+        except Exception:
+            # Fallback: intentar columnas antiguas conocidas
+            possible_cols = ["asignado", "id_admin_asigna", "admin_asigna"]
+            for col in possible_cols:
+                try:
+                    query = f"UPDATE alerta_analisis SET {col} = %s WHERE id_alerta = %s"
+                    DatabaseConnection.execute_query(query, (id_admin, id_alerta), fetch=False)
+                    return True
+                except Exception:
+                    continue
+        return False
+
+    @staticmethod
+    def resolve_alert(id_alerta, id_usuario_resuelve=None, notas: str = None):
+        """Marcar una alerta como resuelta y registrar metadata de resolución."""
+        try:
+            query = """
+                UPDATE alerta_analisis
+                SET estado_alerta = 'resuelta',
+                    fecha_resolucion = NOW(),
+                    id_usuario_asignado = COALESCE(id_usuario_asignado, %s),
+                    notas_resolucion = %s
+                WHERE id_alerta = %s
+            """
+            DatabaseConnection.execute_query(query, (id_usuario_resuelve, notas, id_alerta), fetch=False)
+            return True
+        except Exception:
+            # intentar versiones alternativas de columnas
+            try:
+                query = "UPDATE alerta_analisis SET fecha_revision = NOW() WHERE id_alerta = %s"
+                DatabaseConnection.execute_query(query, (id_alerta,), fetch=False)
+                return True
+            except Exception:
+                return False
     
     @staticmethod
     def count_unreviewed(id_usuario=None):

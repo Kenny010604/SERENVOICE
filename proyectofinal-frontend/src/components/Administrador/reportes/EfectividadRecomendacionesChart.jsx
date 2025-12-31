@@ -39,7 +39,7 @@ const EfectividadRecomendacionesChart = ({ data = [] }) => {
 
   if (!data || data.length === 0) {
     return (
-      <div className="card">
+      <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           Efectividad de Recomendaciones
         </h3>
@@ -53,7 +53,7 @@ const EfectividadRecomendacionesChart = ({ data = [] }) => {
   }
 
   return (
-    <div className="card">
+    <div>
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
         Efectividad de Recomendaciones
       </h3>

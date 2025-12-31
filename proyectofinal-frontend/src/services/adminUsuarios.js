@@ -1,6 +1,7 @@
 // services/adminUsuarios.js
 import { useState, useEffect } from "react";
 import apiClient from "./apiClient";
+import api from "../config/api";
 
 /**
  * Custom hook para obtener la lista de usuarios desde /admin/usuarios
@@ -15,7 +16,7 @@ export const useAdminUsuarios = () => {
     setError(null);
 
     try {
-      const response = await apiClient.get("/admin/usuarios");
+      const response = await apiClient.get(api.endpoints.admin.usuarios.list);
       if (response.data.success) {
         setUsuarios(response.data.usuarios);
       } else {

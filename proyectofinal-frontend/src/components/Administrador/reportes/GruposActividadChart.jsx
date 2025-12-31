@@ -39,7 +39,7 @@ const GruposActividadChart = ({ data = [] }) => {
 
   if (!data || data.length === 0) {
     return (
-      <div className="card">
+      <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           Grupos Más Activos
         </h3>
@@ -58,7 +58,7 @@ const GruposActividadChart = ({ data = [] }) => {
 
   if (topGroups.length === 0) {
     return (
-      <div className="card">
+      <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           Grupos Más Activos (Top 10)
         </h3>
@@ -72,7 +72,7 @@ const GruposActividadChart = ({ data = [] }) => {
   }
 
   return (
-    <div className="card">
+    <div>
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
         Grupos Más Activos (Top 10)
       </h3>
