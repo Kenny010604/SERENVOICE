@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -35,13 +35,11 @@ const Historial: React.FC = () => {
   const [history, setHistory] = useState<HistorialItem[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user) {
-      cargarHistorial();
-    }
-  }, [user]);
+  // Helper type-guard to validate numeric values used across the component
+  const isValidNumber = (v: unknown): v is number =>
+    typeof v === "number" && !isNaN(v as number) && isFinite(v as number);
 
-  const cargarHistorial = async () => {
+  const cargarHistorial = useCallback(async () => {
     try {
       setError(null);
 
@@ -66,7 +64,11 @@ const Historial: React.FC = () => {
       console.error("❌ Error historial:", err.message);
       setError("No se pudo cargar el historial del usuario.");
     }
-  };
+  }, [getHistory]);
+
+  useEffect(() => {
+    if (user) cargarHistorial();
+  }, [user, cargarHistorial]);
 
   // =============================
   // 🔄 LOADING
@@ -109,14 +111,12 @@ const Historial: React.FC = () => {
 
       {/* ANÁLISIS BREVE */}
       {history.length > 0 && (() => {
-        // Solo tomar valores numéricos válidos
-        const isValidNumber = v => typeof v === 'number' && !isNaN(v) && isFinite(v);
         const analizados = history.filter(h => isValidNumber(h.estres) && isValidNumber(h.ansiedad));
         const promEstres = analizados.length
-          ? analizados.reduce((sum, h) => sum + Number(h.estres), 0) / analizados.length
+          ? analizados.reduce((sum: number, h: HistorialItem) => sum + (h.estres as number), 0) / analizados.length
           : null;
         const promAnsiedad = analizados.length
-          ? analizados.reduce((sum, h) => sum + Number(h.ansiedad), 0) / analizados.length
+          ? analizados.reduce((sum: number, h: HistorialItem) => sum + (h.ansiedad as number), 0) / analizados.length
           : null;
         return (
           <View style={styles.summaryCard}>
@@ -168,7 +168,6 @@ const Historial: React.FC = () => {
             </View>
 
             {(() => {
-              const isValidNumber = v => typeof v === 'number' && !isNaN(v) && isFinite(v);
               if (isValidNumber(item.estres) && isValidNumber(item.ansiedad)) {
                 return (
                   <View style={styles.results}>
