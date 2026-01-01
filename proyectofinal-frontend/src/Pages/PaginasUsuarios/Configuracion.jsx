@@ -1,16 +1,12 @@
-import React, { useEffect, useRef, useContext } from "react";
+import React, { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import NavbarUsuario from "../../components/Usuario/NavbarUsuario";
 import { FaUser, FaBell } from "react-icons/fa";
-import { ThemeContext } from "../../context/themeContextDef";
-import FondoClaro from "../../assets/FondoClaro.svg";
-import FondoOscuro from "../../assets/FondoOscuro.svg";
 import "../../global.css";
+import PageCard from "../../components/Shared/PageCard";
 
 
 const Configuracion = () => {
   const navigate = useNavigate();
-  const { isDark } = useContext(ThemeContext);
   const cardRef = useRef(null);
 
   useEffect(() => {
@@ -37,35 +33,15 @@ const Configuracion = () => {
   ];
 
   return (
-    <>
-      <NavbarUsuario />
-      <main 
-        className="container" 
-        style={{ 
-          paddingTop: "2rem", 
-          paddingBottom: "4rem",
-          backgroundImage: `url(${isDark ? FondoOscuro : FondoClaro})`,
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "center center",
-          backgroundSize: "cover",
-          backgroundAttachment: "fixed",
-          minHeight: "100vh"
-        }}
-      >
-        <div className="card" style={{ width: "100%", maxWidth: "1000px" }}>
+    <div className="configuracion-content page-content">
+      <PageCard size="xl">
           <h2>Configuración</h2>
           <p style={{ marginBottom: "1.5rem" }}>
             Administra tu perfil y preferencias
           </p>
-        </div>
+        </PageCard>
 
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-          gap: "1.5rem",
-          width: "100%",
-          maxWidth: "1000px"
-        }}>
+        <div className="dashboard-grid">
           {configOptions.map((option) => (
             <div
               key={option.path}
@@ -100,8 +76,7 @@ const Configuracion = () => {
             </div>
           ))}
         </div>
-      </main>
-    </>
+    </div>
   );
 };
 

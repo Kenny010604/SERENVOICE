@@ -1,10 +1,7 @@
-import React, { useEffect, useRef, useState, useContext } from "react";
-import NavbarUsuario from "../../components/Usuario/NavbarUsuario";
+import React, { useEffect, useRef, useState } from "react";
 import "../../global.css";
 import Spinner from "../../components/Publico/Spinner";
-import { ThemeContext } from "../../context/themeContextDef";
-import FondoClaro from "../../assets/FondoClaro.svg";
-import FondoOscuro from "../../assets/FondoOscuro.svg";
+import PageCard from "../../components/Shared/PageCard";
 import "../../styles/StylesUsuarios/audio-player-custom.css";
 import AudioPlayer from "../../components/Publico/AudioPlayer";
 import {
@@ -35,7 +32,6 @@ import apiClient from '../../services/apiClient';
 import api from '../../config/api';
 
 const AnalizarVoz = () => {
-  const { isDark } = useContext(ThemeContext);
   const navigate = useNavigate();
   const [isRecording, setIsRecording] = useState(false);
   const [mediaSupported, setMediaSupported] = useState(true);
@@ -399,22 +395,8 @@ const AnalizarVoz = () => {
     return iconMap[emotion] || FaMeh;
   };
   return (
-    <>
-      <NavbarUsuario />
-      <main
-        className="container"
-        style={{
-          paddingTop: "2rem",
-          paddingBottom: "4rem",
-          backgroundImage: `url(${isDark ? FondoOscuro : FondoClaro})`,
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "center center",
-          backgroundSize: "cover",
-          backgroundAttachment: "fixed",
-          minHeight: "100vh",
-        }}
-      >
-        <div className="card" style={{ maxWidth: 900, width: "100%" }}>
+    <div className="analizar-voz-content page-content">
+      <PageCard size="xl">
           <h2 style={{ marginBottom: 8 }}>Análisis Emocional por Voz con IA</h2>
           <p style={{ color: "var(--color-text-secondary)", marginBottom: 16 }}>
             Graba al menos 5 segundos de tu voz hablando naturalmente. Nuestra IA analizará
@@ -596,11 +578,7 @@ const AnalizarVoz = () => {
                   );
                 })()}
               </div>
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(4, 1fr)",
-                gap: 16,
-              }}>
+              <div className="emotion-cards-grid">
                 {(() => {
                   // Queremos mostrar siempre 8 cards en orden consistente.
                   const preferred = [
@@ -617,23 +595,12 @@ const AnalizarVoz = () => {
                     const Icon = getEmotionIcon(emotion.name);
                     const color = getEmotionColor(emotion.name);
                     return (
-                      <div key={idx} style={{ 
-                        padding: 12, 
-                        borderRadius: 14, 
-                        background: "var(--color-panel)", 
-                        border: `3px solid ${color}`,
-                        aspectRatio: "1 / 1",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: 10
-                      }}>
-                        <Icon size={56} style={{ color }} />
-                        <p style={{ margin: 0, fontWeight: 800, color, fontSize: "1.05rem", textAlign: "center" }}>{emotion.name}</p>
-                        <span style={{ fontWeight: 800 }}>{emotion.value}%</span>
-                        <div style={{ width: "100%", height: 8, background: "#e0e0e0", borderRadius: 6, overflow: "hidden" }}>
-                          <div style={{ width: `${Math.max(0, Math.min(100, emotion.value))}%`, height: "100%", background: color }}></div>
+                      <div key={idx} className="emotion-card" style={{ border: `3px solid ${color}` }}>
+                        <Icon className="emotion-card-icon" style={{ color }} />
+                        <p className="emotion-card-label" style={{ color }}>{emotion.name}</p>
+                        <span className="emotion-card-value">{emotion.value}%</span>
+                        <div className="emotion-card-bar">
+                          <div className="emotion-card-bar-fill" style={{ width: `${Math.max(0, Math.min(100, emotion.value))}%`, background: color }}></div>
                         </div>
                       </div>
                     );
@@ -642,7 +609,7 @@ const AnalizarVoz = () => {
               </div>
             </div>
           )}
-        </div>
+        </PageCard>
       {/* Card de Recomendaciones IA */}
       {analysis && (() => {
         const baseReco = analysis.recomendaciones || analysis.data?.recomendaciones || [];
@@ -650,7 +617,7 @@ const AnalizarVoz = () => {
         const list = Array.isArray(baseReco) ? baseReco : [];
         return list.length > 0 || (Array.isArray(emoList) && emoList.length > 0);
       })() && (
-        <div className="card" style={{ maxWidth: 900, width: "100%", marginTop: 24 }}>
+        <PageCard size="xl" spaced>
           {(() => {
             const baseReco = analysis.recomendaciones || analysis.data?.recomendaciones || [];
             const emoList = analysis.emotions || analysis.data?.emotions || [];
@@ -763,11 +730,11 @@ const AnalizarVoz = () => {
               </div>
             );
           })()}
-        </div>
+        </PageCard>
       )}
         {analysis && (
           <section className="container" style={{ paddingTop: 8, paddingBottom: 24 }}>
-            <div className="card" style={{ maxWidth: 900, width: "100%" }}>
+            <PageCard size="xl">
               <details open>
                 <summary style={{ cursor: "pointer", fontWeight: 700 }}>Ver respuesta JSON del análisis (depuración)</summary>
                 <pre style={{ marginTop: 12, overflowX: "auto" }}>
@@ -794,14 +761,10 @@ const AnalizarVoz = () => {
                   );
                 })()}
               </details>
-            </div>
+            </PageCard>
           </section>
         )}
-      </main>
-      <footer className="footer">
-        © {new Date().getFullYear()} SerenVoice — Todos los derechos reservados.
-      </footer>
-    </>
+    </div>
   );
 };
 

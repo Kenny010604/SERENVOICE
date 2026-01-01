@@ -21,15 +21,34 @@ def get_recomendaciones_usuario():
     try:
         print(f"[DEBUG] Buscando recomendaciones para user_id: {user_id}")
         
-        # Query simple sin joins complejos
+        # Query que filtra por usuario y trae información relevante
         query = """
-            SELECT r.* FROM recomendaciones r
-            WHERE r.activo = 1
-            LIMIT 100
+            SELECT 
+                r.id_recomendacion,
+                r.id_resultado,
+                r.tipo_recomendacion,
+                r.prioridad,
+                r.contenido,
+                r.aplica,
+                r.fecha_aplica,
+                r.util,
+                r.fecha_generacion,
+                r.activo,
+                ra.clasificacion,
+                ra.nivel_estres,
+                ra.nivel_ansiedad,
+                a.fecha_analisis
+            FROM recomendaciones r
+            JOIN resultado_analisis ra ON r.id_resultado = ra.id_resultado
+            JOIN analisis a ON ra.id_analisis = a.id_analisis
+            JOIN audio au ON a.id_audio = au.id_audio
+            WHERE au.id_usuario = %s AND r.activo = 1
+            ORDER BY r.fecha_generacion DESC
+            LIMIT 50
         """
         
-        result = DatabaseConnection.execute_query(query, fetch=True)
-        print(f"[DEBUG] Resultado de query: {result}")
+        result = DatabaseConnection.execute_query(query, (user_id,), fetch=True)
+        print(f"[DEBUG] Resultado de query: {len(result) if result else 0} recomendaciones")
         
         return Helpers.format_response(
             success=True,
@@ -40,6 +59,11 @@ def get_recomendaciones_usuario():
         print(f"[ERROR] get_recomendaciones_usuario: {str(e)}")
         import traceback
         traceback.print_exc()
+        return Helpers.format_response(
+            success=False,
+            message=f'Error al obtener recomendaciones: {str(e)}',
+            status=500
+        )
 @bp.route('/todas', methods=['GET'])
 @jwt_required()
 @role_required(['admin'])
@@ -192,3 +216,102 @@ def get_recomendacion(id_recomendacion):
         data=recomendacion,
         status=200
     )
+
+@bp.route('/<int:id_recomendacion>/aplicar', methods=['PUT'])
+@jwt_required()
+def marcar_aplicada(id_recomendacion):
+    """Marcar una recomendación como aplicada"""
+    user_id = get_jwt_identity()
+    
+    try:
+        recomendacion = Recomendacion.get_by_id(id_recomendacion)
+        
+        if not recomendacion:
+            return Helpers.format_response(
+                success=False,
+                message='Recomendación no encontrada',
+                status=404
+            )
+        
+        # Verificar permisos
+        resultado = ResultadoAnalisis.get_by_id(recomendacion['id_resultado'])
+        analisis = Analisis.get_by_id(resultado['id_analisis'])
+        audio = Audio.get_by_id(analisis['id_audio'])
+        
+        if audio['id_usuario'] != user_id:
+            return Helpers.format_response(
+                success=False,
+                message='No tienes permisos',
+                status=403
+            )
+        
+        # Actualizar la recomendación
+        query = """
+            UPDATE recomendaciones 
+            SET aplica = 1, fecha_aplica = NOW() 
+            WHERE id_recomendacion = %s
+        """
+        DatabaseConnection.execute_query(query, (id_recomendacion,), fetch=False)
+        
+        return Helpers.format_response(
+            success=True,
+            message='Recomendación marcada como aplicada',
+            status=200
+        )
+    except Exception as e:
+        return Helpers.format_response(
+            success=False,
+            message=f'Error al marcar recomendación: {str(e)}',
+            status=500
+        )
+
+@bp.route('/<int:id_recomendacion>/util', methods=['PUT'])
+@jwt_required()
+def marcar_util(id_recomendacion):
+    """Marcar una recomendación como útil"""
+    user_id = get_jwt_identity()
+    
+    try:
+        data = request.get_json() or {}
+        util = data.get('util', True)
+        
+        recomendacion = Recomendacion.get_by_id(id_recomendacion)
+        
+        if not recomendacion:
+            return Helpers.format_response(
+                success=False,
+                message='Recomendación no encontrada',
+                status=404
+            )
+        
+        # Verificar permisos
+        resultado = ResultadoAnalisis.get_by_id(recomendacion['id_resultado'])
+        analisis = Analisis.get_by_id(resultado['id_analisis'])
+        audio = Audio.get_by_id(analisis['id_audio'])
+        
+        if audio['id_usuario'] != user_id:
+            return Helpers.format_response(
+                success=False,
+                message='No tienes permisos',
+                status=403
+            )
+        
+        # Actualizar la recomendación
+        query = """
+            UPDATE recomendaciones 
+            SET util = %s 
+            WHERE id_recomendacion = %s
+        """
+        DatabaseConnection.execute_query(query, (1 if util else 0, id_recomendacion), fetch=False)
+        
+        return Helpers.format_response(
+            success=True,
+            message='Utilidad de recomendación actualizada',
+            status=200
+        )
+    except Exception as e:
+        return Helpers.format_response(
+            success=False,
+            message=f'Error al actualizar recomendación: {str(e)}',
+            status=500
+        )

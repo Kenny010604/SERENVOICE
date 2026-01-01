@@ -1,15 +1,10 @@
 // proyectofinal-frontend/src/Pages/PaginasUsuarios/ConfiguracionNotificaciones.jsx
-import React, { useState, useEffect, useContext } from 'react';
-import NavbarUsuario from '../../components/Usuario/NavbarUsuario';
+import React, { useState, useEffect } from 'react';
 import notificacionesService from '../../services/notificacionesService';
-import { ThemeContext } from '../../context/themeContextDef';
-import FondoClaro from '../../assets/FondoClaro.svg';
-import FondoOscuro from '../../assets/FondoOscuro.svg';
 import { FaBell, FaEnvelope, FaMobileAlt, FaClock, FaPause, FaPlay, FaSave } from 'react-icons/fa';
 import '../../styles/ConfiguracionNotificaciones.css';
 
 const ConfiguracionNotificaciones = () => {
-  const { isDark } = useContext(ThemeContext);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -209,31 +204,15 @@ const ConfiguracionNotificaciones = () => {
 
   if (loading) {
     return (
-      <>
-        <NavbarUsuario />
-        <div className="loading-container">
-          <div className="spinner"></div>
-          <p>Cargando preferencias...</p>
-        </div>
-      </>
+      <div className="loading-container">
+        <div className="spinner"></div>
+        <p>Cargando preferencias...</p>
+      </div>
     );
   }
 
   return (
-    <>
-      <NavbarUsuario />
-      <div 
-        style={{
-          backgroundImage: `url(${isDark ? FondoOscuro : FondoClaro})`,
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "center center",
-          backgroundSize: "cover",
-          backgroundAttachment: "fixed",
-          minHeight: "100vh",
-          paddingTop: "2rem",
-          paddingBottom: "4rem"
-        }}
-      >
+    <div className="config-notificaciones-content page-content">
         <div className="config-notificaciones-container">
         <div className="config-header">
           <h1>⚙️ Configuración de Notificaciones</h1>
@@ -364,8 +343,7 @@ const ConfiguracionNotificaciones = () => {
           </button>
         </div>
         </div>
-      </div>
-    </>
+    </div>
   );
 };
 

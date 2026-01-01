@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import NavbarUsuario from "../../components/Usuario/NavbarUsuario";
 import "../../global.css";
+import PageCard from "../../components/Shared/PageCard";
 import { FaFileDownload, FaCalendarAlt } from "react-icons/fa";
 
 const ReportesUsuario = () => {
@@ -22,14 +22,12 @@ const ReportesUsuario = () => {
   };
 
   return (
-    <>
-      <NavbarUsuario />
-      <main className="container" style={{ paddingTop: "2rem", paddingBottom: "4rem" }}>
-        <div
+    <div className="reportes-usuario-content page-content">
+        <PageCard
           ref={cardRef}
-          className="card reveal"
+          size="xl"
+          className="reveal"
           data-revealdelay="60"
-          style={{ maxWidth: "900px" }}
         >
           <h2>
             <FaFileDownload /> Mis Reportes
@@ -67,9 +65,8 @@ const ReportesUsuario = () => {
               </div>
             )}
           </div>
-        </div>
-      </main>
-    </>
+        </PageCard>
+    </div>
   );
 };
 

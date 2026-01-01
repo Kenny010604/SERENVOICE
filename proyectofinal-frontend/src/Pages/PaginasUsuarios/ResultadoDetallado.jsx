@@ -1,10 +1,7 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import NavbarUsuario from "../../components/Usuario/NavbarUsuario";
 import Spinner from "../../components/Publico/Spinner";
-import { ThemeContext } from "../../context/themeContextDef";
-import FondoClaro from "../../assets/FondoClaro.svg";
-import FondoOscuro from "../../assets/FondoOscuro.svg";
+import PageCard from "../../components/Shared/PageCard";
 import { 
   FaChartLine, 
   FaLightbulb, 
@@ -31,7 +28,6 @@ import api from '../../config/api';
 const ResultadoDetallado = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isDark } = useContext(ThemeContext);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -135,25 +131,11 @@ const ResultadoDetallado = () => {
   };
 
   return (
-    <>
-      <NavbarUsuario />
-      <main
-        className="container"
-        style={{
-          paddingTop: "2rem",
-          paddingBottom: "4rem",
-          backgroundImage: `url(${isDark ? FondoOscuro : FondoClaro})`,
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "center center",
-          backgroundSize: "cover",
-          backgroundAttachment: "fixed",
-          minHeight: "100vh",
-        }}
-      >
+    <div className="resultado-detallado-content page-content">
         {loading && <Spinner overlay={true} message="Cargando detalle..." />}
 
         {error && (
-          <div className="card" style={{ maxWidth: 900, width: "100%" }}>
+          <PageCard size="xl">
             <div style={{
               color: "#d32f2f",
               padding: 16,
@@ -166,14 +148,14 @@ const ResultadoDetallado = () => {
                 <strong>Error: {error}</strong>
               </div>
             </div>
-          </div>
+          </PageCard>
         )}
 
         {data && (
           <>
             {/* Card de Detalles del Análisis */}
             {data.analisis && (
-              <div className="card" style={{ maxWidth: 900, width: "100%", marginBottom: 24 }}>
+              <PageCard size="xl" spaced>
                 <h2 style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
                   <FaChartLine /> Detalles del Análisis
                 </h2>
@@ -254,20 +236,16 @@ const ResultadoDetallado = () => {
                     )}
                   </div>
                 </div>
-              </div>
+              </PageCard>
             )}
 
             {/* Card de Niveles Emocionales */}
             {data.resultado && (
-              <div className="card" style={{ maxWidth: 900, width: "100%", marginBottom: 24 }}>
+              <PageCard size="xl" spaced>
                 <h2 style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
                   <FaChartLine style={{ color: "var(--color-primary)" }} /> Niveles Emocionales Detectados
                 </h2>
-                <div style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(4, 1fr)",
-                  gap: 16,
-                }}>
+                <div className="emotion-cards-grid">
                   {(() => {
                     // Definir el orden de las emociones
                     const preferred = [
@@ -275,51 +253,50 @@ const ResultadoDetallado = () => {
                       'Ansiedad', 'Neutral', 'Miedo', 'Sorpresa'
                     ];
                     
+                    // Función para obtener valor numérico seguro
+                    const getNumericValue = (val) => {
+                      const num = parseFloat(val);
+                      return isNaN(num) ? 0 : Math.round(num * 10) / 10;
+                    };
+                    
                     // Mapear valores del resultado
                     const niveles = {
-                      'Felicidad': data.resultado.nivel_felicidad || 0,
-                      'Tristeza': data.resultado.nivel_tristeza || 0,
-                      'Enojo': data.resultado.nivel_enojo || 0,
-                      'Estrés': data.resultado.nivel_estres || 0,
-                      'Ansiedad': data.resultado.nivel_ansiedad || 0,
-                      'Neutral': data.resultado.nivel_neutral || 0,
-                      'Miedo': data.resultado.nivel_miedo || 0,
-                      'Sorpresa': data.resultado.nivel_sorpresa || 0,
+                      'Felicidad': getNumericValue(data.resultado.nivel_felicidad),
+                      'Tristeza': getNumericValue(data.resultado.nivel_tristeza),
+                      'Enojo': getNumericValue(data.resultado.nivel_enojo),
+                      'Estrés': getNumericValue(data.resultado.nivel_estres),
+                      'Ansiedad': getNumericValue(data.resultado.nivel_ansiedad),
+                      'Neutral': getNumericValue(data.resultado.nivel_neutral),
+                      'Miedo': getNumericValue(data.resultado.nivel_miedo),
+                      'Sorpresa': getNumericValue(data.resultado.nivel_sorpresa),
                     };
 
+                    // Log para debug
+                    console.debug('[ResultadoDetallado] Niveles emocionales:', niveles);
+                    console.debug('[ResultadoDetallado] Resultado raw:', data.resultado);
+
                     return preferred.map((name, idx) => {
-                      const value = niveles[name] || 0;
+                      const value = niveles[name];
                       const Icon = getEmotionIcon(name);
                       const color = getEmotionColor(name);
                       return (
-                        <div key={idx} style={{ 
-                          padding: 12, 
-                          borderRadius: 14, 
-                          background: "var(--color-panel)", 
-                          border: `3px solid ${color}`,
-                          aspectRatio: "1 / 1",
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: 10
-                        }}>
-                          <Icon size={56} style={{ color }} />
-                          <p style={{ margin: 0, fontWeight: 800, color, fontSize: "1.05rem", textAlign: "center" }}>{name}</p>
-                          <span style={{ fontWeight: 800 }}>{value}%</span>
-                          <div style={{ width: "100%", height: 8, background: "#e0e0e0", borderRadius: 6, overflow: "hidden" }}>
-                            <div style={{ width: `${Math.max(0, Math.min(100, value))}%`, height: "100%", background: color }}></div>
+                        <div key={idx} className="emotion-card" style={{ border: `3px solid ${color}` }}>
+                          <Icon className="emotion-card-icon" style={{ color }} />
+                          <p className="emotion-card-label" style={{ color }}>{name}</p>
+                          <span className="emotion-card-value">{value.toFixed(1)}%</span>
+                          <div className="emotion-card-bar">
+                            <div className="emotion-card-bar-fill" style={{ width: `${Math.max(0, Math.min(100, value))}%`, background: color }}></div>
                           </div>
                         </div>
                       );
                     });
                   })()}
                 </div>
-              </div>
+              </PageCard>
             )}
 
             {/* Card de Recomendaciones */}
-            <div className="card" style={{ maxWidth: 900, width: "100%", marginBottom: 24 }}>
+            <PageCard size="xl" spaced>
               <h2 style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
                 <FaLightbulb style={{ color: "var(--color-primary)" }} /> Recomendaciones Personalizadas
               </h2>
@@ -380,22 +357,18 @@ const ResultadoDetallado = () => {
                   </p>
                 </div>
               )}
-            </div>
+            </PageCard>
           </>
         )}
 
         {!loading && !error && !data && (
-          <div className="card" style={{ maxWidth: 900, width: "100%" }}>
+          <PageCard size="xl">
             <div className="panel" style={{ padding: 16 }}>
               <p style={{ margin: 0 }}>No se encontraron datos para este análisis.</p>
             </div>
-          </div>
+          </PageCard>
         )}
-      </main>
-      <footer className="footer">
-        © {new Date().getFullYear()} SerenVoice — Todos los derechos reservados.
-      </footer>
-    </>
+    </div>
   );
 };
 

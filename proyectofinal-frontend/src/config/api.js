@@ -117,10 +117,13 @@ const api = {
       byId: (id) => `/resultados/${id}`,
     },
     recomendaciones: {
+      list: "/recomendaciones",
       byResultado: (id) => `/recomendaciones/resultado/${id}`,
       byId: (id) => `/recomendaciones/${id}`,
       todas: "/recomendaciones/todas",
       estadisticas: "/recomendaciones/estadisticas",
+      marcarAplicada: (id) => `/recomendaciones/${id}/aplicar`,
+      marcarUtil: (id) => `/recomendaciones/${id}/util`,
     },
     sesionesJuego: {
       todas: "/sesiones-juego/todas",

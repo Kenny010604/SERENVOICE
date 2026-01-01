@@ -352,33 +352,17 @@ const ProbarVoz = () => {
             <h3 style={{ marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
               <FaChartLine style={{ color: "var(--color-primary)" }} /> Resultados del Análisis
             </h3>
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: 16,
-              marginTop: 16,
-            }}>
+            <div className="emotion-cards-grid" style={{ marginTop: 16 }}>
               {analysis.emotions.slice(0, 8).map((emotion, idx) => {
                 const Icon = getEmotionIcon(emotion.name);
                 const color = getEmotionColor(emotion.name);
                 return (
-                  <div key={idx} style={{ 
-                    padding: 12, 
-                    borderRadius: 14, 
-                    background: "var(--color-panel)", 
-                    border: `3px solid ${color}`,
-                    aspectRatio: "1 / 1",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 10
-                  }}>
-                    <Icon size={56} style={{ color }} />
-                    <p style={{ margin: 0, fontWeight: 800, color, fontSize: "1.05rem", textAlign: "center" }}>{emotion.name}</p>
-                    <span style={{ fontWeight: 800 }}>{emotion.value}%</span>
-                    <div style={{ width: "100%", height: 8, background: "#e0e0e0", borderRadius: 6, overflow: "hidden" }}>
-                      <div style={{ width: `${Math.max(0, Math.min(100, emotion.value))}%`, height: "100%", background: color }}></div>
+                  <div key={idx} className="emotion-card" style={{ border: `3px solid ${color}` }}>
+                    <Icon className="emotion-card-icon" style={{ color }} />
+                    <p className="emotion-card-label" style={{ color }}>{emotion.name}</p>
+                    <span className="emotion-card-value">{emotion.value}%</span>
+                    <div className="emotion-card-bar">
+                      <div className="emotion-card-bar-fill" style={{ width: `${Math.max(0, Math.min(100, emotion.value))}%`, background: color }}></div>
                     </div>
                   </div>
                 );
@@ -386,46 +370,24 @@ const ProbarVoz = () => {
               
               {/* Estrés */}
               {indicadores && (
-                <div style={{ 
-                  padding: 12, 
-                  borderRadius: 14, 
-                  background: "var(--color-panel)", 
-                  border: `3px solid #e76f51`,
-                  aspectRatio: "1 / 1",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 10
-                }}>
-                  <FaFrownOpen size={56} style={{ color: "#e76f51" }} />
-                  <p style={{ margin: 0, fontWeight: 800, color: "#e76f51", fontSize: "1.05rem", textAlign: "center" }}>Estrés</p>
-                  <span style={{ fontWeight: 800 }}>{Math.round(indicadores.estres.porcentaje)}%</span>
-                  <div style={{ width: "100%", height: 8, background: "#e0e0e0", borderRadius: 6, overflow: "hidden" }}>
-                    <div style={{ width: `${Math.max(0, Math.min(100, indicadores.estres.porcentaje))}%`, height: "100%", background: "#e76f51" }}></div>
+                <div className="emotion-card" style={{ border: `3px solid #e76f51` }}>
+                  <FaFrownOpen className="emotion-card-icon" style={{ color: "#e76f51" }} />
+                  <p className="emotion-card-label" style={{ color: "#e76f51" }}>Estrés</p>
+                  <span className="emotion-card-value">{Math.round(indicadores.estres.porcentaje)}%</span>
+                  <div className="emotion-card-bar">
+                    <div className="emotion-card-bar-fill" style={{ width: `${Math.max(0, Math.min(100, indicadores.estres.porcentaje))}%`, background: "#e76f51" }}></div>
                   </div>
                 </div>
               )}
 
               {/* Ansiedad */}
               {indicadores && (
-                <div style={{ 
-                  padding: 12, 
-                  borderRadius: 14, 
-                  background: "var(--color-panel)", 
-                  border: `3px solid #9b5de5`,
-                  aspectRatio: "1 / 1",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 10
-                }}>
-                  <FaMeh size={56} style={{ color: "#9b5de5" }} />
-                  <p style={{ margin: 0, fontWeight: 800, color: "#9b5de5", fontSize: "1.05rem", textAlign: "center" }}>Ansiedad</p>
-                  <span style={{ fontWeight: 800 }}>{Math.round(indicadores.ansiedad.porcentaje)}%</span>
-                  <div style={{ width: "100%", height: 8, background: "#e0e0e0", borderRadius: 6, overflow: "hidden" }}>
-                    <div style={{ width: `${Math.max(0, Math.min(100, indicadores.ansiedad.porcentaje))}%`, height: "100%", background: "#9b5de5" }}></div>
+                <div className="emotion-card" style={{ border: `3px solid #9b5de5` }}>
+                  <FaMeh className="emotion-card-icon" style={{ color: "#9b5de5" }} />
+                  <p className="emotion-card-label" style={{ color: "#9b5de5" }}>Ansiedad</p>
+                  <span className="emotion-card-value">{Math.round(indicadores.ansiedad.porcentaje)}%</span>
+                  <div className="emotion-card-bar">
+                    <div className="emotion-card-bar-fill" style={{ width: `${Math.max(0, Math.min(100, indicadores.ansiedad.porcentaje))}%`, background: "#9b5de5" }}></div>
                   </div>
                 </div>
               )}

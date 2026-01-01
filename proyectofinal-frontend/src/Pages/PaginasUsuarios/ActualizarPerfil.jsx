@@ -1,13 +1,9 @@
-import React, { useState, useEffect, useRef, useContext } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import "../../global.css";
 import Spinner from "../../components/Publico/Spinner";
-import NavbarUsuario from "../../components/Usuario/NavbarUsuario";
 import authService from "../../services/authService";
 import apiClient from "../../services/apiClient";
-import { ThemeContext } from "../../context/themeContextDef";
-import FondoClaro from "../../assets/FondoClaro.svg";
-import FondoOscuro from "../../assets/FondoOscuro.svg";
 
 import {
   FaUser,
@@ -59,7 +55,6 @@ const googleLockedStyles = `
 
 const ActualizarPerfil = () => {
   const cardRef = useRef(null);
-  const { isDark } = useContext(ThemeContext);
 
   const user = authService.getUser();
   const isGoogleUser = user?.auth_provider === 'google';
@@ -273,19 +268,9 @@ const ActualizarPerfil = () => {
   };
 
   return (
-    <>
-      <NavbarUsuario userData={user} />
-      <main className="container" style={{
-        paddingTop: "2rem",
-        paddingBottom: "4rem",
-        backgroundImage: `url(${isDark ? FondoOscuro : FondoClaro})`,
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "center center",
-        backgroundSize: "cover",
-        backgroundAttachment: "fixed"
-      }}>
+    <div className="actualizar-perfil-content page-content">
         <style>{googleLockedStyles}</style>
-        <div ref={cardRef} className="auth-card reveal" style={{ maxWidth: "900px" }}>
+        <div ref={cardRef} className="auth-card auth-card-md reveal">
           {loading && <Spinner overlay message="Guardando cambios..." />}
 
           <div className="auth-header">
@@ -729,12 +714,7 @@ const ActualizarPerfil = () => {
             </button>
           </form>
         </div>
-      </main>
-
-      <footer className="footer">
-        © {new Date().getFullYear()} SerenVoice — Todos los derechos reservados.
-      </footer>
-    </>
+    </div>
   );
 };
 

@@ -220,28 +220,51 @@ def analyze_voice():
                 emotions = results.get("emotions", []) or []
                 confidence = float(results.get("confidence", 0.0)) * 100.0
 
-                # Inicializar valores
+                # Inicializar todos los valores de emociones
                 nivel_estres = 0.0
                 nivel_ansiedad = 0.0
+                nivel_felicidad = 0.0
+                nivel_tristeza = 0.0
+                nivel_miedo = 0.0
+                nivel_neutral = 0.0
+                nivel_enojo = 0.0
+                nivel_sorpresa = 0.0
+                emocion_dominante = None
+                max_emotion_value = 0.0
 
-                # Buscar emociones relevantes por nombre
+                # Buscar y extraer todas las emociones por nombre
                 for e in emotions:
                     name = (e.get("name") or "").lower()
                     val = float(e.get("value") or 0.0)
+                    
+                    # Detectar emoción dominante
+                    if val > max_emotion_value:
+                        max_emotion_value = val
+                        emocion_dominante = e.get("name")
+                    
+                    # Mapear cada emoción
                     if "estrés" in name or "estres" in name:
                         nivel_estres = max(nivel_estres, val)
-                    if "ansiedad" in name:
+                    elif "ansiedad" in name:
                         nivel_ansiedad = max(nivel_ansiedad, val)
+                    elif "felic" in name or "alegr" in name:
+                        nivel_felicidad = max(nivel_felicidad, val)
+                    elif "trist" in name:
+                        nivel_tristeza = max(nivel_tristeza, val)
+                    elif "mied" in name:
+                        nivel_miedo = max(nivel_miedo, val)
+                    elif "neutral" in name or "neutro" in name:
+                        nivel_neutral = max(nivel_neutral, val)
+                    elif "enojo" in name or "enoj" in name or "ira" in name:
+                        nivel_enojo = max(nivel_enojo, val)
+                    elif "sorp" in name:
+                        nivel_sorpresa = max(nivel_sorpresa, val)
 
-                # Si no hay etiquetas explícitas, estimar con otras señales
+                # Si no hay etiquetas explícitas de estrés/ansiedad, estimar con otras señales
                 if nivel_estres == 0.0:
-                    enojo = next((float(e.get("value")) for e in emotions if "enojo" in (e.get("name") or "").lower()), 0.0)
-                    sorpresa = next((float(e.get("value")) for e in emotions if "sorpresa" in (e.get("name") or "").lower()), 0.0)
-                    nivel_estres = max(enojo * 0.6, sorpresa * 0.4)
+                    nivel_estres = max(nivel_enojo * 0.6, nivel_sorpresa * 0.4)
                 if nivel_ansiedad == 0.0:
-                    miedo = next((float(e.get("value")) for e in emotions if "miedo" in (e.get("name") or "").lower()), 0.0)
-                    tristeza = next((float(e.get("value")) for e in emotions if "tristeza" in (e.get("name") or "").lower()), 0.0)
-                    nivel_ansiedad = max(miedo * 0.6, tristeza * 0.4)
+                    nivel_ansiedad = max(nivel_miedo * 0.6, nivel_tristeza * 0.4)
 
                 # Clasificación por umbrales
                 max_score = max(nivel_estres, nivel_ansiedad)
@@ -256,17 +279,24 @@ def analyze_voice():
                 else:
                     clasificacion = 'normal'
 
-                # Crear resultado del análisis
+                # Crear resultado del análisis con todos los niveles emocionales
                 from models.resultado_analisis import ResultadoAnalisis
                 resultado_id = ResultadoAnalisis.create(
                     id_analisis=analisis_id,
                     nivel_estres=round(nivel_estres, 2),
                     nivel_ansiedad=round(nivel_ansiedad, 2),
                     clasificacion=clasificacion,
-                    confianza_modelo=round(confidence, 2)
+                    confianza_modelo=round(confidence, 2),
+                    emocion_dominante=emocion_dominante,
+                    nivel_felicidad=round(nivel_felicidad, 2),
+                    nivel_tristeza=round(nivel_tristeza, 2),
+                    nivel_miedo=round(nivel_miedo, 2),
+                    nivel_neutral=round(nivel_neutral, 2),
+                    nivel_enojo=round(nivel_enojo, 2),
+                    nivel_sorpresa=round(nivel_sorpresa, 2)
                 )
                 
-                print(f'[audio_routes] Resultado creado con ID: {resultado_id}')
+                print(f'[audio_routes] Resultado creado con ID: {resultado_id}, emociones: felicidad={nivel_felicidad}, tristeza={nivel_tristeza}, miedo={nivel_miedo}, neutral={nivel_neutral}, enojo={nivel_enojo}, sorpresa={nivel_sorpresa}')
 
                 if not resultado_id:
                     raise Exception('No se pudo crear el registro de resultado de análisis')

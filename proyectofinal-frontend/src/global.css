@@ -692,6 +692,71 @@ main {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
+/* Card size variants - use these instead of inline styles */
+.card.card-sm {
+  max-width: 600px;
+}
+
+.card.card-md {
+  max-width: 900px;
+}
+
+.card.card-lg {
+  max-width: 1000px;
+}
+
+.card.card-xl {
+  max-width: 1200px;
+}
+
+.card.card-full {
+  max-width: 100%;
+}
+
+/* Card text alignment variants */
+.card.card-left {
+  text-align: left;
+}
+
+/* Card spacing variants */
+.card.card-spaced {
+  margin-bottom: 1.5rem;
+}
+
+/* Page content wrapper - ensures consistent padding and centering */
+.page-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem;
+}
+
+@media (max-width: 768px) {
+  .page-content {
+    padding: 0.5rem;
+  }
+  
+  .card {
+    padding: 1.25rem;
+    border-radius: 16px;
+  }
+}
+
+/* Dashboard grid for quick access cards */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1000px;
+}
+
+.dashboard-grid .card {
+  max-width: 100%;
+}
+
 @keyframes fadeInUp {
   to {
     opacity: 1;
@@ -1052,7 +1117,7 @@ main {
 }
 
 .content-max {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
@@ -1315,6 +1380,10 @@ button:hover {
   max-width: 1000px;
   text-align: center;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.auth-card.auth-card-md {
+  max-width: 1200px;
 }
 
 .auth-card:hover {
@@ -2474,4 +2543,138 @@ input[type="password"]::-webkit-clear-button {
 /* Localized vertical spacing for Reportes page cards */
 .reportes-page .card {
   margin: 1.5rem 0;
+}
+
+/* ========================================
+   EMOTION CARDS GRID - RESPONSIVE STYLES
+   ======================================== */
+
+.emotion-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  width: 100%;
+}
+
+.emotion-card {
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--color-panel);
+  aspect-ratio: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.emotion-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--color-shadow);
+}
+
+.emotion-card-icon {
+  font-size: 3.5rem;
+}
+
+.emotion-card-label {
+  margin: 0;
+  font-weight: 800;
+  font-size: 1.05rem;
+  text-align: center;
+}
+
+.emotion-card-value {
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
+.emotion-card-bar {
+  width: 100%;
+  height: 8px;
+  background: #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.emotion-card-bar-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+/* Tablet - 3 columnas */
+@media (max-width: 1024px) {
+  .emotion-cards-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  
+  .emotion-card {
+    padding: 10px;
+  }
+  
+  .emotion-card-icon {
+    font-size: 2.8rem;
+  }
+  
+  .emotion-card-label {
+    font-size: 0.95rem;
+  }
+}
+
+/* Tablet pequeña - 2 columnas */
+@media (max-width: 768px) {
+  .emotion-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  
+  .emotion-card {
+    padding: 10px;
+    aspect-ratio: unset;
+    min-height: 140px;
+  }
+  
+  .emotion-card-icon {
+    font-size: 2.5rem;
+  }
+  
+  .emotion-card-label {
+    font-size: 0.9rem;
+  }
+  
+  .emotion-card-value {
+    font-size: 1rem;
+  }
+}
+
+/* Móvil - 2 columnas compactas */
+@media (max-width: 480px) {
+  .emotion-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  
+  .emotion-card {
+    padding: 8px;
+    min-height: 120px;
+    gap: 6px;
+  }
+  
+  .emotion-card-icon {
+    font-size: 2rem;
+  }
+  
+  .emotion-card-label {
+    font-size: 0.8rem;
+  }
+  
+  .emotion-card-value {
+    font-size: 0.9rem;
+  }
+  
+  .emotion-card-bar {
+    height: 6px;
+  }
 }

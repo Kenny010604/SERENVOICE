@@ -1,12 +1,9 @@
-import React, { useEffect, useState, useCallback, useContext } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import groupsService from '../../services/groupsService';
 import { Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import authService from '../../services/authService';
-import NavbarUsuario from '../../components/Usuario/NavbarUsuario';
 import '../../global.css';
-import { ThemeContext } from '../../context/themeContextDef';
-import FondoClaro from '../../assets/FondoClaro.svg';
-import FondoOscuro from '../../assets/FondoOscuro.svg';
+import PageCard from '../../components/Shared/PageCard';
 import logger from '../../utils/logger';
 
 export default function Grupos() {
@@ -15,7 +12,6 @@ export default function Grupos() {
   const [query, setQuery] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
-  const { isDark } = useContext(ThemeContext);
   const userData = authService.getUser();
 
   const cargar = useCallback(async () => {
@@ -66,23 +62,8 @@ export default function Grupos() {
   if (!userData) return <Navigate to="/login" replace />;
 
   return (
-    <>
-      <NavbarUsuario userData={userData} />
-
-      <main
-        className="container"
-        style={{
-          paddingTop: '2rem',
-          paddingBottom: '4rem',
-          backgroundImage: `url(${isDark ? FondoOscuro : FondoClaro})`,
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'center center',
-          backgroundSize: 'cover',
-          backgroundAttachment: 'fixed',
-          minHeight: '100vh'
-        }}
-      >
-        <div className="card" style={{maxWidth: '1200px', margin: '0 auto'}}>
+    <div className="grupos-content page-content">
+        <PageCard size="xl">
           <h2 style={{marginTop:0,color:'var(--color-text-main)'}}>{showingMyGroups ? 'Mis Grupos' : 'Explorar Grupos'}</h2>
           
           <div style={{display:'flex',gap:12,alignItems:'center',marginBottom:'1.5rem',flexWrap:'wrap'}}>
@@ -215,12 +196,7 @@ export default function Grupos() {
             )}
             </div>
           )}
-        </div>
-      </main>
-
-      <footer className="footer">
-        © {new Date().getFullYear()} SerenVoice — Todos los derechos reservados.
-      </footer>
-    </>
+        </PageCard>
+    </div>
   );
 }

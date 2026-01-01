@@ -3,6 +3,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import GameHistory from "../../components/Usuario/GameHistory.jsx";
 import { juegosAPI } from "../../services/apiClient";
+import PageCard from "../../components/Shared/PageCard";
 
 const JuegoRecomendado = () => {
   const location = useLocation();
@@ -106,8 +107,8 @@ const JuegoRecomendado = () => {
   }
 
   return (
-    <div className="container" style={{ paddingTop: "2rem", paddingBottom: "4rem" }}>
-      <div className="card" style={{ maxWidth: 1000, margin: "0 auto", padding: 20 }}>
+    <div className="juego-recomendado-content page-content">
+      <PageCard size="xl">
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: 30 }}>
           <div style={{ fontSize: "5rem", marginBottom: 10 }}>
@@ -266,7 +267,7 @@ const JuegoRecomendado = () => {
             ← Volver al análisis
           </button>
         </div>
-      </div>
+      </PageCard>
     </div>
   );
 };

@@ -1,15 +1,12 @@
-import React, { useEffect, useState, useContext, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { FaTag, FaAlignLeft, FaKey, FaLock, FaUsers, FaUser } from 'react-icons/fa';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import groupsService from '../../services/groupsService';
 import authService from '../../services/authService';
-import NavbarUsuario from '../../components/Usuario/NavbarUsuario';
 import GroupMembersPanel from '../../components/Grupos/GroupMembersPanel';
 import GroupActivitiesPanel from '../../components/Grupos/GroupActivitiesPanel';
 import '../../global.css';
-import { ThemeContext } from '../../context/themeContextDef';
-import FondoClaro from '../../assets/FondoClaro.svg';
-import FondoOscuro from '../../assets/FondoOscuro.svg';
+import PageCard from '../../components/Shared/PageCard';
 
 export default function GrupoForm(){
   const { id } = useParams();
@@ -19,7 +16,6 @@ export default function GrupoForm(){
   const [currentId, setCurrentId] = useState(id && id !== 'nuevo' ? id : null);
   const [queuedActivities, setQueuedActivities] = useState([]);
   const [queuedMembers, setQueuedMembers] = useState([]);
-  const { isDark } = useContext(ThemeContext);
   const userData = authService.getUser();
 
   useEffect(() => {
@@ -100,23 +96,8 @@ export default function GrupoForm(){
   if (!userData) return <Navigate to="/login" replace />;
 
   return (
-    <>
-      <NavbarUsuario userData={userData} />
-
-      <main
-        className="container"
-        style={{
-          paddingTop: '2rem',
-          paddingBottom: '4rem',
-          backgroundImage: `url(${isDark ? FondoOscuro : FondoClaro})`,
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'center center',
-          backgroundSize: 'cover',
-          backgroundAttachment: 'fixed',
-          minHeight: '100vh'
-        }}
-      >
-        <div className="card" style={{maxWidth:900,margin:'0 auto',padding:16}}>
+    <div className="grupo-form-content page-content">
+        <PageCard size="xl">
           <h2 style={{marginTop:0}}>{id && id !== 'nuevo' ? 'Editar Grupo' : 'Crear Grupo'}</h2>
 
           <div className="card inner-card" style={{marginTop:12,padding:12}}>
@@ -233,12 +214,7 @@ export default function GrupoForm(){
             <button type="button" disabled={loading} onClick={submit} className="auth-button">{loading ? 'Guardando...' : 'Guardar'}</button>
           </div>
 
-        </div>
-      </main>
-
-      <footer className="footer">
-        © {new Date().getFullYear()} SerenVoice — Todos los derechos reservados.
-      </footer>
-    </>
+        </PageCard>
+    </div>
   );
 }

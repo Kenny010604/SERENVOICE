@@ -26,7 +26,7 @@ export default function ActividadesGrupo(){
   };
 
   return (
-    <div>
+    <div className="actividades-grupo-content page-content">
       <h2>Actividades del grupo</h2>
       <form onSubmit={crear} style={{marginBottom:12}}>
         <input placeholder="Título" required value={nuevo.titulo} onChange={e=>setNuevo(n=>({...n,titulo:e.target.value}))} />

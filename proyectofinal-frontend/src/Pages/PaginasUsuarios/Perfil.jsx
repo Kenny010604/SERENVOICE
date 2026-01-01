@@ -1,13 +1,9 @@
-import React, { useEffect, useRef, useContext } from "react";
-import NavbarUsuario from "../../components/Usuario/NavbarUsuario";
+import React, { useEffect, useRef } from "react";
 import "../../global.css";
+import PageCard from "../../components/Shared/PageCard";
 import { FaUser, FaEnvelope, FaCalendarAlt } from "react-icons/fa";
-import { ThemeContext } from "../../context/themeContextDef";
-import FondoClaro from "../../assets/FondoClaro.svg";
-import FondoOscuro from "../../assets/FondoOscuro.svg";
 
 const Perfil = ({ user = {} }) => {
-  const { isDark } = useContext(ThemeContext);
   const u = user.nombres
     ? user
     : {
@@ -27,22 +23,12 @@ const Perfil = ({ user = {} }) => {
   }, []);
 
   return (
-    <>
-      <NavbarUsuario userData={u} />
-      <main className="container" style={{
-        paddingTop: "2rem",
-        paddingBottom: "4rem",
-        backgroundImage: `url(${isDark ? FondoOscuro : FondoClaro})`,
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "center center",
-        backgroundSize: "cover",
-        backgroundAttachment: "fixed"
-      }}>
-        <div
+    <div className="perfil-content page-content">
+        <PageCard
           ref={cardRef}
-          className="card reveal"
+          size="xl"
+          className="reveal"
           data-revealdelay="60"
-          style={{ maxWidth: "900px" }}
         >
           <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
             <FaUser size={48} />
@@ -87,9 +73,8 @@ const Perfil = ({ user = {} }) => {
               </div>
             </div>
           </div>
-        </div>
-      </main>
-    </>
+        </PageCard>
+    </div>
   );
 };
 

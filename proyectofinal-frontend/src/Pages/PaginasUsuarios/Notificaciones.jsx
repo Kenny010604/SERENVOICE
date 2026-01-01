@@ -1,11 +1,8 @@
 // proyectofinal-frontend/src/Pages/PaginasUsuarios/Notificaciones.jsx
-import React, { useState, useEffect, useCallback, useContext } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import NavbarUsuario from '../../components/Usuario/NavbarUsuario';
 import notificacionesService from '../../services/notificacionesService';
-import { ThemeContext } from '../../context/themeContextDef';
-import FondoClaro from '../../assets/FondoClaro.svg';
-import FondoOscuro from '../../assets/FondoOscuro.svg';
+import PageCard from '../../components/Shared/PageCard';
 import {
   FaBell,
   FaCheckDouble,
@@ -18,7 +15,6 @@ import '../../styles/Notificaciones.css';
 
 const Notificaciones = () => {
   const navigate = useNavigate();
-  const { isDark } = useContext(ThemeContext);
   const [loading, setLoading] = useState(true);
   const [notificaciones, setNotificaciones] = useState([]);
   const [filter, setFilter] = useState('all'); // all, unread, read
@@ -148,22 +144,8 @@ const Notificaciones = () => {
   const unreadCount = notificaciones.filter(n => !n.leida).length;
 
   return (
-    <>
-      <NavbarUsuario />
-      <main 
-        className="container"
-        style={{
-          paddingTop: "2rem",
-          paddingBottom: "4rem",
-          backgroundImage: `url(${isDark ? FondoOscuro : FondoClaro})`,
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "center center",
-          backgroundSize: "cover",
-          backgroundAttachment: "fixed",
-          minHeight: "100vh"
-        }}
-      >
-        <div className="card" style={{ maxWidth: "1200px" }}>
+    <div className="notificaciones-content page-content">
+        <PageCard size="xl">
         <div className="notificaciones-header">
           <div className="header-title">
             <h1>📬 Notificaciones</h1>
@@ -307,9 +289,8 @@ const Notificaciones = () => {
             ))}
           </div>
         )}
-        </div>
-      </main>
-    </>
+        </PageCard>
+    </div>
   );
 };
 

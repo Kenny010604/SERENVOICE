@@ -34,7 +34,7 @@ export default function Miembros(){
   };
 
   return (
-    <div>
+    <div className="miembros-content page-content">
       <h2>Miembros del grupo</h2>
       <form onSubmit={agregar} style={{marginBottom:12}}>
         <input placeholder="Nombre" required value={nuevo.nombre} onChange={e=>setNuevo(n=>({...n,nombre:e.target.value}))} />

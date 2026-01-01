@@ -5,18 +5,40 @@ class ResultadoAnalisis:
     """Modelo para la tabla Resultado_analisis"""
     
     @staticmethod
-    def create(id_analisis, nivel_estres, nivel_ansiedad, clasificacion, confianza_modelo):
-        """Crear resultado de análisis y devolver su ID.
-        También guarda la fecha/hora actual en la columna fecha_resultado si existe en la BD.
+    def create(id_analisis, nivel_estres, nivel_ansiedad, clasificacion, confianza_modelo,
+               emocion_dominante=None, nivel_felicidad=None, nivel_tristeza=None,
+               nivel_miedo=None, nivel_neutral=None, nivel_enojo=None, nivel_sorpresa=None):
+        """Crear resultado de análisis con todos los niveles emocionales.
+        
+        Args:
+            id_analisis: ID del análisis
+            nivel_estres: Nivel de estrés (0-100)
+            nivel_ansiedad: Nivel de ansiedad (0-100)
+            clasificacion: Clasificación del resultado
+            confianza_modelo: Confianza del modelo (0-100)
+            emocion_dominante: Emoción dominante detectada
+            nivel_felicidad: Nivel de felicidad (0-100)
+            nivel_tristeza: Nivel de tristeza (0-100)
+            nivel_miedo: Nivel de miedo (0-100)
+            nivel_neutral: Nivel neutral (0-100)
+            nivel_enojo: Nivel de enojo (0-100)
+            nivel_sorpresa: Nivel de sorpresa (0-100)
+        
+        Returns:
+            int: ID del resultado creado
         """
         query = """
             INSERT INTO resultado_analisis 
-            (id_analisis, nivel_estres, nivel_ansiedad, clasificacion, confianza_modelo, fecha_resultado)
-            VALUES (%s, %s, %s, %s, %s, NOW())
+            (id_analisis, nivel_estres, nivel_ansiedad, clasificacion, confianza_modelo,
+             emocion_dominante, nivel_felicidad, nivel_tristeza, nivel_miedo,
+             nivel_neutral, nivel_enojo, nivel_sorpresa, fecha_resultado)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
         """
         res = DatabaseConnection.execute_update(
             query,
-            (id_analisis, nivel_estres, nivel_ansiedad, clasificacion, confianza_modelo)
+            (id_analisis, nivel_estres, nivel_ansiedad, clasificacion, confianza_modelo,
+             emocion_dominante, nivel_felicidad, nivel_tristeza, nivel_miedo,
+             nivel_neutral, nivel_enojo, nivel_sorpresa)
         )
         return res.get('last_id')
     

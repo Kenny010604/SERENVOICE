@@ -1,28 +1,35 @@
 import React, { useState, useEffect, useRef } from "react";
-import NavbarUsuario from "../../components/Usuario/NavbarUsuario";
 import "../../global.css";
-import { FaHeart, FaCheck } from "react-icons/fa";
-
-const sampleRecs = [
-  {
-    id: 1,
-    titulo: "Ejercicio de respiración",
-    tipo: "respiracion",
-    texto: "Respira 4 segundos, retén 4, exhala 6. Repetir 5 veces.",
-    aplicado: false,
-  },
-  {
-    id: 2,
-    titulo: "Pausa activa 5 min",
-    tipo: "pausa",
-    texto: "Levántate, estira hombros y cuello durante 5 minutos.",
-    aplicado: true,
-  },
-];
+import PageCard from "../../components/Shared/PageCard";
+import Spinner from "../../components/Publico/Spinner";
+import { 
+  FaHeart, 
+  FaCheck, 
+  FaHeartbeat, 
+  FaPause, 
+  FaPray, 
+  FaDumbbell, 
+  FaUserMd, 
+  FaCoffee, 
+  FaLeaf,
+  FaExclamationTriangle,
+  FaThumbsUp,
+  FaThumbsDown,
+  FaCalendarAlt
+} from "react-icons/fa";
+import apiClient from '../../services/apiClient';
+import api from '../../config/api';
 
 const Recomendaciones = () => {
-  const [recs, setRecs] = useState(sampleRecs);
+  const [recs, setRecs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [markingId, setMarkingId] = useState(null);
   const cardRef = useRef(null);
+
+  useEffect(() => {
+    fetchRecomendaciones();
+  }, []);
 
   useEffect(() => {
     if (!cardRef.current) return;
@@ -30,61 +37,241 @@ const Recomendaciones = () => {
     els.forEach((el) => el.classList.add("reveal-visible"));
     if (cardRef.current.classList.contains("reveal"))
       cardRef.current.classList.add("reveal-visible");
-  }, []);
+  }, [recs]);
 
-  const markApplied = (id) => {
-    setRecs((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, aplicado: true } : r))
-    );
+  const fetchRecomendaciones = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await apiClient.get(api.endpoints.recomendaciones.list);
+      const data = response.data;
+      if (data?.success) {
+        setRecs(data.data?.recomendaciones || []);
+      } else {
+        throw new Error(data?.message || 'Error al cargar recomendaciones');
+      }
+    } catch (e) {
+      console.error('[Recomendaciones] Error:', e);
+      setError(e.response?.data?.message || e.message || 'Error al cargar recomendaciones');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const markApplied = async (id) => {
+    setMarkingId(id);
+    try {
+      await apiClient.put(api.endpoints.recomendaciones.marcarAplicada(id));
+      setRecs((prev) =>
+        prev.map((r) => (r.id_recomendacion === id ? { ...r, aplica: 1, fecha_aplica: new Date().toISOString() } : r))
+      );
+    } catch (e) {
+      console.error('[Recomendaciones] Error al marcar:', e);
+    } finally {
+      setMarkingId(null);
+    }
+  };
+
+  const markUtil = async (id, util) => {
+    try {
+      await apiClient.put(api.endpoints.recomendaciones.marcarUtil(id), { util });
+      setRecs((prev) =>
+        prev.map((r) => (r.id_recomendacion === id ? { ...r, util: util ? 1 : 0 } : r))
+      );
+    } catch (e) {
+      console.error('[Recomendaciones] Error al marcar útil:', e);
+    }
+  };
+
+  const getTipoIcon = (tipo) => {
+    const t = (tipo || '').toString().toLowerCase();
+    switch (t) {
+      case 'respiracion': return FaHeartbeat;
+      case 'pausa_activa': return FaPause;
+      case 'meditacion': return FaPray;
+      case 'ejercicio': return FaDumbbell;
+      case 'profesional': return FaUserMd;
+      case 'habito': return FaCoffee;
+      default: return FaLeaf;
+    }
+  };
+
+  const getPrioridadColor = (prioridad) => {
+    switch (prioridad) {
+      case 'alta': return '#d32f2f';
+      case 'media': return '#ff9800';
+      case 'baja': return '#4caf50';
+      default: return 'var(--color-text-secondary)';
+    }
+  };
+
+  const getTipoLabel = (tipo) => {
+    const t = (tipo || '').toString().toLowerCase();
+    const labels = {
+      'respiracion': 'Respiración',
+      'pausa_activa': 'Pausa Activa',
+      'meditacion': 'Meditación',
+      'ejercicio': 'Ejercicio',
+      'profesional': 'Profesional',
+      'habito': 'Hábito',
+    };
+    return labels[t] || tipo || 'General';
   };
 
   return (
-    <>
-      <NavbarUsuario />
-      <main className="container" style={{ paddingTop: "2rem", paddingBottom: "4rem" }}>
-        <div
-          ref={cardRef}
-          className="card reveal"
-          data-revealdelay="60"
-          style={{ maxWidth: "1000px" }}
-        >
-          <h2>
-            <FaHeart /> Recomendaciones
-          </h2>
-          <p style={{ color: "var(--color-text-secondary)" }}>
-            Sigue las recomendaciones personalizadas generadas por el sistema.
-          </p>
+    <div className="recomendaciones-content page-content">
+      {loading && <Spinner overlay={true} message="Cargando recomendaciones..." />}
 
-          <div style={{ marginTop: "1rem" }}>
-            {recs.map((r) => (
+      <PageCard
+        ref={cardRef}
+        size="xl"
+        className="reveal"
+        data-revealdelay="60"
+      >
+        <h2>
+          <FaHeart /> Recomendaciones
+        </h2>
+        <p style={{ color: "var(--color-text-secondary)" }}>
+          Sigue las recomendaciones personalizadas generadas por el sistema basadas en tus análisis emocionales.
+        </p>
+
+        {error && (
+          <div style={{
+            color: "#d32f2f",
+            padding: 16,
+            background: "#ffebee",
+            borderRadius: 8,
+            border: "2px solid #ef5350",
+            marginTop: "1rem"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <FaExclamationTriangle size={20} />
+              <strong>Error: {error}</strong>
+            </div>
+          </div>
+        )}
+
+        <div style={{ marginTop: "1rem" }}>
+          {!loading && recs.length === 0 && !error && (
+            <div className="panel" style={{ padding: 24, textAlign: 'center' }}>
+              <FaLeaf size={48} style={{ color: 'var(--color-text-secondary)', marginBottom: 12 }} />
+              <p style={{ color: "var(--color-text-secondary)", margin: 0 }}>
+                No tienes recomendaciones todavía. Realiza un análisis de voz para recibir recomendaciones personalizadas.
+              </p>
+            </div>
+          )}
+
+          {recs.map((r) => {
+            const Icon = getTipoIcon(r.tipo_recomendacion);
+            const prioridad = r.prioridad || 'media';
+            const isAplicada = r.aplica === 1 || r.aplica === true;
+            const isUtil = r.util === 1 || r.util === true;
+            
+            return (
               <div
-                key={r.id}
-                className="card"
-                style={{ marginBottom: "0.75rem" }}
+                key={r.id_recomendacion}
+                className="panel"
+                style={{ 
+                  marginBottom: "0.75rem",
+                  padding: 16,
+                  borderLeft: `4px solid ${getPrioridadColor(prioridad)}`,
+                }}
               >
-                <h4 style={{ margin: 0 }}>{r.titulo}</h4>
-                <p
-                  style={{
-                    marginTop: "0.25rem",
-                    color: "var(--color-text-secondary)",
-                  }}
-                >
-                  {r.texto}
-                </p>
-                <div style={{ display: "flex", gap: "0.5rem" }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
+                  <div style={{ flexGrow: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                      <Icon style={{ fontSize: '1.5rem', color: 'var(--color-primary)' }} />
+                      <h4 style={{ margin: 0 }}>{getTipoLabel(r.tipo_recomendacion)}</h4>
+                      <span style={{
+                        marginLeft: 8,
+                        fontSize: '0.7rem',
+                        background: getPrioridadColor(prioridad),
+                        color: 'white',
+                        borderRadius: 6,
+                        padding: '2px 8px',
+                        fontWeight: 'bold',
+                        textTransform: 'uppercase'
+                      }}>{prioridad}</span>
+                    </div>
+                    <p style={{
+                      marginTop: "0.5rem",
+                      color: "var(--color-text-secondary)",
+                      margin: 0,
+                      lineHeight: 1.5
+                    }}>
+                      {r.contenido}
+                    </p>
+                    
+                    {r.fecha_generacion && (
+                      <div style={{ 
+                        marginTop: '0.75rem', 
+                        fontSize: '0.8rem', 
+                        color: 'var(--color-text-secondary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6
+                      }}>
+                        <FaCalendarAlt size={12} />
+                        {new Date(r.fecha_generacion).toLocaleDateString('es-ES', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric'
+                        })}
+                        {r.clasificacion && (
+                          <span style={{ marginLeft: 12 }}>
+                            • Clasificación: <strong>{r.clasificacion}</strong>
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div style={{ display: "flex", gap: "0.5rem", marginTop: '1rem', flexWrap: 'wrap' }}>
                   <button
-                    disabled={r.aplicado}
-                    onClick={() => markApplied(r.id)}
+                    disabled={isAplicada || markingId === r.id_recomendacion}
+                    onClick={() => markApplied(r.id_recomendacion)}
+                    style={{
+                      opacity: isAplicada ? 0.7 : 1,
+                      background: isAplicada ? '#4caf50' : undefined,
+                      color: isAplicada ? 'white' : undefined
+                    }}
                   >
-                    {r.aplicado ? "Aplicada" : "Marcar como aplicada"}
+                    <FaCheck style={{ marginRight: 6 }} />
+                    {markingId === r.id_recomendacion ? 'Guardando...' : (isAplicada ? "Aplicada" : "Marcar como aplicada")}
                   </button>
+                  
+                  {isAplicada && (
+                    <>
+                      <button
+                        onClick={() => markUtil(r.id_recomendacion, true)}
+                        style={{
+                          background: isUtil ? '#2196f3' : 'var(--color-panel)',
+                          color: isUtil ? 'white' : 'var(--color-text)'
+                        }}
+                        title="Me fue útil"
+                      >
+                        <FaThumbsUp />
+                      </button>
+                      <button
+                        onClick={() => markUtil(r.id_recomendacion, false)}
+                        style={{
+                          background: r.util === 0 && r.util !== null ? '#f44336' : 'var(--color-panel)',
+                          color: r.util === 0 && r.util !== null ? 'white' : 'var(--color-text)'
+                        }}
+                        title="No me fue útil"
+                      >
+                        <FaThumbsDown />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
-      </main>
-    </>
+      </PageCard>
+    </div>
   );
 };
 

@@ -1,17 +1,12 @@
-import React, { useState, useEffect, useRef, useContext } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import NavbarUsuario from "../../components/Usuario/NavbarUsuario";
 import Spinner from "../../components/Publico/Spinner";
 import analisisService from "../../services/analisisService";
-import authService from "../../services/authService";
 import "../../global.css";
+import PageCard from "../../components/Shared/PageCard";
 import { FaHistory, FaPlay, FaDownload, FaEye } from "react-icons/fa";
-import { ThemeContext } from "../../context/themeContextDef";
-import FondoClaro from "../../assets/FondoClaro.svg";
-import FondoOscuro from "../../assets/FondoOscuro.svg";
 
 const Historial = () => {
-  const { isDark } = useContext(ThemeContext);
   const navigate = useNavigate();
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -105,24 +100,14 @@ const Historial = () => {
   };
 
   return (
-    <>
-      <NavbarUsuario userData={authService.getUser()} />
-      <main className="container" style={{
-        paddingTop: "2rem",
-        paddingBottom: "4rem",
-        backgroundImage: `url(${isDark ? FondoOscuro : FondoClaro})`,
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "center center",
-        backgroundSize: "cover",
-        backgroundAttachment: "fixed"
-      }}>
-        {loading && <Spinner message="Cargando historial..." />}
+    <div className="historial-content page-content">
+      {loading && <Spinner message="Cargando historial..." />}
         
-        <div
+        <PageCard
           ref={cardRef}
-          className="card reveal"
+          size="xl"
+          className="reveal"
           data-revealdelay="60"
-          style={{ maxWidth: "1200px" }}
         >
           <h2>
             <FaHistory /> Historial de Análisis
@@ -277,9 +262,8 @@ const Historial = () => {
               </div>
             )}
           </div>
-        </div>
-      </main>
-    </>
+        </PageCard>
+    </div>
   );
 };
 
