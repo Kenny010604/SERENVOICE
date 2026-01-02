@@ -38,6 +38,17 @@ import Usuarios from "./Pages/PaginasAdministradores/Usuarios.jsx";
 import Alertas from "./Pages/PaginasAdministradores/Alertas.jsx";
 import Reportes from "./Pages/PaginasAdministradores/Reportes.jsx";
 import PerfilAdmin from "./Pages/PaginasAdministradores/PerfilAdmin.jsx";
+import GruposAdmin from "./Pages/PaginasAdministradores/Grupos.jsx";
+import GrupoFormAdmin from "./Pages/PaginasAdministradores/GrupoForm.jsx";
+import MiembrosAdmin from "./Pages/PaginasAdministradores/Miembros.jsx";
+import ActividadesGrupoAdmin from "./Pages/PaginasAdministradores/ActividadesGrupo.jsx";
+import AuditoriaAdmin from "./Pages/PaginasAdministradores/Auditoria.jsx";
+import NotificacionesAdmin from "./Pages/PaginasAdministradores/Notificaciones.jsx";
+import SesionesJuegoAdmin from "./Pages/PaginasAdministradores/SesionesJuego.jsx";
+import RecomendacionesAdmin from "./Pages/PaginasAdministradores/Recomendaciones.jsx";
+import JuegosAdmin from "./Pages/PaginasAdministradores/JuegosAdmin.jsx";
+import AnalisisAdmin from "./Pages/PaginasAdministradores/AnalisisAdmin.jsx";
+import PreferenciasNotificacion from "./Pages/PaginasAdministradores/PreferenciasNotificacion.jsx";
 import Grupos from "./Pages/PaginasUsuarios/Grupos.jsx";
 import GrupoForm from "./Pages/PaginasUsuarios/GrupoForm.jsx";
 import Miembros from "./Pages/PaginasUsuarios/Miembros.jsx";
@@ -45,6 +56,7 @@ import ActividadesGrupo from "./Pages/PaginasUsuarios/ActividadesGrupo.jsx";
 
 // Layout
 import LayoutUsuario from "./layouts/LayoutUsuario.jsx";
+import LayoutAdmin from "./layouts/LayoutAdmin.jsx";
 
 // Contextos y utilidades
 import PageWithTitle from "./utils/PageWithTitle.jsx";
@@ -237,7 +249,11 @@ function App() {
 								path="/admin/dashboard"
 								element={
 									<ProtectedRoute requiredRole="admin">
-										<PageWithTitle title="Panel de Administración"><DashboardAdmin /></PageWithTitle>
+										<PageWithTitle title="Panel de Administración">
+											<LayoutAdmin>
+												<DashboardAdmin />
+											</LayoutAdmin>
+										</PageWithTitle>
 									</ProtectedRoute>
 								}
 							/>
@@ -246,7 +262,11 @@ function App() {
 								path="/admin/usuarios"
 								element={
 									<ProtectedRoute requiredRole="admin">
-										<PageWithTitle title="Gestión de Usuarios"><Usuarios /></PageWithTitle>
+										<PageWithTitle title="Gestión de Usuarios">
+											<LayoutAdmin>
+												<Usuarios />
+											</LayoutAdmin>
+										</PageWithTitle>
 									</ProtectedRoute>
 								}
 							/>
@@ -255,7 +275,11 @@ function App() {
 								path="/admin/perfil"
 								element={
 									<ProtectedRoute requiredRole="admin">
-										<PageWithTitle title="Perfil Admin"><PerfilAdmin /></PageWithTitle>
+										<PageWithTitle title="Perfil Admin">
+											<LayoutAdmin>
+												<PerfilAdmin />
+											</LayoutAdmin>
+										</PageWithTitle>
 									</ProtectedRoute>
 								}
 							/>
@@ -330,7 +354,11 @@ function App() {
 							path="/admin/reportes"
 							element={
 								<ProtectedRoute requiredRole="admin">
-									<PageWithTitle title="Reportes"><Reportes /></PageWithTitle>
+									<PageWithTitle title="Reportes">
+										<LayoutAdmin>
+											<Reportes />
+										</LayoutAdmin>
+									</PageWithTitle>
 								</ProtectedRoute>
 							}
 						/>
@@ -339,7 +367,11 @@ function App() {
 								path="/admin/alertas"
 								element={
 									<ProtectedRoute requiredRole="admin">
-										<PageWithTitle title="Alertas"><Alertas /></PageWithTitle>
+										<PageWithTitle title="Alertas">
+											<LayoutAdmin>
+												<Alertas />
+											</LayoutAdmin>
+										</PageWithTitle>
 									</ProtectedRoute>
 								}
 							/>
@@ -348,7 +380,167 @@ function App() {
 								path="/admin/configuracion"
 								element={
 									<ProtectedRoute requiredRole="admin">
-										<PageWithTitle title="Configuración Admin"><ConfiguracionAdmin /></PageWithTitle>
+										<PageWithTitle title="Configuración Admin">
+											<LayoutAdmin>
+												<ConfiguracionAdmin />
+											</LayoutAdmin>
+										</PageWithTitle>
+									</ProtectedRoute>
+								}
+							/>
+
+							<Route
+								path="/admin/grupos"
+								element={
+									<ProtectedRoute requiredRole="admin">
+										<PageWithTitle title="Grupos Admin">
+											<LayoutAdmin>
+												<GruposAdmin />
+											</LayoutAdmin>
+										</PageWithTitle>
+									</ProtectedRoute>
+								}
+							/>
+
+							<Route
+								path="/admin/grupos/nuevo"
+								element={
+									<ProtectedRoute requiredRole="admin">
+										<PageWithTitle title="Crear Grupo">
+											<LayoutAdmin>
+												<GrupoFormAdmin />
+											</LayoutAdmin>
+										</PageWithTitle>
+									</ProtectedRoute>
+								}
+							/>
+
+							<Route
+								path="/admin/grupos/:id"
+								element={
+									<ProtectedRoute requiredRole="admin">
+										<PageWithTitle title="Editar Grupo">
+											<LayoutAdmin>
+												<GrupoFormAdmin />
+											</LayoutAdmin>
+										</PageWithTitle>
+									</ProtectedRoute>
+								}
+							/>
+
+							<Route
+								path="/admin/grupos/:id/miembros"
+								element={
+									<ProtectedRoute requiredRole="admin">
+										<PageWithTitle title="Miembros del Grupo">
+											<LayoutAdmin>
+												<MiembrosAdmin />
+											</LayoutAdmin>
+										</PageWithTitle>
+									</ProtectedRoute>
+								}
+							/>
+
+							<Route
+								path="/admin/grupos/:id/actividades"
+								element={
+									<ProtectedRoute requiredRole="admin">
+										<PageWithTitle title="Actividades del Grupo">
+											<LayoutAdmin>
+												<ActividadesGrupoAdmin />
+											</LayoutAdmin>
+										</PageWithTitle>
+									</ProtectedRoute>
+								}
+							/>
+
+							<Route
+								path="/admin/notificaciones"
+								element={
+									<ProtectedRoute requiredRole="admin">
+										<PageWithTitle title="Notificaciones Admin">
+											<LayoutAdmin>
+												<NotificacionesAdmin />
+											</LayoutAdmin>
+										</PageWithTitle>
+									</ProtectedRoute>
+								}
+							/>
+
+							<Route
+								path="/admin/auditoria"
+								element={
+									<ProtectedRoute requiredRole="admin">
+										<PageWithTitle title="Auditoría">
+											<LayoutAdmin>
+												<AuditoriaAdmin />
+											</LayoutAdmin>
+										</PageWithTitle>
+									</ProtectedRoute>
+								}
+							/>
+
+							<Route
+								path="/admin/sesiones-juego"
+								element={
+									<ProtectedRoute requiredRole="admin">
+										<PageWithTitle title="Sesiones de Juego">
+											<LayoutAdmin>
+												<SesionesJuegoAdmin />
+											</LayoutAdmin>
+										</PageWithTitle>
+									</ProtectedRoute>
+								}
+							/>
+
+							<Route
+								path="/admin/recomendaciones"
+								element={
+									<ProtectedRoute requiredRole="admin">
+										<PageWithTitle title="Recomendaciones Admin">
+											<LayoutAdmin>
+												<RecomendacionesAdmin />
+											</LayoutAdmin>
+										</PageWithTitle>
+									</ProtectedRoute>
+								}
+							/>
+
+							<Route
+								path="/admin/juegos"
+								element={
+									<ProtectedRoute requiredRole="admin">
+										<PageWithTitle title="Juegos Terapéuticos">
+											<LayoutAdmin>
+												<JuegosAdmin />
+											</LayoutAdmin>
+										</PageWithTitle>
+									</ProtectedRoute>
+								}
+							/>
+
+							<Route
+								path="/admin/analisis"
+								element={
+									<ProtectedRoute requiredRole="admin">
+										<PageWithTitle title="Análisis Emocional">
+											<LayoutAdmin>
+												<AnalisisAdmin />
+											</LayoutAdmin>
+										</PageWithTitle>
+									</ProtectedRoute>
+								}
+							/>
+
+							<Route
+								path="/admin/preferencias-notificacion"
+								element={
+									<ProtectedRoute requiredRole="admin">
+										<PageWithTitle title="Preferencias de Notificación">
+											<LayoutAdmin>
+												<PreferenciasNotificacion />
+											</LayoutAdmin>
+										</PageWithTitle>
 									</ProtectedRoute>
 								}
 							/>

@@ -1,23 +1,21 @@
 import React, { useState, useEffect, useCallback, useContext, useRef } from 'react';
 import { BarChart3, Users, Brain, AlertTriangle, Activity, RefreshCw, Info } from 'lucide-react';
-import NavbarAdministrador from '../../components/Administrador/NavbarAdministrador';
 import apiClient from '../../services/apiClient';
 import api from '../../config/api';
 import { ThemeContext } from '../../context/themeContextDef';
-import FondoClaro from '../../assets/FondoClaro.svg';
-import FondoOscuro from '../../assets/FondoOscuro.svg';
-import ReporteCard from '../../components/Administrador/reportes/ReporteCard';
+import ReporteCard from '../../components/Administrador/Reportes/ReporteCard';
 import AdminCard from '../../components/Administrador/AdminCard';
-import TendenciasChart from '../../components/Administrador/reportes/TendenciasChart';
-import DistribucionEmocionalChart from '../../components/Administrador/reportes/DistribucionEmocionalChart';
-import ClasificacionChart from '../../components/Administrador/reportes/ClasificacionChart';
-import GruposActividadChart from '../../components/Administrador/reportes/GruposActividadChart';
-import EfectividadRecomendacionesChart from '../../components/Administrador/reportes/EfectividadRecomendacionesChart';
-import AlertasTable from '../../components/Administrador/reportes/AlertasTable';
-import TopUsuariosTable from '../../components/Administrador/reportes/TopUsuariosTable';
-import FiltrosFechas from '../../components/Administrador/reportes/FiltrosFechas';
-import GraficasFiltros from '../../components/Administrador/reportes/GraficasFiltros';
-import ExportButton from '../../components/Administrador/reportes/ExportButton';
+import TendenciasChart from '../../components/Administrador/Reportes/TendenciasChart';
+import DistribucionEmocionalChart from '../../components/Administrador/Reportes/DistribucionEmocionalChart';
+import ClasificacionChart from '../../components/Administrador/Reportes/ClasificacionChart';
+import GruposActividadChart from '../../components/Administrador/Reportes/GruposActividadChart';
+import EfectividadRecomendacionesChart from '../../components/Administrador/Reportes/EfectividadRecomendacionesChart';
+import AlertasTable from '../../components/Administrador/Reportes/AlertasTable';
+import TopUsuariosTable from '../../components/Administrador/Reportes/TopUsuariosTable';
+import FiltrosFechas from '../../components/Administrador/Reportes/FiltrosFechas';
+import GraficasFiltros from '../../components/Administrador/Reportes/GraficasFiltros';
+import ExportButton from '../../components/Administrador/Reportes/ExportButton';
+import "../../styles/StylesAdmin/AdminPages.css";
 
 // Use centralized api endpoints and client
 
@@ -233,19 +231,12 @@ const Reportes = () => {
   );
 
   return (
-    <>
-      <NavbarAdministrador />
+    <div className="admin-reportes-page">
       <main
         className="container"
         style={{
-          paddingTop: '2rem',
-          paddingBottom: '6rem',
-          minHeight: '100vh',
-          backgroundImage: `url(${isDark ? FondoOscuro : FondoClaro})`,
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'center center',
-          backgroundSize: 'cover',
-          backgroundAttachment: 'fixed'
+          paddingBottom: '2rem',
+          minHeight: '100vh'
         }}
       >
         <div className="max-w-7xl mx-auto px-4 reportes-page">
@@ -565,11 +556,7 @@ const Reportes = () => {
           </div>
         </div>
       </main>
-
-      <footer className="footer">
-        © {new Date().getFullYear()} SerenVoice — Panel de Administración
-      </footer>
-    </>
+    </div>
   );
 };
 

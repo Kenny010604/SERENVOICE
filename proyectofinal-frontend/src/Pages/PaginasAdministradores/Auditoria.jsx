@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useContext } from "react";
-import NavbarAdministrador from "../../components/Administrador/NavbarAdministrador";
 import { ThemeContext } from "../../context/themeContextDef";
-import FondoClaro from "../../assets/FondoClaro.svg";
-import FondoOscuro from "../../assets/FondoOscuro.svg";
 import apiClient from "../../services/apiClient";
 import api from "../../config/api";
-import { FaShieldAlt, FaFilter, FaExclamationTriangle, FaDownload, FaEye } from "react-icons/fa";
+import { FaShieldAlt, FaFilter, FaExclamationTriangle, FaDownload, FaEye, FaTimes, FaSearch } from "react-icons/fa";
+import PageCard from "../../components/Shared/PageCard";
 import "../../global.css";
+import "../../styles/StylesAdmin/AdminPages.css";
 
 const Auditoria = () => {
-  const { isDark } = useContext(ThemeContext);
+  useContext(ThemeContext);
   const [sesiones, setSesiones] = useState([]);
   const [cambiosRoles, setCambiosRoles] = useState([]);
   const [actividadSospechosa, setActividadSospechosa] = useState([]);
@@ -29,8 +28,8 @@ const Auditoria = () => {
     try {
       const [sesionesRes, rolesRes, sospechosaRes] = await Promise.all([
         apiClient.get(api.endpoints.auditoria.sesiones),
-        apiClient.get(`${api.endpoints.auditoria.sesiones}/cambios-roles`),
-        apiClient.get(`${api.endpoints.auditoria.sesiones}/actividad-sospechosa`),
+        apiClient.get(api.endpoints.auditoria.cambiosRoles),
+        apiClient.get(api.endpoints.auditoria.actividadSospechosa),
       ]);
 
       setSesiones(sesionesRes.data?.data || []);
@@ -144,184 +143,163 @@ const Auditoria = () => {
     setShowModal(true);
   };
 
-  const getGravedadColor = (gravedad) => {
-    switch (gravedad) {
-      case 'critica': return '#f44336';
-      case 'alta': return '#ff9800';
-      case 'media': return '#ffc107';
-      case 'baja': return '#4caf50';
-      default: return '#9e9e9e';
-    }
-  };
-
   return (
-    <>
-      <NavbarAdministrador />
-      <main
-        className="container"
-        style={{
-          paddingTop: "2rem",
-          paddingBottom: "100px",
-          backgroundImage: `url(${isDark ? FondoOscuro : FondoClaro})`,
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "center center",
-          backgroundSize: "cover",
-          backgroundAttachment: "fixed"
-        }}
-      >
-        <div className="card reveal" data-revealdelay="60" style={{ maxWidth: "1400px" }}>
-          <h2><FaShieldAlt /> Auditoría y Seguridad</h2>
-          <p style={{ color: "var(--color-text-secondary)" }}>
-            Monitorea sesiones, cambios de roles y actividad sospechosa.
-          </p>
-
-          {/* Tabs */}
-          <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.5rem", borderBottom: "2px solid var(--color-border)" }}>
-            <button
-              onClick={() => setActiveTab("sesiones")}
-              style={{
-                padding: "0.75rem 1.5rem",
-                background: activeTab === "sesiones" ? "var(--color-primary)" : "transparent",
-                color: activeTab === "sesiones" ? "#fff" : "var(--color-text)",
-                border: "none",
-                borderRadius: "8px 8px 0 0",
-                cursor: "pointer",
-                fontWeight: activeTab === "sesiones" ? "bold" : "normal"
-              }}
-            >
-              Sesiones ({sesiones.length})
-            </button>
-            <button
-              onClick={() => setActiveTab("roles")}
-              style={{
-                padding: "0.75rem 1.5rem",
-                background: activeTab === "roles" ? "var(--color-primary)" : "transparent",
-                color: activeTab === "roles" ? "#fff" : "var(--color-text)",
-                border: "none",
-                borderRadius: "8px 8px 0 0",
-                cursor: "pointer",
-                fontWeight: activeTab === "roles" ? "bold" : "normal"
-              }}
-            >
-              Cambios de Roles ({cambiosRoles.length})
-            </button>
-            <button
-              onClick={() => setActiveTab("sospechosa")}
-              style={{
-                padding: "0.75rem 1.5rem",
-                background: activeTab === "sospechosa" ? "var(--color-primary)" : "transparent",
-                color: activeTab === "sospechosa" ? "#fff" : "var(--color-text)",
-                border: "none",
-                borderRadius: "8px 8px 0 0",
-                cursor: "pointer",
-                fontWeight: activeTab === "sospechosa" ? "bold" : "normal"
-              }}
-            >
-              <FaExclamationTriangle /> Sospechosa ({actividadSospechosa.length})
+    <div className="admin-auditoria-page">
+      <div className="admin-page-content">
+        {/* Header y Filtros en PageCard */}
+        <PageCard size="xl">
+          <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
+            <h2 style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", margin: 0 }}>
+              <FaShieldAlt style={{ color: "#2196f3" }} /> Auditoría y Seguridad
+            </h2>
+            <p style={{ color: "var(--color-text-secondary)", margin: "0.5rem 0 0 0" }}>Monitorea sesiones, cambios de roles y actividad sospechosa</p>
+          </div>
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'nowrap', alignItems: 'flex-end', overflowX: 'auto' }}>
+            <div style={{ flex: 2, minWidth: '180px' }}>
+              <div className="input-labels">
+                <label><FaSearch /> Buscar usuario/email</label>
+              </div>
+              <div className="input-group no-icon">
+                <input
+                  type="text"
+                  placeholder="Nombre o email..."
+                  value={filter.usuario}
+                  onChange={(e) => setFilter({ ...filter, usuario: e.target.value })}
+                />
+              </div>
+            </div>
+            <div style={{ flex: 1, minWidth: '140px' }}>
+              <div className="input-labels">
+                <label>Desde</label>
+              </div>
+              <div className="input-group no-icon">
+                <input
+                  type="date"
+                  value={filter.desde}
+                  onChange={(e) => setFilter({ ...filter, desde: e.target.value })}
+                />
+              </div>
+            </div>
+            <div style={{ flex: 1, minWidth: '140px' }}>
+              <div className="input-labels">
+                <label>Hasta</label>
+              </div>
+              <div className="input-group no-icon">
+                <input
+                  type="date"
+                  value={filter.hasta}
+                  onChange={(e) => setFilter({ ...filter, hasta: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+            <button onClick={exportarDatos} className="admin-btn admin-btn-secondary" style={{ whiteSpace: 'nowrap' }}>
+              <FaDownload /> <span className="admin-hidden-mobile">Exportar</span>
             </button>
           </div>
+        </PageCard>
 
-          {/* Filtros */}
-          <div style={{ marginTop: "1.5rem", display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "end" }}>
-            <div className="form-group" style={{ minWidth: "200px" }}>
-              <label>Buscar usuario/email</label>
-              <input
-                type="text"
-                placeholder="Nombre o email..."
-                value={filter.usuario}
-                onChange={(e) => setFilter({ ...filter, usuario: e.target.value })}
-              />
-            </div>
+        {/* Tabs */}
+        <div className="admin-tabs">
+          <button
+            onClick={() => setActiveTab("sesiones")}
+            className={`admin-tab ${activeTab === "sesiones" ? 'active' : ''}`}
+          >
+            <span>Sesiones</span>
+            <span className="badge">{sesiones.length}</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("roles")}
+            className={`admin-tab ${activeTab === "roles" ? 'active' : ''}`}
+          >
+            <span>Cambios de Roles</span>
+            <span className="badge">{cambiosRoles.length}</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("sospechosa")}
+            className={`admin-tab ${activeTab === "sospechosa" ? 'active' : ''}`}
+          >
+            <FaExclamationTriangle />
+            <span>Sospechosa</span>
+            <span className="badge">{actividadSospechosa.length}</span>
+          </button>
+        </div>
 
-            <div className="form-group" style={{ minWidth: "150px" }}>
-              <label>Desde</label>
-              <input
-                type="date"
-                value={filter.desde}
-                onChange={(e) => setFilter({ ...filter, desde: e.target.value })}
-              />
-            </div>
+        <p className="admin-text-muted admin-mb-2">
+          Mostrando {filteredData.length} registros
+        </p>
 
-            <div className="form-group" style={{ minWidth: "150px" }}>
-              <label>Hasta</label>
-              <input
-                type="date"
-                value={filter.hasta}
-                onChange={(e) => setFilter({ ...filter, hasta: e.target.value })}
-              />
-            </div>
+        {msg && <div className="admin-message admin-message-success">{msg}</div>}
 
-            <button onClick={exportarDatos} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <FaDownload /> Exportar
-            </button>
-          </div>
-
-          <div style={{ marginTop: "0.5rem", color: "var(--color-text-secondary)", fontSize: "0.9rem" }}>
-            Mostrando {filteredData.length} registros
-          </div>
-
-          {msg && <div className="success-message" style={{ marginTop: "1rem" }}>{msg}</div>}
-
-          {loading ? (
+        {loading ? (
+          <div className="admin-loading">
+            <div className="admin-loading-spinner"></div>
             <p>Cargando datos de auditoría...</p>
-          ) : filteredData.length === 0 ? (
+          </div>
+        ) : filteredData.length === 0 ? (
+          <div className="admin-empty-state">
+            <FaShieldAlt />
+            <h3>Sin registros</h3>
             <p>No hay registros que coincidan con los filtros.</p>
-          ) : (
-            <div style={{ marginTop: "1rem", overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          </div>
+        ) : (
+          <div className="admin-table-container">
+            <div className="admin-table-scroll">
+              <table className="admin-table">
                 <thead>
-                  <tr style={{ borderBottom: "2px solid var(--color-border)" }}>
+                  <tr>
                     {activeTab === "sesiones" && (
                       <>
-                        <th style={{ padding: "1rem", textAlign: "left" }}>Usuario</th>
-                        <th style={{ padding: "1rem", textAlign: "left" }}>IP</th>
-                        <th style={{ padding: "1rem", textAlign: "left" }}>Dispositivo</th>
-                        <th style={{ padding: "1rem", textAlign: "left" }}>Inicio</th>
-                        <th style={{ padding: "1rem", textAlign: "left" }}>Duración</th>
-                        <th style={{ padding: "1rem", textAlign: "center" }}>Acciones</th>
+                        <th>Usuario</th>
+                        <th>IP</th>
+                        <th className="admin-hidden-mobile">Dispositivo</th>
+                        <th>Inicio</th>
+                        <th>Duración</th>
+                        <th>Acciones</th>
                       </>
                     )}
                     {activeTab === "roles" && (
                       <>
-                        <th style={{ padding: "1rem", textAlign: "left" }}>Usuario</th>
-                        <th style={{ padding: "1rem", textAlign: "left" }}>Rol Anterior</th>
-                        <th style={{ padding: "1rem", textAlign: "left" }}>Rol Nuevo</th>
-                        <th style={{ padding: "1rem", textAlign: "left" }}>Admin</th>
-                        <th style={{ padding: "1rem", textAlign: "left" }}>Fecha</th>
-                        <th style={{ padding: "1rem", textAlign: "center" }}>Acciones</th>
+                        <th>Usuario</th>
+                        <th>Rol Anterior</th>
+                        <th>Rol Nuevo</th>
+                        <th className="admin-hidden-mobile">Admin</th>
+                        <th>Fecha</th>
+                        <th>Acciones</th>
                       </>
                     )}
                     {activeTab === "sospechosa" && (
                       <>
-                        <th style={{ padding: "1rem", textAlign: "left" }}>Usuario</th>
-                        <th style={{ padding: "1rem", textAlign: "left" }}>Tipo</th>
-                        <th style={{ padding: "1rem", textAlign: "left" }}>Descripción</th>
-                        <th style={{ padding: "1rem", textAlign: "left" }}>Gravedad</th>
-                        <th style={{ padding: "1rem", textAlign: "left" }}>Fecha</th>
-                        <th style={{ padding: "1rem", textAlign: "center" }}>Acciones</th>
+                        <th>Usuario</th>
+                        <th>Tipo</th>
+                        <th className="admin-hidden-mobile">Descripción</th>
+                        <th>Gravedad</th>
+                        <th>Fecha</th>
+                        <th>Acciones</th>
                       </>
                     )}
                   </tr>
                 </thead>
                 <tbody>
                   {filteredData.map((item, idx) => (
-                    <tr key={idx} style={{ borderBottom: "1px solid var(--color-border)" }}>
+                    <tr key={idx}>
                       {activeTab === "sesiones" && (
                         <>
-                          <td style={{ padding: "1rem" }}>
+                          <td>
                             <div><strong>{item.usuario}</strong></div>
-                            <div style={{ fontSize: "0.85rem", color: "var(--color-text-secondary)" }}>{item.email}</div>
+                            <div className="admin-text-muted" style={{ fontSize: "0.85rem" }}>{item.email}</div>
                           </td>
-                          <td style={{ padding: "1rem" }}>{item.ip_address}</td>
-                          <td style={{ padding: "1rem" }}>{item.dispositivo}</td>
-                          <td style={{ padding: "1rem" }}>{new Date(item.fecha_inicio).toLocaleString()}</td>
-                          <td style={{ padding: "1rem" }}>
+                          <td>{item.ip_address}</td>
+                          <td className="admin-hidden-mobile">{item.dispositivo}</td>
+                          <td>{new Date(item.fecha_inicio).toLocaleString()}</td>
+                          <td>
                             {item.duracion_minutos ? `${item.duracion_minutos} min` : (
-                              <span style={{ color: "#4caf50" }}>🟢 Activa</span>
+                              <span className="admin-badge admin-badge-success">🟢 Activa</span>
                             )}
                           </td>
-                          <td style={{ padding: "1rem", textAlign: "center" }}>
-                            <button onClick={() => verDetalles(item)} style={{ padding: "0.5rem" }}>
+                          <td className="admin-table-actions">
+                            <button className="admin-btn admin-btn-secondary admin-btn-icon" onClick={() => verDetalles(item)}>
                               <FaEye />
                             </button>
                           </td>
@@ -329,24 +307,16 @@ const Auditoria = () => {
                       )}
                       {activeTab === "roles" && (
                         <>
-                          <td style={{ padding: "1rem" }}>
+                          <td>
                             <div><strong>{item.usuario}</strong></div>
-                            <div style={{ fontSize: "0.85rem", color: "var(--color-text-secondary)" }}>{item.email}</div>
+                            <div className="admin-text-muted" style={{ fontSize: "0.85rem" }}>{item.email}</div>
                           </td>
-                          <td style={{ padding: "1rem" }}>
-                            <span style={{ padding: "0.25rem 0.5rem", borderRadius: "4px", backgroundColor: "var(--color-secondary)", fontSize: "0.85rem" }}>
-                              {item.rol_anterior}
-                            </span>
-                          </td>
-                          <td style={{ padding: "1rem" }}>
-                            <span style={{ padding: "0.25rem 0.5rem", borderRadius: "4px", backgroundColor: "var(--color-primary)", color: "#fff", fontSize: "0.85rem" }}>
-                              {item.rol_nuevo}
-                            </span>
-                          </td>
-                          <td style={{ padding: "1rem" }}>{item.admin_asigna || "Sistema"}</td>
-                          <td style={{ padding: "1rem" }}>{new Date(item.fecha_cambio).toLocaleString()}</td>
-                          <td style={{ padding: "1rem", textAlign: "center" }}>
-                            <button onClick={() => verDetalles(item)} style={{ padding: "0.5rem" }}>
+                          <td><span className="admin-badge admin-badge-neutral">{item.rol_anterior}</span></td>
+                          <td><span className="admin-badge admin-badge-info">{item.rol_nuevo}</span></td>
+                          <td className="admin-hidden-mobile">{item.admin_asigna || "Sistema"}</td>
+                          <td>{new Date(item.fecha_cambio).toLocaleString()}</td>
+                          <td className="admin-table-actions">
+                            <button className="admin-btn admin-btn-secondary admin-btn-icon" onClick={() => verDetalles(item)}>
                               <FaEye />
                             </button>
                           </td>
@@ -354,29 +324,20 @@ const Auditoria = () => {
                       )}
                       {activeTab === "sospechosa" && (
                         <>
-                          <td style={{ padding: "1rem" }}>
+                          <td>
                             <div><strong>{item.usuario}</strong></div>
-                            <div style={{ fontSize: "0.85rem", color: "var(--color-text-secondary)" }}>{item.email}</div>
+                            <div className="admin-text-muted" style={{ fontSize: "0.85rem" }}>{item.email}</div>
                           </td>
-                          <td style={{ padding: "1rem" }}>{item.tipo_actividad}</td>
-                          <td style={{ padding: "1rem" }}>{item.descripcion}</td>
-                          <td style={{ padding: "1rem" }}>
-                            <span
-                              style={{
-                                padding: "0.25rem 0.5rem",
-                                borderRadius: "4px",
-                                backgroundColor: `${getGravedadColor(item.nivel_gravedad)}20`,
-                                color: getGravedadColor(item.nivel_gravedad),
-                                fontSize: "0.85rem",
-                                textTransform: "uppercase"
-                              }}
-                            >
+                          <td>{item.tipo_actividad}</td>
+                          <td className="admin-hidden-mobile">{item.descripcion}</td>
+                          <td>
+                            <span className={`admin-badge ${item.nivel_gravedad === 'critica' ? 'admin-badge-danger' : item.nivel_gravedad === 'alta' ? 'admin-badge-warning' : 'admin-badge-info'}`}>
                               {item.nivel_gravedad}
                             </span>
                           </td>
-                          <td style={{ padding: "1rem" }}>{new Date(item.fecha_deteccion).toLocaleString()}</td>
-                          <td style={{ padding: "1rem", textAlign: "center" }}>
-                            <button onClick={() => verDetalles(item)} style={{ padding: "0.5rem" }}>
+                          <td>{new Date(item.fecha_deteccion).toLocaleString()}</td>
+                          <td className="admin-table-actions">
+                            <button className="admin-btn admin-btn-secondary admin-btn-icon" onClick={() => verDetalles(item)}>
                               <FaEye />
                             </button>
                           </td>
@@ -387,63 +348,78 @@ const Auditoria = () => {
                 </tbody>
               </table>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Modal de detalles */}
         {showModal && selectedItem && (
-          <div className="modal-overlay" onClick={() => setShowModal(false)}>
-            <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-                <h3>Detalles de {activeTab === "sesiones" ? "Sesión" : activeTab === "roles" ? "Cambio de Rol" : "Actividad Sospechosa"}</h3>
-                <button onClick={() => setShowModal(false)} style={{ background: "transparent", border: "none", fontSize: "1.5rem", cursor: "pointer" }}>×</button>
+          <div className="admin-modal-overlay" onClick={() => setShowModal(false)}>
+            <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="admin-modal-header">
+                <h3 className="admin-modal-title">
+                  Detalles de {activeTab === "sesiones" ? "Sesión" : activeTab === "roles" ? "Cambio de Rol" : "Actividad Sospechosa"}
+                </h3>
+                <button className="admin-modal-close" onClick={() => setShowModal(false)}>
+                  <FaTimes />
+                </button>
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              <div className="admin-modal-body">
                 {activeTab === "sesiones" && (
                   <>
-                    <div><strong>Usuario:</strong> {selectedItem.usuario}</div>
-                    <div><strong>Email:</strong> {selectedItem.email}</div>
-                    <div><strong>IP:</strong> {selectedItem.ip_address}</div>
-                    <div><strong>Dispositivo:</strong> {selectedItem.dispositivo}</div>
-                    <div><strong>Inicio:</strong> {new Date(selectedItem.fecha_inicio).toLocaleString()}</div>
-                    {selectedItem.fecha_fin && <div><strong>Fin:</strong> {new Date(selectedItem.fecha_fin).toLocaleString()}</div>}
-                    {selectedItem.duracion_minutos && <div><strong>Duración:</strong> {selectedItem.duracion_minutos} minutos</div>}
+                    <div className="admin-form-group"><label className="admin-form-label">Usuario:</label><p>{selectedItem.usuario}</p></div>
+                    <div className="admin-form-group"><label className="admin-form-label">Email:</label><p>{selectedItem.email}</p></div>
+                    <div className="admin-form-row">
+                      <div className="admin-form-group"><label className="admin-form-label">IP:</label><p>{selectedItem.ip_address}</p></div>
+                      <div className="admin-form-group"><label className="admin-form-label">Dispositivo:</label><p>{selectedItem.dispositivo}</p></div>
+                    </div>
+                    <div className="admin-form-group"><label className="admin-form-label">Inicio:</label><p>{new Date(selectedItem.fecha_inicio).toLocaleString()}</p></div>
+                    {selectedItem.fecha_fin && <div className="admin-form-group"><label className="admin-form-label">Fin:</label><p>{new Date(selectedItem.fecha_fin).toLocaleString()}</p></div>}
+                    {selectedItem.duracion_minutos && <div className="admin-form-group"><label className="admin-form-label">Duración:</label><p>{selectedItem.duracion_minutos} minutos</p></div>}
                   </>
                 )}
                 {activeTab === "roles" && (
                   <>
-                    <div><strong>Usuario:</strong> {selectedItem.usuario}</div>
-                    <div><strong>Email:</strong> {selectedItem.email}</div>
-                    <div><strong>Rol Anterior:</strong> {selectedItem.rol_anterior}</div>
-                    <div><strong>Rol Nuevo:</strong> {selectedItem.rol_nuevo}</div>
-                    <div><strong>Asignado por:</strong> {selectedItem.admin_asigna || "Sistema automático"}</div>
-                    <div><strong>Fecha:</strong> {new Date(selectedItem.fecha_cambio).toLocaleString()}</div>
-                    {selectedItem.razon && <div><strong>Razón:</strong> {selectedItem.razon}</div>}
+                    <div className="admin-form-group"><label className="admin-form-label">Usuario:</label><p>{selectedItem.usuario}</p></div>
+                    <div className="admin-form-group"><label className="admin-form-label">Email:</label><p>{selectedItem.email}</p></div>
+                    <div className="admin-form-row">
+                      <div className="admin-form-group"><label className="admin-form-label">Rol Anterior:</label><span className="admin-badge admin-badge-neutral">{selectedItem.rol_anterior}</span></div>
+                      <div className="admin-form-group"><label className="admin-form-label">Rol Nuevo:</label><span className="admin-badge admin-badge-info">{selectedItem.rol_nuevo}</span></div>
+                    </div>
+                    <div className="admin-form-group"><label className="admin-form-label">Asignado por:</label><p>{selectedItem.admin_asigna || "Sistema automático"}</p></div>
+                    <div className="admin-form-group"><label className="admin-form-label">Fecha:</label><p>{new Date(selectedItem.fecha_cambio).toLocaleString()}</p></div>
+                    {selectedItem.razon && <div className="admin-form-group"><label className="admin-form-label">Razón:</label><p>{selectedItem.razon}</p></div>}
                   </>
                 )}
                 {activeTab === "sospechosa" && (
                   <>
-                    <div><strong>Usuario:</strong> {selectedItem.usuario}</div>
-                    <div><strong>Email:</strong> {selectedItem.email}</div>
-                    <div><strong>Tipo:</strong> {selectedItem.tipo_actividad}</div>
-                    <div><strong>Descripción:</strong> {selectedItem.descripcion}</div>
-                    <div><strong>Gravedad:</strong> <span style={{ color: getGravedadColor(selectedItem.nivel_gravedad) }}>{selectedItem.nivel_gravedad}</span></div>
-                    <div><strong>Fecha:</strong> {new Date(selectedItem.fecha_deteccion).toLocaleString()}</div>
-                    {selectedItem.ip_address && <div><strong>IP:</strong> {selectedItem.ip_address}</div>}
-                    {selectedItem.acciones_tomadas && <div><strong>Acciones:</strong> {selectedItem.acciones_tomadas}</div>}
+                    <div className="admin-form-group"><label className="admin-form-label">Usuario:</label><p>{selectedItem.usuario}</p></div>
+                    <div className="admin-form-group"><label className="admin-form-label">Email:</label><p>{selectedItem.email}</p></div>
+                    <div className="admin-form-row">
+                      <div className="admin-form-group"><label className="admin-form-label">Tipo:</label><p>{selectedItem.tipo_actividad}</p></div>
+                      <div className="admin-form-group">
+                        <label className="admin-form-label">Gravedad:</label>
+                        <span className={`admin-badge ${selectedItem.nivel_gravedad === 'critica' ? 'admin-badge-danger' : selectedItem.nivel_gravedad === 'alta' ? 'admin-badge-warning' : 'admin-badge-info'}`}>
+                          {selectedItem.nivel_gravedad}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="admin-form-group"><label className="admin-form-label">Descripción:</label><p>{selectedItem.descripcion}</p></div>
+                    <div className="admin-form-group"><label className="admin-form-label">Fecha:</label><p>{new Date(selectedItem.fecha_deteccion).toLocaleString()}</p></div>
+                    {selectedItem.ip_address && <div className="admin-form-group"><label className="admin-form-label">IP:</label><p>{selectedItem.ip_address}</p></div>}
+                    {selectedItem.acciones_tomadas && <div className="admin-form-group"><label className="admin-form-label">Acciones:</label><p>{selectedItem.acciones_tomadas}</p></div>}
                   </>
                 )}
               </div>
 
-              <div style={{ marginTop: "1.5rem", display: "flex", justifyContent: "flex-end" }}>
-                <button onClick={() => setShowModal(false)}>Cerrar</button>
+              <div className="admin-modal-footer">
+                <button className="admin-btn admin-btn-secondary" onClick={() => setShowModal(false)}>Cerrar</button>
               </div>
             </div>
           </div>
         )}
-      </main>
-    </>
+      </div>
+    </div>
   );
 };
 

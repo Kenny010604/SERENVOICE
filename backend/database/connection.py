@@ -2,8 +2,12 @@ import mysql.connector
 from mysql.connector import pooling, Error
 import os
 from dotenv import load_dotenv
+from pathlib import Path
 
-load_dotenv()
+# Cargar variables de entorno desde la raíz del proyecto
+root_dir = Path(__file__).parent.parent.parent
+env_path = root_dir / '.env'
+load_dotenv(dotenv_path=env_path)
 
 
 class DatabaseConnection:

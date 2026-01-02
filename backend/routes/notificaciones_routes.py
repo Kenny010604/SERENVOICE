@@ -494,3 +494,173 @@ def toggle_plantilla(id_plantilla):
             message=f'Error al cambiar estado: {str(e)}',
             status=500
         )
+
+
+# ============================================
+# CONFIGURACIÓN GLOBAL DE NOTIFICACIONES (ADMIN)
+# ============================================
+
+@bp.route('/configuracion', methods=['GET'])
+@jwt_required()
+@role_required(['admin'])
+def get_configuracion():
+    """Obtener configuración global de notificaciones"""
+    try:
+        # Configuración por defecto
+        config_default = {
+            'notificaciones_email': True,
+            'notificaciones_push': True,
+            'notificaciones_in_app': True,
+            'frecuencia_resumen': 'diario',
+            'hora_resumen': '09:00',
+            'alertas_criticas_inmediatas': True,
+            'recordatorio_inactividad': True,
+            'dias_inactividad': 7,
+            'notificar_nuevos_usuarios': True,
+            'notificar_alertas_resueltas': True,
+            'notificar_reportes_generados': True
+        }
+        
+        try:
+            conn = DatabaseConnection.get_connection()
+            cursor = conn.cursor(dictionary=True)
+            
+            cursor.execute("SELECT * FROM configuracion_notificaciones LIMIT 1")
+            config = cursor.fetchone()
+            
+            cursor.close()
+            DatabaseConnection.return_connection(conn)
+            
+            if config:
+                return Helpers.format_response(
+                    success=True,
+                    data=config,
+                    status=200
+                )
+        except Exception:
+            pass
+        
+        return Helpers.format_response(
+            success=True,
+            data=config_default,
+            status=200
+        )
+    except Exception as e:
+        return Helpers.format_response(
+            success=False,
+            message=f'Error al obtener configuración: {str(e)}',
+            status=500
+        )
+
+
+@bp.route('/configuracion', methods=['PUT'])
+@jwt_required()
+@role_required(['admin'])
+def update_configuracion():
+    """Actualizar configuración global de notificaciones"""
+    try:
+        data = request.get_json() or {}
+        
+        # Intentar crear la tabla si no existe
+        try:
+            conn = DatabaseConnection.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS configuracion_notificaciones (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    notificaciones_email BOOLEAN DEFAULT TRUE,
+                    notificaciones_push BOOLEAN DEFAULT TRUE,
+                    notificaciones_in_app BOOLEAN DEFAULT TRUE,
+                    frecuencia_resumen VARCHAR(50) DEFAULT 'diario',
+                    hora_resumen TIME DEFAULT '09:00:00',
+                    alertas_criticas_inmediatas BOOLEAN DEFAULT TRUE,
+                    recordatorio_inactividad BOOLEAN DEFAULT TRUE,
+                    dias_inactividad INT DEFAULT 7,
+                    notificar_nuevos_usuarios BOOLEAN DEFAULT TRUE,
+                    notificar_alertas_resueltas BOOLEAN DEFAULT TRUE,
+                    notificar_reportes_generados BOOLEAN DEFAULT TRUE,
+                    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                )
+            """)
+            conn.commit()
+            
+            # Verificar si existe una configuración
+            cursor.execute("SELECT id FROM configuracion_notificaciones LIMIT 1")
+            existing = cursor.fetchone()
+            
+            if existing:
+                # Actualizar
+                cursor.execute("""
+                    UPDATE configuracion_notificaciones SET
+                        notificaciones_email = %s,
+                        notificaciones_push = %s,
+                        notificaciones_in_app = %s,
+                        frecuencia_resumen = %s,
+                        hora_resumen = %s,
+                        alertas_criticas_inmediatas = %s,
+                        recordatorio_inactividad = %s,
+                        dias_inactividad = %s,
+                        notificar_nuevos_usuarios = %s,
+                        notificar_alertas_resueltas = %s,
+                        notificar_reportes_generados = %s
+                    WHERE id = %s
+                """, (
+                    data.get('notificaciones_email', True),
+                    data.get('notificaciones_push', True),
+                    data.get('notificaciones_in_app', True),
+                    data.get('frecuencia_resumen', 'diario'),
+                    data.get('hora_resumen', '09:00'),
+                    data.get('alertas_criticas_inmediatas', True),
+                    data.get('recordatorio_inactividad', True),
+                    data.get('dias_inactividad', 7),
+                    data.get('notificar_nuevos_usuarios', True),
+                    data.get('notificar_alertas_resueltas', True),
+                    data.get('notificar_reportes_generados', True),
+                    existing[0]
+                ))
+            else:
+                # Insertar
+                cursor.execute("""
+                    INSERT INTO configuracion_notificaciones 
+                    (notificaciones_email, notificaciones_push, notificaciones_in_app,
+                     frecuencia_resumen, hora_resumen, alertas_criticas_inmediatas,
+                     recordatorio_inactividad, dias_inactividad, notificar_nuevos_usuarios,
+                     notificar_alertas_resueltas, notificar_reportes_generados)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    data.get('notificaciones_email', True),
+                    data.get('notificaciones_push', True),
+                    data.get('notificaciones_in_app', True),
+                    data.get('frecuencia_resumen', 'diario'),
+                    data.get('hora_resumen', '09:00'),
+                    data.get('alertas_criticas_inmediatas', True),
+                    data.get('recordatorio_inactividad', True),
+                    data.get('dias_inactividad', 7),
+                    data.get('notificar_nuevos_usuarios', True),
+                    data.get('notificar_alertas_resueltas', True),
+                    data.get('notificar_reportes_generados', True)
+                ))
+            
+            conn.commit()
+            cursor.close()
+            DatabaseConnection.return_connection(conn)
+            
+            return Helpers.format_response(
+                success=True,
+                message='Configuración actualizada correctamente',
+                status=200
+            )
+        except Exception as db_error:
+            print(f"[NOTIFICACIONES] Error de BD: {db_error}")
+            return Helpers.format_response(
+                success=False,
+                message=f'Error de base de datos: {str(db_error)}',
+                status=500
+            )
+    except Exception as e:
+        return Helpers.format_response(
+            success=False,
+            message=f'Error al actualizar configuración: {str(e)}',
+            status=500
+        )

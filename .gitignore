@@ -6,9 +6,6 @@ __pycache__/
 node_modules/
 *.log
 
-# IDEs and editors
-.github/instructions/instructions.instructions.md
-
 # React / Expo
 dist/
 .expo/
@@ -34,3 +31,8 @@ backend/.pytest_cache/
 # Frontend
 proyectofinal-frontend/node_modules/
 proyectofinal-mobile/node_modules/
+
+#txt
+*.txt
+
+#env

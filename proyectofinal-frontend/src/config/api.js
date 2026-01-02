@@ -92,7 +92,10 @@ const api = {
       estadisticas: "/grupos/estadisticas",
       detail: (id) => `/grupos/${id}`,
       miembros: (id) => `/grupos/${id}/miembros`,
+      actualizarMiembro: (idGrupo, idUsuario) => `/grupos/${idGrupo}/miembros/${idUsuario}`,
+      eliminarMiembro: (idGrupo, idUsuario) => `/grupos/${idGrupo}/miembros/${idUsuario}`,
       actividades: (id) => `/grupos/${id}/actividades`,
+      eliminarActividad: (idActividad) => `/grupos/actividades/${idActividad}`,
       estado: (id) => `/grupos/${id}/estado`,
       estadisticasDetalladas: (id) => `/grupos/${id}/estadisticas-detalladas`,
     },
@@ -131,6 +134,8 @@ const api = {
     },
     auditoria: {
       sesiones: "/auditoria/sesiones",
+      cambiosRoles: "/auditoria/cambios-roles",
+      actividadSospechosa: "/auditoria/actividad-sospechosa",
     },
   },
 };

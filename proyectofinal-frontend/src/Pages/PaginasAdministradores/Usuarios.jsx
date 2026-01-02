@@ -1,17 +1,16 @@
-import React, { useState, useEffect, useRef, useContext } from "react";
-import NavbarAdministrador from "../../components/Administrador/NavbarAdministrador";
+import React, { useState, useEffect, useContext } from "react";
 import apiClient from "../../services/apiClient";
 import api from "../../config/api";
 import authService from "../../services/authService";
 import { ThemeContext } from "../../context/themeContextDef";
-import FondoClaro from "../../assets/FondoClaro.svg";
-import FondoOscuro from "../../assets/FondoOscuro.svg";
 import "../../global.css";
-import { FaUser, FaUserEdit, FaUserShield, FaUserTimes, FaChartLine, FaFilter, FaDownload, FaEnvelope, FaPhone, FaCalendar, FaBirthdayCake, FaMapMarkerAlt, FaSearch, FaKey, FaVenusMars, FaCheckCircle } from "react-icons/fa";
+import "../../styles/StylesAdmin/AdminPages.css";
+import { FaUser, FaUserEdit, FaUserShield, FaUserTimes, FaChartLine, FaFilter, FaDownload, FaEnvelope, FaPhone, FaCalendar, FaBirthdayCake, FaMapMarkerAlt, FaSearch, FaKey, FaVenusMars, FaCheckCircle, FaUsers } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import UserCard from "../../components/Administrador/UserCard";
 import RoleEditor from "../../components/Administrador/RoleEditor";
 import StatsModal from "../../components/Administrador/StatsModal";
+import PageCard from "../../components/Shared/PageCard";
 
 const Usuarios = () => {
   const { isDark } = useContext(ThemeContext);
@@ -27,7 +26,6 @@ const Usuarios = () => {
   const [currentUserId, setCurrentUserId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(15);
-  const cardRef = useRef(null);
 
   useEffect(() => {
     const load = async () => {
@@ -213,34 +211,26 @@ const Usuarios = () => {
   };
 
   return (
-    <>
-      <NavbarAdministrador />
-      <main
-        className="container"
-        style={{
-          paddingTop: "2rem",
-          paddingBottom: "100px",
-          backgroundImage: `url(${isDark ? FondoOscuro : FondoClaro})`,
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "center center",
-          backgroundSize: "cover",
-          backgroundAttachment: "fixed"
-        }}
-      >
-        <div ref={cardRef} className="card reveal" style={{ maxWidth: "1400px" }}>
-          <h2>Gestión de Usuarios</h2>
-          <p style={{ color: "var(--color-text-secondary)" }}>
-            Lista de usuarios y acciones administrativas.
-          </p>
+    <div className="admin-usuarios-page">
+      <div className="admin-page-content">
+        {/* Card con título centrado y filtros */}
+        <PageCard size="xl">
+          <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
+            <h2 style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", margin: 0 }}>
+              <FaUsers style={{ color: "#5ad0d2" }} /> Gestión de Usuarios
+            </h2>
+            <p style={{ color: "var(--color-text-secondary)", margin: "0.5rem 0 0 0" }}>
+              Administra, filtra y gestiona todos los usuarios del sistema
+            </p>
+          </div>
 
-          {/* Filtros y acciones */}
-          <div style={{ marginTop: "1rem", display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "end" }}>
-            <div className="form-group" style={{ flex: "1", minWidth: "200px" }}>
+          {/* Filtros horizontales dentro del card */}
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'nowrap', alignItems: 'flex-end', overflowX: 'auto' }}>
+            <div style={{ flex: 2, minWidth: '180px' }}>
               <div className="input-labels">
                 <label><FaSearch /> Buscar</label>
               </div>
-              <div className="input-group">
-                <FaSearch className="input-icon" />
+              <div className="input-group no-icon">
                 <input
                   type="text"
                   placeholder="Nombre, apellido o correo..."
@@ -250,26 +240,24 @@ const Usuarios = () => {
               </div>
             </div>
 
-            <div className="form-group" style={{ minWidth: "150px" }}>
+            <div style={{ flex: 1, minWidth: '120px' }}>
               <div className="input-labels">
                 <label><FaUserShield /> Rol</label>
               </div>
-              <div className="input-group flush">
-                <span className="input-icon" />
+              <div className="input-group no-icon">
                 <select value={filter.rol} onChange={(e) => setFilter({ ...filter, rol: e.target.value })}>
-                  <option value="todos">Todos los roles</option>
-                  <option value="admin">Administrador</option>
+                  <option value="todos">Todos</option>
+                  <option value="admin">Admin</option>
                   <option value="usuario">Usuario</option>
                 </select>
               </div>
             </div>
 
-            <div className="form-group" style={{ minWidth: "150px" }}>
+            <div style={{ flex: 1, minWidth: '110px' }}>
               <div className="input-labels">
                 <label><FaKey /> Proveedor</label>
               </div>
-              <div className="input-group flush">
-                <span className="input-icon" />
+              <div className="input-group no-icon">
                 <select value={filter.authProvider} onChange={(e) => setFilter({ ...filter, authProvider: e.target.value })}>
                   <option value="todos">Todos</option>
                   <option value="local">Local</option>
@@ -278,27 +266,25 @@ const Usuarios = () => {
               </div>
             </div>
 
-            <div className="form-group" style={{ minWidth: "150px" }}>
+            <div style={{ flex: 1, minWidth: '110px' }}>
               <div className="input-labels">
                 <label><FaVenusMars /> Género</label>
               </div>
-              <div className="input-group flush">
-                <span className="input-icon" />
+              <div className="input-group no-icon">
                 <select value={filter.genero} onChange={(e) => setFilter({ ...filter, genero: e.target.value })}>
                   <option value="todos">Todos</option>
-                  <option value="M">Masculino</option>
-                  <option value="F">Femenino</option>
+                  <option value="M">Masc.</option>
+                  <option value="F">Fem.</option>
                   <option value="Otro">Otro</option>
                 </select>
               </div>
             </div>
 
-            <div className="form-group" style={{ minWidth: "150px" }}>
+            <div style={{ flex: 1, minWidth: '110px' }}>
               <div className="input-labels">
                 <label><FaCheckCircle /> Estado</label>
               </div>
-              <div className="input-group flush">
-                <span className="input-icon" />
+              <div className="input-group no-icon">
                 <select value={filter.activo} onChange={(e) => setFilter({ ...filter, activo: e.target.value })}>
                   <option value="todos">Todos</option>
                   <option value="activos">Activos</option>
@@ -306,30 +292,34 @@ const Usuarios = () => {
                 </select>
               </div>
             </div>
-
-            <button onClick={exportUsers} className="auth-button" style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "auto" }}>
-              <FaDownload /> Exportar CSV
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+            <button onClick={exportUsers} className="admin-btn admin-btn-secondary" style={{ whiteSpace: 'nowrap' }}>
+              <FaDownload /> <span className="admin-hidden-mobile">Exportar</span>
             </button>
           </div>
+        </PageCard>
 
-          <div style={{ marginTop: "0.5rem", color: "var(--color-text-secondary)", fontSize: "0.9rem" }}>
-            Mostrando {filteredUsers.length} de {users.length} usuarios
-          </div>
+        <p className="admin-text-muted admin-mb-2">
+          Mostrando {filteredUsers.length} de {users.length} usuarios
+        </p>
 
-          {msg && <div className="success-message" style={{ marginTop: "1rem" }}>{msg}</div>}
+        {msg && <div className="admin-message admin-message-success">{msg}</div>}
 
           {loading ? (
-            <p>Cargando usuarios...</p>
+            <div className="admin-loading">
+              <div className="admin-loading-spinner"></div>
+              <p>Cargando usuarios...</p>
+            </div>
           ) : filteredUsers.length === 0 ? (
-            <p>No hay usuarios que coincidan con los filtros.</p>
+            <div className="admin-empty-state">
+              <FaUsers />
+              <h3>Sin resultados</h3>
+              <p>No hay usuarios que coincidan con los filtros.</p>
+            </div>
           ) : (
             <>
-            <div style={{ 
-              marginTop: "1.5rem", 
-              display: "grid", 
-              gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", 
-              gap: "1.5rem" 
-            }}>
+            <div className="admin-cards-grid">
               {(() => {
                 const total = filteredUsers.length;
                 const startIndex = (currentPage - 1) * perPage;
@@ -349,46 +339,47 @@ const Usuarios = () => {
                 ));
               })()}
             </div>
+            
             {/* Paginación */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', gap: '1rem' }}>
-              <div style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>
-                Mostrando {filteredUsers.length === 0 ? 0 : ( (currentPage - 1) * perPage + 1 )}-{Math.min(filteredUsers.length, currentPage * perPage)} de {filteredUsers.length} usuarios
-              </div>
+            <div className="admin-pagination">
+              <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1}>«</button>
+              <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>‹</button>
 
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1}>« Primero</button>
-                <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>‹ Anterior</button>
+              {(() => {
+                const total = filteredUsers.length;
+                const totalPages = Math.max(1, Math.ceil(total / perPage));
+                const visible = 5;
+                let start = Math.max(1, currentPage - Math.floor(visible / 2));
+                let end = Math.min(totalPages, start + visible - 1);
+                if (end - start + 1 < visible) {
+                  start = Math.max(1, end - visible + 1);
+                }
+                const pages = [];
+                for (let i = start; i <= end; i++) pages.push(i);
+                return pages.map(p => (
+                  <button 
+                    key={p} 
+                    onClick={() => setCurrentPage(p)} 
+                    className={p === currentPage ? 'active' : ''}
+                  >
+                    {p}
+                  </button>
+                ));
+              })()}
 
-                {/* Números de página (limitar rango visible) */}
-                {(() => {
-                  const total = filteredUsers.length;
-                  const totalPages = Math.max(1, Math.ceil(total / perPage));
-                  const visible = 7;
-                  let start = Math.max(1, currentPage - Math.floor(visible / 2));
-                  let end = Math.min(totalPages, start + visible - 1);
-                  if (end - start + 1 < visible) {
-                    start = Math.max(1, end - visible + 1);
-                  }
-                  const pages = [];
-                  for (let i = start; i <= end; i++) pages.push(i);
-                  return pages.map(p => (
-                    <button key={p} onClick={() => setCurrentPage(p)} style={{ fontWeight: p === currentPage ? '700' : '400' }}>{p}</button>
-                  ));
-                })()}
+              <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage >= Math.max(1, Math.ceil(filteredUsers.length / perPage))}>›</button>
+              <button onClick={() => setCurrentPage(Math.max(1, Math.ceil(filteredUsers.length / perPage)))} disabled={currentPage >= Math.max(1, Math.ceil(filteredUsers.length / perPage))}>»</button>
 
-                <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage >= Math.max(1, Math.ceil(filteredUsers.length / perPage))}>Siguiente ›</button>
-                <button onClick={() => setCurrentPage(Math.max(1, Math.ceil(filteredUsers.length / perPage)))} disabled={currentPage >= Math.max(1, Math.ceil(filteredUsers.length / perPage))}>Último »</button>
-
-                <div className="input-group no-icon" style={{ marginLeft: '0.5rem' }}>
-                  <select value={perPage} onChange={(e) => { setPerPage(Number(e.target.value)); setCurrentPage(1); }}>
-                    {[5,10,20,50].map(n => <option key={n} value={n}>{n} / pág</option>)}
-                  </select>
-                </div>
-              </div>
+              <select 
+                value={perPage} 
+                onChange={(e) => { setPerPage(Number(e.target.value)); setCurrentPage(1); }}
+                style={{ marginLeft: '0.5rem', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--color-border)' }}
+              >
+                {[5,10,20,50].map(n => <option key={n} value={n}>{n} / pág</option>)}
+              </select>
             </div>
             </>
           )}
-        </div>
 
         {/* Modal de estadísticas del usuario (componente) */}
         {showModal && selectedUser && (
@@ -409,12 +400,8 @@ const Usuarios = () => {
             currentUserId={currentUserId}
           />
         )}
-      </main>
-
-      <footer className="footer">
-        © {new Date().getFullYear()} SerenVoice — Todos los derechos reservados.
-      </footer>
-    </>
+      </div>
+    </div>
   );
 };
 
