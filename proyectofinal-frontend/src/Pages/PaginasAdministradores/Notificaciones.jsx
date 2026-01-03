@@ -1,15 +1,13 @@
 import React, { useState, useEffect, useContext } from "react";
-import NavbarAdministrador from "../../components/Administrador/NavbarAdministrador";
 import { ThemeContext } from "../../context/themeContextDef";
-import FondoClaro from "../../assets/FondoClaro.svg";
-import FondoOscuro from "../../assets/FondoOscuro.svg";
 import apiClient from "../../services/apiClient";
 import api from "../../config/api";
 import { FaBell, FaEdit, FaPlus, FaSave, FaTimes, FaTrash } from "react-icons/fa";
 import "../../global.css";
+import "../../styles/StylesAdmin/AdminPages.css";
 
 const Notificaciones = () => {
-  const { isDark } = useContext(ThemeContext);
+  useContext(ThemeContext);
   const [plantillas, setPlantillas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState("");
@@ -118,252 +116,212 @@ const Notificaciones = () => {
   };
 
   return (
-    <>
-      <NavbarAdministrador />
-      <main
-        className="container"
-        style={{
-          paddingTop: "2rem",
-          paddingBottom: "100px",
-          backgroundImage: `url(${isDark ? FondoOscuro : FondoClaro})`,
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "center center",
-          backgroundSize: "cover",
-          backgroundAttachment: "fixed"
-        }}
-      >
-        <div className="card reveal" data-revealdelay="60" style={{ maxWidth: "1400px" }}>
+    <div className="admin-notificaciones-page">
+      <div className="admin-page-content">
+        {/* Header */}
+        <div className="admin-page-header">
           <h2><FaBell /> Gestión de Notificaciones</h2>
-          <p style={{ color: "var(--color-text-secondary)" }}>
-            Configura plantillas y tipos de notificaciones del sistema.
-          </p>
-
-          <div style={{ marginTop: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div style={{ color: "var(--color-text-secondary)", fontSize: "0.9rem" }}>
-              Total de plantillas: {plantillas.length}
-            </div>
-            <button onClick={handleCreate} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <FaPlus /> Nueva Plantilla
+          <div className="admin-header-actions">
+            <button onClick={handleCreate} className="admin-btn admin-btn-primary">
+              <FaPlus /> <span className="admin-hidden-mobile">Nueva Plantilla</span>
             </button>
           </div>
+        </div>
 
-          {msg && <div className="success-message" style={{ marginTop: "1rem" }}>{msg}</div>}
+        <p className="admin-text-muted admin-mb-2">
+          Total de plantillas: {plantillas.length}
+        </p>
 
-          {loading ? (
+        {msg && <div className="admin-message admin-message-success">{msg}</div>}
+
+        {loading ? (
+          <div className="admin-loading">
+            <div className="admin-loading-spinner"></div>
             <p>Cargando plantillas...</p>
-          ) : plantillas.length === 0 ? (
-            <p>No hay plantillas de notificaciones.</p>
-          ) : (
-            <div style={{ marginTop: "1rem", display: "grid", gap: "1rem" }}>
-              {plantillas.map((plantilla) => (
-                <div
-                  key={plantilla.id_plantilla}
-                  className="card"
-                  style={{
-                    padding: "1.25rem",
-                    borderLeft: `4px solid ${getPriorityColor(plantilla.prioridad_defecto)}`,
-                    opacity: plantilla.activa ? 1 : 0.6
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
-                        <span style={{ fontSize: "1.5rem" }}>{plantilla.icono_defecto}</span>
-                        <strong style={{ fontSize: "1.1rem" }}>{plantilla.titulo_plantilla}</strong>
-                        <span
-                          style={{
-                            padding: "0.25rem 0.5rem",
-                            borderRadius: "4px",
-                            fontSize: "0.75rem",
-                            backgroundColor: `${getPriorityColor(plantilla.prioridad_defecto)}20`,
-                            color: getPriorityColor(plantilla.prioridad_defecto),
-                            textTransform: "uppercase"
-                          }}
-                        >
-                          {plantilla.prioridad_defecto}
-                        </span>
-                        {!plantilla.activa && (
-                          <span style={{ padding: "0.25rem 0.5rem", borderRadius: "4px", fontSize: "0.75rem", backgroundColor: "#f4433620", color: "#f44336" }}>
-                            INACTIVA
-                          </span>
-                        )}
-                      </div>
-
-                      <div style={{ color: "var(--color-text-secondary)", marginBottom: "0.5rem" }}>
-                        {plantilla.mensaje_plantilla}
-                      </div>
-
-                      <div style={{ fontSize: "0.9rem", display: "flex", gap: "1.5rem", flexWrap: "wrap" }}>
-                        <div><strong>Tipo:</strong> {plantilla.tipo_notificacion}</div>
-                        <div><strong>Idioma:</strong> {plantilla.idioma || 'es'}</div>
-                        {plantilla.fecha_modificacion && (
-                          <div><strong>Última modificación:</strong> {new Date(plantilla.fecha_modificacion).toLocaleDateString()}</div>
-                        )}
-                      </div>
+          </div>
+        ) : plantillas.length === 0 ? (
+          <div className="admin-empty-state">
+            <FaBell />
+            <h3>Sin plantillas</h3>
+            <p>No hay plantillas de notificaciones configuradas.</p>
+          </div>
+        ) : (
+          <div className="admin-cards-grid">
+            {plantillas.map((plantilla) => (
+              <div
+                key={plantilla.id_plantilla}
+                className="admin-card"
+                style={{
+                  borderLeft: `4px solid ${getPriorityColor(plantilla.prioridad_defecto)}`,
+                  opacity: plantilla.activa ? 1 : 0.7
+                }}
+              >
+                <div className="admin-card-header">
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
+                      <span style={{ fontSize: "1.25rem" }}>{plantilla.icono_defecto}</span>
+                      <h4 className="admin-card-title">{plantilla.titulo_plantilla}</h4>
                     </div>
-
-                    <div style={{ display: "flex", gap: "0.5rem", flexDirection: "column", minWidth: "100px" }}>
-                      <button
-                        onClick={() => handleEdit(plantilla)}
-                        style={{ fontSize: "0.85rem", padding: "0.5rem" }}
-                      >
-                        <FaEdit /> Editar
-                      </button>
-                      <button
-                        onClick={() => toggleEstado(plantilla.id_plantilla, plantilla.activa)}
-                        style={{
-                          fontSize: "0.85rem",
-                          padding: "0.5rem",
-                          backgroundColor: plantilla.activa ? "#ff9800" : "#4caf50",
-                          color: "#fff"
-                        }}
-                      >
-                        {plantilla.activa ? 'Desactivar' : 'Activar'}
-                      </button>
-                      <button
-                        onClick={() => handleDelete(plantilla.id_plantilla)}
-                        style={{ fontSize: "0.85rem", padding: "0.5rem", backgroundColor: "#f44336", color: "#fff" }}
-                      >
-                        <FaTrash />
-                      </button>
+                    <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                      <span className={`admin-badge ${plantilla.prioridad_defecto === 'urgente' ? 'admin-badge-danger' : plantilla.prioridad_defecto === 'alta' ? 'admin-badge-warning' : 'admin-badge-info'}`}>
+                        {plantilla.prioridad_defecto}
+                      </span>
+                      {!plantilla.activa && (
+                        <span className="admin-badge admin-badge-danger">INACTIVA</span>
+                      )}
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+
+                <div className="admin-card-body">
+                  <p className="admin-text-muted" style={{ fontSize: "0.9rem" }}>{plantilla.mensaje_plantilla}</p>
+                  
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", fontSize: "0.85rem" }}>
+                    <span><strong>Tipo:</strong> {plantilla.tipo_notificacion}</span>
+                    {plantilla.fecha_modificacion && (
+                      <span><strong>Modificado:</strong> {new Date(plantilla.fecha_modificacion).toLocaleDateString()}</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="admin-card-footer">
+                  <button className="admin-btn admin-btn-secondary admin-btn-sm" onClick={() => handleEdit(plantilla)}>
+                    <FaEdit /> Editar
+                  </button>
+                  <button 
+                    className={`admin-btn admin-btn-sm ${plantilla.activa ? 'admin-btn-warning' : 'admin-btn-success'}`}
+                    onClick={() => toggleEstado(plantilla.id_plantilla, plantilla.activa)}
+                  >
+                    {plantilla.activa ? 'Desactivar' : 'Activar'}
+                  </button>
+                  <button 
+                    className="admin-btn admin-btn-danger admin-btn-sm admin-btn-icon"
+                    onClick={() => handleDelete(plantilla.id_plantilla)}
+                  >
+                    <FaTrash />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Modal de edición/creación */}
         {showModal && (
-          <div
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "rgba(0,0,0,0.5)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 1000,
-            }}
-            onClick={() => setShowModal(false)}
-          >
-            <div
-              className="card"
-              style={{
-                maxWidth: "600px",
-                width: "90%",
-                maxHeight: "80vh",
-                overflow: "auto",
-                padding: "2rem",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3>{editingTemplate ? 'Editar Plantilla' : 'Nueva Plantilla'}</h3>
+          <div className="admin-modal-overlay" onClick={() => setShowModal(false)}>
+            <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="admin-modal-header">
+                <h3 className="admin-modal-title">{editingTemplate ? 'Editar Plantilla' : 'Nueva Plantilla'}</h3>
+                <button className="admin-modal-close" onClick={() => setShowModal(false)}>
+                  <FaTimes />
+                </button>
+              </div>
+              
+              <form onSubmit={handleSave}>
+                <div className="admin-modal-body">
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">Tipo de Notificación</label>
+                    <select
+                      className="admin-form-select"
+                      value={formData.tipo_notificacion}
+                      onChange={(e) => setFormData({ ...formData, tipo_notificacion: e.target.value })}
+                      required
+                    >
+                      <option value="sistema">Sistema</option>
+                      <option value="invitacion_grupo">Invitación a Grupo</option>
+                      <option value="actividad_grupo">Actividad de Grupo</option>
+                      <option value="recordatorio_actividad">Recordatorio de Actividad</option>
+                      <option value="recomendacion">Recomendación</option>
+                      <option value="alerta_critica">Alerta Crítica</option>
+                      <option value="mensaje_facilitador">Mensaje del Facilitador</option>
+                      <option value="logro_desbloqueado">Logro Desbloqueado</option>
+                      <option value="recordatorio_analisis">Recordatorio de Análisis</option>
+                      <option value="actualizacion_grupo">Actualización de Grupo</option>
+                    </select>
+                  </div>
 
-              <form onSubmit={handleSave} style={{ marginTop: "1.5rem" }}>
-                <div className="form-group">
-                  <label>Tipo de Notificación</label>
-                  <select
-                    value={formData.tipo_notificacion}
-                    onChange={(e) => setFormData({ ...formData, tipo_notificacion: e.target.value })}
-                    required
-                  >
-                    <option value="sistema">Sistema</option>
-                    <option value="invitacion_grupo">Invitación a Grupo</option>
-                    <option value="actividad_grupo">Actividad de Grupo</option>
-                    <option value="recordatorio_actividad">Recordatorio de Actividad</option>
-                    <option value="recomendacion">Recomendación</option>
-                    <option value="alerta_critica">Alerta Crítica</option>
-                    <option value="mensaje_facilitador">Mensaje del Facilitador</option>
-                    <option value="logro_desbloqueado">Logro Desbloqueado</option>
-                    <option value="recordatorio_analisis">Recordatorio de Análisis</option>
-                    <option value="actualizacion_grupo">Actualización de Grupo</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Título de la Plantilla</label>
-                  <input
-                    type="text"
-                    value={formData.titulo_plantilla}
-                    onChange={(e) => setFormData({ ...formData, titulo_plantilla: e.target.value })}
-                    placeholder="Ej: Nueva invitación a grupo"
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Mensaje de la Plantilla</label>
-                  <textarea
-                    value={formData.mensaje_plantilla}
-                    onChange={(e) => setFormData({ ...formData, mensaje_plantilla: e.target.value })}
-                    placeholder="Ej: Has sido invitado al grupo {nombre_grupo}"
-                    rows="4"
-                    required
-                  />
-                  <small style={{ color: "var(--color-text-secondary)" }}>
-                    Usa variables entre llaves, ej: {'{nombre_grupo}, {nombre_usuario}'}
-                  </small>
-                </div>
-
-                <div className="form-group">
-                  <label>Icono por Defecto</label>
-                  <input
-                    type="text"
-                    value={formData.icono_defecto}
-                    onChange={(e) => setFormData({ ...formData, icono_defecto: e.target.value })}
-                    placeholder="🔔"
-                    maxLength="10"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Prioridad por Defecto</label>
-                  <select
-                    value={formData.prioridad_defecto}
-                    onChange={(e) => setFormData({ ...formData, prioridad_defecto: e.target.value })}
-                    required
-                  >
-                    <option value="baja">Baja</option>
-                    <option value="media">Media</option>
-                    <option value="alta">Alta</option>
-                    <option value="urgente">Urgente</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">Título de la Plantilla</label>
                     <input
-                      type="checkbox"
-                      checked={formData.activa}
-                      onChange={(e) => setFormData({ ...formData, activa: e.target.checked })}
+                      type="text"
+                      className="admin-form-input"
+                      value={formData.titulo_plantilla}
+                      onChange={(e) => setFormData({ ...formData, titulo_plantilla: e.target.value })}
+                      placeholder="Ej: Nueva invitación a grupo"
+                      required
                     />
-                    Plantilla Activa
-                  </label>
+                  </div>
+
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">Mensaje de la Plantilla</label>
+                    <textarea
+                      className="admin-form-textarea"
+                      value={formData.mensaje_plantilla}
+                      onChange={(e) => setFormData({ ...formData, mensaje_plantilla: e.target.value })}
+                      placeholder="Ej: Has sido invitado al grupo {nombre_grupo}"
+                      rows="4"
+                      required
+                    />
+                    <small className="admin-text-muted">
+                      Usa variables entre llaves, ej: {'{nombre_grupo}, {nombre_usuario}'}
+                    </small>
+                  </div>
+
+                  <div className="admin-form-row">
+                    <div className="admin-form-group">
+                      <label className="admin-form-label">Icono por Defecto</label>
+                      <input
+                        type="text"
+                        className="admin-form-input"
+                        value={formData.icono_defecto}
+                        onChange={(e) => setFormData({ ...formData, icono_defecto: e.target.value })}
+                        placeholder="🔔"
+                        maxLength="10"
+                      />
+                    </div>
+
+                    <div className="admin-form-group">
+                      <label className="admin-form-label">Prioridad por Defecto</label>
+                      <select
+                        className="admin-form-select"
+                        value={formData.prioridad_defecto}
+                        onChange={(e) => setFormData({ ...formData, prioridad_defecto: e.target.value })}
+                        required
+                      >
+                        <option value="baja">Baja</option>
+                        <option value="media">Media</option>
+                        <option value="alta">Alta</option>
+                        <option value="urgente">Urgente</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="admin-form-group">
+                    <label className="admin-form-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={formData.activa}
+                        onChange={(e) => setFormData({ ...formData, activa: e.target.checked })}
+                      />
+                      Plantilla Activa
+                    </label>
+                  </div>
                 </div>
 
-                <div style={{ display: "flex", gap: "1rem", marginTop: "1.5rem" }}>
-                  <button type="submit" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
-                    <FaSave /> Guardar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    style={{ flex: 1, backgroundColor: "#f44336", color: "#fff" }}
-                  >
+                <div className="admin-modal-footer">
+                  <button type="button" className="admin-btn admin-btn-secondary" onClick={() => setShowModal(false)}>
                     <FaTimes /> Cancelar
+                  </button>
+                  <button type="submit" className="admin-btn admin-btn-primary">
+                    <FaSave /> Guardar
                   </button>
                 </div>
               </form>
             </div>
           </div>
         )}
-      </main>
-    </>
+      </div>
+    </div>
   );
 };
 

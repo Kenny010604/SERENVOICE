@@ -1,56 +1,63 @@
 import React, { useState, useContext } from "react";
-import NavbarAdministrador from "../../components/Administrador/NavbarAdministrador";
 import { ThemeContext } from "../../context/themeContextDef";
-import FondoClaro from "../../assets/FondoClaro.svg";
-import FondoOscuro from "../../assets/FondoOscuro.svg";
+import { FaCog } from "react-icons/fa";
 import "../../global.css";
+import "../../styles/StylesAdmin/AdminPages.css";
 
 const ConfiguracionAdmin = () => {
-  const { isDark } = useContext(ThemeContext);
+  useContext(ThemeContext);
   const [msg, setMsg] = useState("");
 
   const handleSave = () => {
     setMsg("Guardado (simulado)");
+    setTimeout(() => setMsg(""), 3000);
   };
 
   return (
-    <>
-      <NavbarAdministrador />
-      <main 
-        className="container" 
-        style={{ 
-          paddingTop: "2rem",
-          paddingBottom: "100px",
-          backgroundImage: `url(${isDark ? FondoOscuro : FondoClaro})`,
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "center center",
-          backgroundSize: "cover",
-          backgroundAttachment: "fixed"
-        }}
-      >
-        <div className="card" style={{ maxWidth: "1000px", width: "100%" }}>
-          <h2>Configuración del Administrador</h2>
-          <p style={{ color: "var(--color-text-secondary)" }}>
-            Opciones globales del sistema (simulado).
-          </p>
+    <div className="admin-configuracion-page">
+      <div className="admin-page-content">
+        {/* Header */}
+        <div className="admin-page-header">
+          <h2><FaCog /> Configuración del Administrador</h2>
+        </div>
 
-          <div style={{ marginTop: "1rem" }}>
-            <div className="form-group">
-              <label>Notificaciones globales</label>
-              <select>
+        <div className="admin-card" style={{ maxWidth: "600px" }}>
+          <div className="admin-card-body">
+            <div className="admin-form-group">
+              <label className="admin-form-label">Notificaciones globales</label>
+              <select className="admin-form-input">
                 <option>Activadas</option>
                 <option>Desactivadas</option>
               </select>
             </div>
 
-            <button onClick={handleSave} style={{ marginTop: "1rem" }}>
-              Guardar
+            <div className="admin-form-group">
+              <label className="admin-form-label">Idioma del sistema</label>
+              <select className="admin-form-input">
+                <option>Español</option>
+                <option>English</option>
+              </select>
+            </div>
+
+            <div className="admin-form-group">
+              <label className="admin-form-label">Zona horaria</label>
+              <select className="admin-form-input">
+                <option>America/Mexico_City</option>
+                <option>America/Bogota</option>
+                <option>America/Lima</option>
+                <option>Europe/Madrid</option>
+              </select>
+            </div>
+
+            <button onClick={handleSave} className="admin-btn admin-btn-primary" style={{ marginTop: "1rem" }}>
+              Guardar Configuración
             </button>
-            {msg && <p style={{ marginTop: "0.5rem" }}>{msg}</p>}
+            
+            {msg && <div className="admin-message admin-message-success" style={{ marginTop: "1rem" }}>{msg}</div>}
           </div>
         </div>
-      </main>
-    </>
+      </div>
+    </div>
   );
 };
 

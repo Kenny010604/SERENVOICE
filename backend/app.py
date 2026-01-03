@@ -26,7 +26,11 @@ from services.audio_service import AudioService
 # ===============================
 try:
     from dotenv import load_dotenv
-    load_dotenv()
+    from pathlib import Path
+    # Cargar .env desde la raíz del proyecto
+    root_dir = Path(__file__).parent.parent
+    env_path = root_dir / '.env'
+    load_dotenv(dotenv_path=env_path)
 except Exception:
     pass
 

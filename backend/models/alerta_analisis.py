@@ -28,16 +28,31 @@ class AlertaAnalisis:
     
     @staticmethod
     def get_active_alerts(tipo_alerta=None):
-        """Obtener alertas activas usando vista optimizada"""
-        query = "SELECT * FROM vista_alertas_activas"
+        """Obtener alertas activas con todos los campos necesarios"""
+        query = """
+            SELECT 
+                al.*,
+                u.nombre,
+                u.apellido,
+                u.correo,
+                ra.nivel_estres,
+                ra.nivel_ansiedad,
+                ra.clasificacion,
+                ra.emocion_dominante
+            FROM alerta_analisis al
+            JOIN resultado_analisis ra ON al.id_resultado = ra.id_resultado
+            JOIN analisis an ON ra.id_analisis = an.id_analisis
+            JOIN audio au ON an.id_audio = au.id_audio
+            JOIN usuario u ON au.id_usuario = u.id_usuario
+            WHERE al.activo = 1
+        """
         params = []
         
         if tipo_alerta:
-            query += " WHERE tipo_alerta = %s"
+            query += " AND al.tipo_alerta = %s"
             params.append(tipo_alerta)
         
-        # la tabla usa la columna `fecha`, no `fecha_creacion`
-        query += " ORDER BY fecha DESC"
+        query += " ORDER BY al.fecha DESC"
         
         if params:
             return DatabaseConnection.execute_query(query, tuple(params))
@@ -45,8 +60,25 @@ class AlertaAnalisis:
     
     @staticmethod
     def get_critical_alerts():
-        """Obtener solo alertas críticas"""
-        query = "SELECT * FROM vista_alertas_activas WHERE tipo_alerta = 'critica'"
+        """Obtener solo alertas críticas con todos los campos necesarios"""
+        query = """
+            SELECT 
+                al.*,
+                u.nombre,
+                u.apellido,
+                u.correo,
+                ra.nivel_estres,
+                ra.nivel_ansiedad,
+                ra.clasificacion,
+                ra.emocion_dominante
+            FROM alerta_analisis al
+            JOIN resultado_analisis ra ON al.id_resultado = ra.id_resultado
+            JOIN analisis an ON ra.id_analisis = an.id_analisis
+            JOIN audio au ON an.id_audio = au.id_audio
+            JOIN usuario u ON au.id_usuario = u.id_usuario
+            WHERE al.activo = 1 AND al.tipo_alerta = 'critica'
+            ORDER BY al.fecha DESC
+        """
         return DatabaseConnection.execute_query(query)
     
     @staticmethod

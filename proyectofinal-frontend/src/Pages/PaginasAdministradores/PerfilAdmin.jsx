@@ -1,11 +1,13 @@
 import React from 'react';
-import NavbarAdministrador from '../../components/Administrador/NavbarAdministrador';
 import ActualizarPerfil from '../../Pages/PaginasUsuarios/ActualizarPerfil.jsx';
+import "../../styles/StylesAdmin/AdminPages.css";
 
 export default function PerfilAdmin(){
   return (
-    <div>
-      <ActualizarPerfil NavbarComponent={NavbarAdministrador} />
+    <div className="admin-perfil-page">
+      <div className="admin-page-content">
+        <ActualizarPerfil showNavbar={false} />
+      </div>
     </div>
   );
 }

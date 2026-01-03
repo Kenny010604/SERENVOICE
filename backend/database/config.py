@@ -2,10 +2,12 @@
 import os
 from dotenv import load_dotenv
 import socket
+from pathlib import Path
 
-
-# Cargar variables de entorno
-load_dotenv()
+# Cargar variables de entorno desde la raíz del proyecto
+root_dir = Path(__file__).parent.parent.parent
+env_path = root_dir / '.env'
+load_dotenv(dotenv_path=env_path)
 
 class Config:
     """Configuración de la aplicación"""

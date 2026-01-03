@@ -389,4 +389,160 @@ def historial_juegos():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+# ==================== ADMIN ROUTES ====================
+
+@juegos_bp.route('/<int:juego_id>', methods=['GET'])
+@jwt_required()
+def get_juego(juego_id):
+    """Obtener un juego específico por ID"""
+    try:
+        sql = "SELECT * FROM juegos_terapeuticos WHERE id = %s"
+        result = DatabaseConnection.execute_query(sql, (juego_id,))
+        if result and len(result) > 0:
+            return jsonify({'success': True, 'data': result[0]}), 200
+        return jsonify({'success': False, 'error': 'Juego no encontrado'}), 404
+    except Exception as e:
+        print(f"[ERROR] get_juego: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@juegos_bp.route('/', methods=['POST'])
+@jwt_required()
+def crear_juego():
+    """Crear un nuevo juego terapéutico (admin)"""
+    try:
+        data = request.get_json() or {}
+        
+        nombre = data.get('nombre')
+        if not nombre:
+            return jsonify({'success': False, 'error': 'Nombre es requerido'}), 400
+        
+        descripcion = data.get('descripcion', '')
+        tipo_juego = data.get('tipo_juego', 'puzzle')
+        duracion_recomendada = data.get('duracion_recomendada', 10)
+        objetivo_emocional = data.get('objetivo_emocional', '')
+        icono = data.get('icono', '🎮')
+        activo = data.get('activo', True)
+        
+        sql = """
+            INSERT INTO juegos_terapeuticos 
+            (nombre, descripcion, tipo_juego, duracion_recomendada, objetivo_emocional, icono, activo)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """
+        DatabaseConnection.execute_query(
+            sql, 
+            (nombre, descripcion, tipo_juego, duracion_recomendada, objetivo_emocional, icono, 1 if activo else 0)
+        )
+        
+        # Obtener el juego recién creado
+        sql_last = "SELECT * FROM juegos_terapeuticos WHERE nombre = %s ORDER BY id DESC LIMIT 1"
+        result = DatabaseConnection.execute_query(sql_last, (nombre,))
+        
+        return jsonify({
+            'success': True,
+            'message': 'Juego creado correctamente',
+            'data': result[0] if result else {'nombre': nombre}
+        }), 201
+    except Exception as e:
+        print(f"[ERROR] crear_juego: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@juegos_bp.route('/<int:juego_id>', methods=['PUT'])
+@jwt_required()
+def actualizar_juego(juego_id):
+    """Actualizar un juego existente (admin)"""
+    try:
+        data = request.get_json() or {}
+        
+        # Construir query dinámico
+        campos = []
+        valores = []
+        
+        if 'nombre' in data:
+            campos.append('nombre = %s')
+            valores.append(data['nombre'])
+        if 'descripcion' in data:
+            campos.append('descripcion = %s')
+            valores.append(data['descripcion'])
+        if 'tipo_juego' in data:
+            campos.append('tipo_juego = %s')
+            valores.append(data['tipo_juego'])
+        if 'duracion_recomendada' in data:
+            campos.append('duracion_recomendada = %s')
+            valores.append(data['duracion_recomendada'])
+        if 'objetivo_emocional' in data:
+            campos.append('objetivo_emocional = %s')
+            valores.append(data['objetivo_emocional'])
+        if 'icono' in data:
+            campos.append('icono = %s')
+            valores.append(data['icono'])
+        if 'activo' in data:
+            campos.append('activo = %s')
+            valores.append(1 if data['activo'] else 0)
+        
+        if not campos:
+            return jsonify({'success': False, 'error': 'No hay campos para actualizar'}), 400
+        
+        valores.append(juego_id)
+        sql = f"UPDATE juegos_terapeuticos SET {', '.join(campos)} WHERE id = %s"
+        DatabaseConnection.execute_query(sql, tuple(valores))
+        
+        return jsonify({'success': True, 'message': 'Juego actualizado correctamente'}), 200
+    except Exception as e:
+        print(f"[ERROR] actualizar_juego: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@juegos_bp.route('/<int:juego_id>', methods=['PATCH'])
+@jwt_required()
+def patch_juego(juego_id):
+    """Actualizar parcialmente un juego (toggle activo, etc)"""
+    try:
+        data = request.get_json() or {}
+        
+        if 'activo' in data:
+            sql = "UPDATE juegos_terapeuticos SET activo = %s WHERE id = %s"
+            DatabaseConnection.execute_query(sql, (1 if data['activo'] else 0, juego_id))
+            return jsonify({'success': True, 'message': 'Estado actualizado'}), 200
+        
+        return jsonify({'success': False, 'error': 'Campo no soportado'}), 400
+    except Exception as e:
+        print(f"[ERROR] patch_juego: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@juegos_bp.route('/<int:juego_id>', methods=['DELETE'])
+@jwt_required()
+def eliminar_juego(juego_id):
+    """Eliminar un juego (admin)"""
+    try:
+        # Verificar que existe
+        sql_check = "SELECT id FROM juegos_terapeuticos WHERE id = %s"
+        result = DatabaseConnection.execute_query(sql_check, (juego_id,))
+        if not result:
+            return jsonify({'success': False, 'error': 'Juego no encontrado'}), 404
+        
+        # Eliminar (o marcar como inactivo si hay sesiones asociadas)
+        sql_sessions = "SELECT COUNT(*) as count FROM sesiones_juego WHERE id_juego = %s"
+        sessions = DatabaseConnection.execute_query(sql_sessions, (juego_id,))
+        
+        if sessions and sessions[0]['count'] > 0:
+            # Tiene sesiones, solo desactivar
+            sql = "UPDATE juegos_terapeuticos SET activo = 0 WHERE id = %s"
+            DatabaseConnection.execute_query(sql, (juego_id,))
+            return jsonify({
+                'success': True, 
+                'message': 'Juego desactivado (tiene sesiones asociadas)'
+            }), 200
+        else:
+            # No tiene sesiones, eliminar
+            sql = "DELETE FROM juegos_terapeuticos WHERE id = %s"
+            DatabaseConnection.execute_query(sql, (juego_id,))
+            return jsonify({'success': True, 'message': 'Juego eliminado correctamente'}), 200
+    except Exception as e:
+        print(f"[ERROR] eliminar_juego: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 print("[DEBUG] OK - juegos_routes.py - Modulo cargado completamente")

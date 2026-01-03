@@ -6,6 +6,7 @@ from models.grupo import Grupo
 from models.grupo_miembro import GrupoMiembro
 from models.actividad_grupo import ActividadGrupo, ParticipacionActividad
 from models.usuario import Usuario
+from models.rol_usuario import RolUsuario
 from datetime import datetime
 
 bp = Blueprint('grupos', __name__, url_prefix='/api/grupos')
@@ -246,9 +247,10 @@ def get_group_members(id_grupo):
         except Exception:
             current_user_id = identity.get('id_usuario') if isinstance(identity, dict) else identity
 
-        # Verificar acceso
+        # Verificar acceso: admin o miembro del grupo
+        is_admin = RolUsuario.has_role(current_user_id, 'admin')
         miembro = GrupoMiembro.is_member(id_grupo, current_user_id)
-        if not miembro:
+        if not miembro and not is_admin:
             return jsonify({'error': 'No tienes acceso a este grupo'}), 403
         
         miembros = GrupoMiembro.get_group_members(id_grupo)
@@ -302,6 +304,49 @@ def add_group_member(id_grupo):
         return jsonify({'error': str(e), 'trace': tb}), 500
 
 
+@bp.route('/<int:id_grupo>/miembros/<int:id_usuario>', methods=['PUT'])
+@jwt_required()
+def update_member_role(id_grupo, id_usuario):
+    """Actualizar el rol de un miembro en el grupo"""
+    try:
+        data = request.get_json() or {}
+        identity = get_jwt_identity()
+        try:
+            current_user_id = int(identity)
+        except Exception:
+            current_user_id = identity.get('id_usuario') if isinstance(identity, dict) else identity
+        
+        nuevo_rol = data.get('rol_grupo') or data.get('rol')
+        if not nuevo_rol:
+            return jsonify({'error': 'Se requiere el nuevo rol'}), 400
+        
+        roles_validos = ['facilitador', 'co_facilitador', 'participante', 'observador']
+        if nuevo_rol not in roles_validos:
+            return jsonify({'error': f'Rol inválido. Roles permitidos: {", ".join(roles_validos)}'}), 400
+        
+        grupo = Grupo.get_by_id(id_grupo)
+        if not grupo:
+            return jsonify({'error': 'Grupo no encontrado'}), 404
+        
+        is_admin = RolUsuario.has_role(current_user_id, 'admin')
+        is_facilitator = grupo['id_facilitador'] == current_user_id
+        
+        if not (is_facilitator or is_admin):
+            return jsonify({'error': 'No tienes permiso para cambiar roles'}), 403
+        
+        miembro = GrupoMiembro.is_member(id_grupo, id_usuario)
+        if not miembro:
+            return jsonify({'error': 'El usuario no es miembro del grupo'}), 404
+        
+        GrupoMiembro.update_rol(miembro['id_grupo_miembro'], nuevo_rol)
+        return jsonify({'message': 'Rol actualizado exitosamente', 'nuevo_rol': nuevo_rol}), 200
+        
+    except Exception as e:
+        tb = traceback.format_exc()
+        print('[GRUPOS] Error en update_member_role:\n', tb)
+        return jsonify({'error': str(e)}), 500
+
+
 @bp.route('/<int:id_grupo>/miembros/<int:id_usuario>', methods=['DELETE'])
 @jwt_required()
 def remove_member(id_grupo, id_usuario):
@@ -313,15 +358,16 @@ def remove_member(id_grupo, id_usuario):
         except Exception:
             current_user_id = identity.get('id_usuario') if isinstance(identity, dict) else identity
         
-        # Verificar que sea facilitador o el mismo usuario
+        # Verificar que sea facilitador, admin o el mismo usuario
         grupo = Grupo.get_by_id(id_grupo)
         if not grupo:
             return jsonify({'error': 'Grupo no encontrado'}), 404
         
+        is_admin = RolUsuario.has_role(current_user_id, 'admin')
         is_facilitator = grupo['id_facilitador'] == current_user_id
         is_self = current_user_id == id_usuario
         
-        if not (is_facilitator or is_self):
+        if not (is_facilitator or is_self or is_admin):
             return jsonify({'error': 'No tienes permiso para esta acción'}), 403
         
         GrupoMiembro.remove_member(id_grupo, id_usuario)
@@ -360,17 +406,17 @@ def get_group_stats(id_grupo):
 @bp.route('/estadisticas', methods=['GET'])
 @jwt_required()
 def get_global_group_stats():
-    """Endpoint de compatibilidad: estadísticas globales de grupos"""
+    """Obtener lista de grupos con estadísticas para administración"""
     try:
-        # Usar la vista o consultas directas para agregar métricas simples
         from database.connection import DatabaseConnection
-
-        result = DatabaseConnection.execute_query(
-            "SELECT COUNT(*) AS activos FROM grupos WHERE activo = 1"
-        )
-        activos = result[0]['activos'] if result else 0
-
-        return jsonify({'activos': activos}), 200
+        
+        # Usar la vista que ya existe en la base de datos
+        query = "SELECT * FROM vista_grupos_estadisticas ORDER BY fecha_creacion DESC"
+        
+        result = DatabaseConnection.execute_query(query)
+        grupos = result if result else []
+        
+        return jsonify({'data': grupos}), 200
     except Exception as e:
         tb = traceback.format_exc()
         print('[GRUPOS] Error en get_global_group_stats:\n', tb)
@@ -450,9 +496,10 @@ def get_group_activities(id_grupo):
         except Exception:
             current_user_id = identity.get('id_usuario') if isinstance(identity, dict) else identity
 
-        # Verificar acceso
+        # Verificar acceso: admin o miembro del grupo
+        is_admin = RolUsuario.has_role(current_user_id, 'admin')
         miembro = GrupoMiembro.is_member(id_grupo, current_user_id)
-        if not miembro:
+        if not miembro and not is_admin:
             return jsonify({'error': 'No tienes acceso a este grupo'}), 403
         
         completada = request.args.get('completada')
@@ -461,6 +508,38 @@ def get_group_activities(id_grupo):
         
         actividades = ActividadGrupo.get_by_grupo(id_grupo, completada)
         return jsonify(actividades), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/actividades/<int:id_actividad>', methods=['DELETE'])
+@jwt_required()
+def delete_activity(id_actividad):
+    """Eliminar una actividad del grupo"""
+    try:
+        identity = get_jwt_identity()
+        try:
+            current_user_id = int(identity)
+        except Exception:
+            current_user_id = identity.get('id_usuario') if isinstance(identity, dict) else identity
+        
+        # Verificar que la actividad existe
+        actividad = ActividadGrupo.get_by_id(id_actividad)
+        if not actividad:
+            return jsonify({'error': 'Actividad no encontrada'}), 404
+        
+        # Verificar que sea facilitador del grupo o admin
+        grupo = Grupo.get_by_id(actividad['id_grupo'])
+        if not grupo:
+            return jsonify({'error': 'Grupo no encontrado'}), 404
+        
+        is_admin = RolUsuario.has_role(current_user_id, 'admin')
+        if grupo['id_facilitador'] != current_user_id and not is_admin:
+            return jsonify({'error': 'Solo el facilitador o admin puede eliminar actividades'}), 403
+        
+        ActividadGrupo.delete(id_actividad)
+        return jsonify({'message': 'Actividad eliminada exitosamente'}), 200
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500

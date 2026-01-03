@@ -19,11 +19,16 @@ import {
 import logo from "../../assets/Logo.svg";
 import { makeFotoUrlWithProxy } from '../../utils/avatar';
 
-const NavbarAdministrador = ({ adminData = {} }) => {
+const NavbarAdministrador = ({ adminData = {}, onMenuToggle, isMobileMenuOpen }) => {
   const navigate = useNavigate();
   const auth = useAuth();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Solo usar estado interno si no se provee onMenuToggle (compatibilidad hacia atrás)
+  const [internalMobileMenuOpen, setInternalMobileMenuOpen] = useState(false);
+  
+  // Determinar si usar estado controlado o interno
+  const mobileMenuOpen = onMenuToggle ? isMobileMenuOpen : internalMobileMenuOpen;
+  const toggleMobileMenu = onMenuToggle || (() => setInternalMobileMenuOpen(!internalMobileMenuOpen));
 
   const handleLogout = () => {
     if (auth && auth.logout) auth.logout();
@@ -36,16 +41,26 @@ const NavbarAdministrador = ({ adminData = {} }) => {
     navigate("/login");
   };
 
+  const closeMobileMenu = () => {
+    if (onMenuToggle) {
+      // Si hay control externo, llamar con false para cerrar
+      // Nota: onMenuToggle es toggle, así que solo cerramos si está abierto
+      if (isMobileMenuOpen) onMenuToggle();
+    } else {
+      setInternalMobileMenuOpen(false);
+    }
+  };
+
   const handleNavigateToProfile = () => {
     navigate("/admin/perfil");
     setUserMenuOpen(false);
-    setMobileMenuOpen(false);
+    closeMobileMenu();
   };
 
   const handleNavigateToSettings = () => {
     navigate("/admin/configuracion");
     setUserMenuOpen(false);
-    setMobileMenuOpen(false);
+    closeMobileMenu();
   };
 
   // Prefer prop `adminData`, si está vacío usar authService.getUser()
@@ -75,7 +90,7 @@ const NavbarAdministrador = ({ adminData = {} }) => {
       {/* Botón hamburguesa para móvil */}
       <button
         className={`nav-toggle ${mobileMenuOpen ? 'open' : ''}`}
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        onClick={toggleMobileMenu}
         aria-label="Toggle menu"
         aria-expanded={mobileMenuOpen}
       >
@@ -84,19 +99,19 @@ const NavbarAdministrador = ({ adminData = {} }) => {
 
       {/* Enlaces y menú */}
       <div className={`nav-links admin-nav-links ${mobileMenuOpen ? 'open' : ''}`}>
-        <Link to="/admin/dashboard" className="admin-link" onClick={() => setMobileMenuOpen(false)}>
+        <Link to="/admin/dashboard" className="admin-link" onClick={closeMobileMenu}>
           <FaHome /> <span>Dashboard</span>
         </Link>
 
-        <Link to="/admin/usuarios" className="admin-link" onClick={() => setMobileMenuOpen(false)}>
+        <Link to="/admin/usuarios" className="admin-link" onClick={closeMobileMenu}>
           <FaUsers /> <span>Usuarios</span>
         </Link>
 
-        <Link to="/admin/reportes" className="admin-link" onClick={() => setMobileMenuOpen(false)}>
+        <Link to="/admin/reportes" className="admin-link" onClick={closeMobileMenu}>
           <FaChartBar /> <span>Reportes</span>
         </Link>
 
-        <Link to="/admin/alertas" className="admin-link" onClick={() => setMobileMenuOpen(false)}>
+        <Link to="/admin/alertas" className="admin-link" onClick={closeMobileMenu}>
           <FaBell /> <span>Alertas</span>
         </Link>
 

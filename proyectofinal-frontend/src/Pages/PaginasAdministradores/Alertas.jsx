@@ -1,17 +1,16 @@
 import React, { useRef, useState, useEffect, useContext } from "react";
-import NavbarAdministrador from "../../components/Administrador/NavbarAdministrador";
-import { FaBell, FaCheck, FaExclamationTriangle, FaUser, FaFilter, FaDownload, FaCheckCircle } from "react-icons/fa";
+import { FaBell, FaCheck, FaExclamationTriangle, FaUser, FaFilter, FaDownload, FaCheckCircle, FaTimes } from "react-icons/fa";
 import "../../global.css";
+import "../../styles/StylesAdmin/AdminPages.css";
+import PageCard from "../../components/Shared/PageCard";
 import { useAlertas } from "../../context/AlertasContext";
 import { ThemeContext } from "../../context/themeContextDef";
-import FondoClaro from "../../assets/FondoClaro.svg";
-import FondoOscuro from "../../assets/FondoOscuro.svg";
 import apiClient from "../../services/apiClient";
 import api from "../../config/api";
 import alertasService from "../../services/alertasService";
 
 const Alertas = () => {
-  const { isDark } = useContext(ThemeContext);
+  useContext(ThemeContext);
   const { alerts: contextAlerts, assignToMe, resolveAlerta } = useAlertas();
   const [alerts, setAlerts] = useState([]);
   const [filteredAlerts, setFilteredAlerts] = useState([]);
@@ -185,190 +184,142 @@ const Alertas = () => {
   };
 
   return (
-    <>
-      <NavbarAdministrador />
-      <main 
-        className="container" 
-        style={{ 
-          paddingTop: "2rem",
-          paddingBottom: "100px",
-          backgroundImage: `url(${isDark ? FondoOscuro : FondoClaro})`,
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "center center",
-          backgroundSize: "cover",
-          backgroundAttachment: "fixed"
-        }}
-      >
-        <div ref={cardRef} className="card reveal" style={{ maxWidth: "1200px" }}>
-          <h2>
-            <FaBell /> Gestión de Alertas Críticas
-          </h2>
-          <p style={{ color: "var(--color-text-secondary)" }}>
-            Monitorea y gestiona alertas de alto riesgo del sistema.
-          </p>
+    <div className="admin-alertas-page">
+      <div className="admin-page-content">
+        {/* Card con título y filtros */}
+        <PageCard size="xl">
+          <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
+            <h2 style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", margin: 0 }}>
+              <FaBell style={{ color: "#f44336" }} /> Gestión de Alertas Críticas
+            </h2>
+            <p style={{ color: "var(--color-text-secondary)", margin: "0.5rem 0 0 0" }}>
+              Monitorea y gestiona las alertas del sistema
+            </p>
+          </div>
 
-          {/* Filtros */}
-          <div style={{ marginTop: "1rem", display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "end" }}>
-            <div className="form-group" style={{ minWidth: "180px" }}>
-              <div className="input-labels">
-                <label><FaFilter /> Tipo de Alerta</label>
-              </div>
-              <div className="input-group flush">
-                <span className="input-icon" />
-                <select value={filter.tipo} onChange={(e) => setFilter({ ...filter, tipo: e.target.value })}>
-                  <option value="todas">Todas</option>
-                  <option value="baja">Baja</option>
-                  <option value="media">Media</option>
-                  <option value="alta">Alta</option>
-                  <option value="critica">Crítica</option>
-                </select>
-              </div>
+          {/* Filtros horizontales */}
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'nowrap', alignItems: 'flex-end', marginBottom: '1rem', overflowX: 'auto' }}>
+          <div style={{ flex: 1, minWidth: '160px' }}>
+            <div className="input-labels">
+              <label><FaFilter /> Tipo de Alerta</label>
             </div>
-
-            <div className="form-group" style={{ minWidth: "180px" }}>
-              <div className="input-labels">
-                <label><FaFilter /> Severidad</label>
-              </div>
-              <div className="input-group flush">
-                <span className="input-icon" />
-                <select value={filter.severidad} onChange={(e) => setFilter({ ...filter, severidad: e.target.value })}>
-                  <option value="todas">Todas</option>
-                  <option value="baja">Baja</option>
-                  <option value="media">Media</option>
-                  <option value="alta">Alta</option>
-                  <option value="critica">Crítica</option>
-                </select>
-              </div>
+            <div className="input-group no-icon">
+              <select value={filter.tipo} onChange={(e) => setFilter({ ...filter, tipo: e.target.value })}>
+                <option value="todas">Todas</option>
+                <option value="baja">Baja</option>
+                <option value="media">Media</option>
+                <option value="alta">Alta</option>
+                <option value="critica">Crítica</option>
+              </select>
             </div>
+          </div>
 
-            <div className="form-group" style={{ minWidth: "180px" }}>
-              <div className="input-labels">
-                <label><FaCheckCircle /> Estado</label>
-              </div>
-              <div className="input-group flush">
-                <span className="input-icon" />
-                <select value={filter.estado} onChange={(e) => setFilter({ ...filter, estado: e.target.value })}>
-                  <option value="activas">Activas</option>
-                  <option value="resueltas">Resueltas</option>
-                  <option value="todas">Todas</option>
-                </select>
-              </div>
+          <div style={{ flex: 1, minWidth: '160px' }}>
+            <div className="input-labels">
+              <label><FaFilter /> Severidad</label>
             </div>
+            <div className="input-group no-icon">
+              <select value={filter.severidad} onChange={(e) => setFilter({ ...filter, severidad: e.target.value })}>
+                <option value="todas">Todas</option>
+                <option value="baja">Baja</option>
+                <option value="media">Media</option>
+                <option value="alta">Alta</option>
+                <option value="critica">Crítica</option>
+              </select>
+            </div>
+          </div>
 
-            <button onClick={exportAlertas} className="auth-button" style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "auto" }}>
+          <div style={{ flex: 1, minWidth: '160px' }}>
+            <div className="input-labels">
+              <label><FaCheckCircle /> Estado</label>
+            </div>
+            <div className="input-group no-icon">
+              <select value={filter.estado} onChange={(e) => setFilter({ ...filter, estado: e.target.value })}>
+                <option value="activas">Activas</option>
+                <option value="resueltas">Resueltas</option>
+                <option value="todas">Todas</option>
+              </select>
+            </div>
+          </div>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+            <button onClick={exportAlertas} className="admin-btn admin-btn-secondary">
               <FaDownload /> Exportar
             </button>
           </div>
+        </PageCard>
 
-          <div style={{ marginTop: "0.5rem", color: "var(--color-text-secondary)", fontSize: "0.9rem" }}>
-            Mostrando {filteredAlerts.length} de {alerts.length} alertas
-          </div>
+        <p className="admin-text-muted admin-mb-2">
+          Mostrando {filteredAlerts.length} de {alerts.length} alertas
+        </p>
 
-
-          {msg && <div className="success-message">{msg}</div>}
+        {msg && <div className="admin-message admin-message-success">{msg}</div>}
 
           {loading ? (
-            <p>Cargando alertas...</p>
+            <div className="admin-loading">
+              <div className="admin-loading-spinner"></div>
+              <p>Cargando alertas...</p>
+            </div>
           ) : filteredAlerts.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "2rem", color: "var(--color-text-secondary)" }}>
-              <FaCheck style={{ fontSize: "3rem", marginBottom: "1rem" }} />
-              <p>No hay alertas pendientes.</p>
+            <div className="admin-empty-state">
+              <FaCheck />
+              <h3>Sin alertas pendientes</h3>
+              <p>No hay alertas que coincidan con los filtros seleccionados.</p>
             </div>
           ) : (
-            <div style={{ marginTop: "1rem" }}>
+            <div className="admin-cards-grid">
               {filteredAlerts.map((a) => (
                 <div
                   key={a.id_alerta || a.id}
-                  className="card"
+                  className="admin-card"
                   style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "start",
-                    marginBottom: "0.75rem",
-                    padding: "1.25rem",
                     borderLeft: `4px solid ${getSeverityColor(a.tipo_alerta)}`,
-                    opacity: a.fecha_revision ? 0.6 : 1,
+                    opacity: a.fecha_revision ? 0.7 : 1,
                   }}
                 >
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
-                      <FaExclamationTriangle style={{ color: getSeverityColor(a.tipo_alerta) }} />
-                      <strong style={{ fontSize: "1.1rem" }}>{a.titulo}</strong>
-                      <span
-                        style={{
-                          padding: "0.25rem 0.5rem",
-                          borderRadius: "4px",
-                          fontSize: "0.75rem",
-                          backgroundColor: `${getSeverityColor(a.tipo_alerta)}20`,
-                          color: getSeverityColor(a.tipo_alerta),
-                          textTransform: "uppercase",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        {a.tipo_alerta}
+                  <div className="admin-card-header">
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
+                        <FaExclamationTriangle style={{ color: getSeverityColor(a.tipo_alerta) }} />
+                        <h4 className="admin-card-title">{a.titulo}</h4>
+                      </div>
+                      <span className={`admin-badge ${a.tipo_alerta === 'critica' ? 'admin-badge-danger' : a.tipo_alerta === 'alta' ? 'admin-badge-warning' : 'admin-badge-info'}`}>
+                        {a.tipo_alerta?.toUpperCase()}
                       </span>
                     </div>
+                  </div>
 
-                    <div style={{ color: "var(--color-text-secondary)", marginBottom: "0.5rem" }}>
-                      {a.descripcion}
-                    </div>
-
-                    <div style={{ fontSize: "0.9rem", display: "flex", gap: "1.5rem", flexWrap: "wrap" }}>
-                      <div>
-                        <FaUser style={{ marginRight: "0.25rem" }} />
-                        <strong>Usuario:</strong> {a.nombre} {a.apellido}
-                      </div>
-                      <div>
-                        <strong>Clasificación:</strong> {a.clasificacion}
-                      </div>
-                      <div>
-                        <strong>Fecha:</strong> {new Date(a.fecha || a.fecha_creacion).toLocaleDateString()}
-                      </div>
-                      {a.nivel_estres && (
-                        <div>
-                          <strong>Estrés:</strong> {a.nivel_estres.toFixed(1)}%
-                        </div>
-                      )}
-                      {a.nivel_ansiedad && (
-                        <div>
-                          <strong>Ansiedad:</strong> {a.nivel_ansiedad.toFixed(1)}%
-                        </div>
-                      )}
+                  <div className="admin-card-body">
+                    <p className="admin-text-muted" style={{ fontSize: "0.9rem" }}>{a.descripcion}</p>
+                    
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", fontSize: "0.85rem" }}>
+                      <span><FaUser /> {a.nombre} {a.apellido}</span>
+                      <span><strong>Fecha:</strong> {new Date(a.fecha || a.fecha_creacion).toLocaleDateString()}</span>
                     </div>
 
                     {a.contexto && (
-                      <div style={{ marginTop: "0.5rem", fontSize: "0.85rem", fontStyle: "italic", color: "var(--color-text-secondary)" }}>
+                      <p style={{ fontSize: "0.85rem", fontStyle: "italic" }} className="admin-text-muted">
                         Contexto: {a.contexto}
-                      </div>
+                      </p>
                     )}
 
                     {a.fecha_revision && (
-                      <div style={{ marginTop: "0.5rem", color: "#4caf50", fontSize: "0.9rem" }}>
+                      <div className="admin-badge admin-badge-success">
                         ✓ Resuelta el {new Date(a.fecha_revision).toLocaleDateString()}
                       </div>
                     )}
                   </div>
 
-                  <div style={{ display: "flex", gap: "0.5rem", flexDirection: "column", minWidth: "120px" }}>
-                    <button
-                      onClick={() => viewAlertDetail(a)}
-                      style={{ fontSize: "0.85rem", padding: "0.5rem" }}
-                    >
+                  <div className="admin-card-footer">
+                    <button className="admin-btn admin-btn-secondary admin-btn-sm" onClick={() => viewAlertDetail(a)}>
                       Ver Detalles
                     </button>
-                    
                     {!a.fecha_revision && (
                       <>
-                        <button
-                          onClick={() => handleAssign(a.id_alerta || a.id)}
-                          style={{ fontSize: "0.85rem", padding: "0.5rem" }}
-                        >
+                        <button className="admin-btn admin-btn-secondary admin-btn-sm" onClick={() => handleAssign(a.id_alerta || a.id)}>
                           Asignar
                         </button>
-                        <button
-                          onClick={() => handleResolve(a.id_alerta || a.id)}
-                          style={{ background: "#4caf50", color: "#fff", fontSize: "0.85rem", padding: "0.5rem" }}
-                        >
+                        <button className="admin-btn admin-btn-success admin-btn-sm" onClick={() => handleResolve(a.id_alerta || a.id)}>
                           <FaCheck /> Resolver
                         </button>
                       </>
@@ -378,51 +329,48 @@ const Alertas = () => {
               ))}
             </div>
           )}
-        </div>
 
-        {/* Modal de detalles de alerta */}
+
         {/* Modal Asignar administrador */}
         {showAssignModal && selectedAlert && (
-          <div
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "rgba(0,0,0,0.5)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 1000,
-            }}
-            onClick={() => setShowAssignModal(false)}
-          >
-            <div
-              className="card"
-              style={{
-                maxWidth: "600px",
-                width: "90%",
-                padding: "1.5rem",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3>Asignar Alerta</h3>
-              <p>Alerta: <strong>{selectedAlert.titulo}</strong></p>
-              <div style={{ marginTop: "1rem" }}>
-                <label>Seleccionar administrador</label>
-                <div className="input-group no-icon" style={{ marginTop: "0.5rem", width: "100%" }}>
-                  <select value={selectedAdmin || ""} onChange={(e) => setSelectedAdmin(e.target.value)}>
+          <div className="admin-modal-overlay" onClick={() => setShowAssignModal(false)}>
+            <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="admin-modal-header">
+                <h3 className="admin-modal-title">Asignar Alerta</h3>
+                <button className="admin-modal-close" onClick={() => setShowAssignModal(false)}>
+                  <FaTimes />
+                </button>
+              </div>
+              <div className="admin-modal-body">
+                <p>Alerta: <strong>{selectedAlert.titulo}</strong></p>
+                <div className="admin-form-group">
+                  <label className="admin-form-label">Seleccionar administrador</label>
+                  <select 
+                    className="admin-form-select"
+                    value={selectedAdmin || ""} 
+                    onChange={(e) => setSelectedAdmin(e.target.value)}
+                  >
                     <option value="">-- Seleccionar --</option>
                     {admins.map(u => (
-                      <option key={u.id_usuario || u.id} value={u.id_usuario || u.id}>{u.nombre} {u.apellido} {u.correo ? `(${u.correo})` : ''}</option>
+                      <option key={u.id_usuario || u.id} value={u.id_usuario || u.id}>
+                        {u.nombre} {u.apellido} {u.correo ? `(${u.correo})` : ''}
+                      </option>
                     ))}
                   </select>
                 </div>
               </div>
-              <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem" }}>
-                <button onClick={confirmAssign} className="auth-button" disabled={!selectedAdmin} style={{ opacity: !selectedAdmin ? 0.6 : 1, cursor: !selectedAdmin ? 'not-allowed' : 'pointer' }}>Confirmar</button>
-                <button onClick={() => setShowAssignModal(false)}>Cancelar</button>
+              <div className="admin-modal-footer">
+                <button className="admin-btn admin-btn-secondary" onClick={() => setShowAssignModal(false)}>
+                  Cancelar
+                </button>
+                <button 
+                  className="admin-btn admin-btn-primary" 
+                  onClick={confirmAssign} 
+                  disabled={!selectedAdmin}
+                  style={{ opacity: !selectedAdmin ? 0.6 : 1 }}
+                >
+                  Confirmar
+                </button>
               </div>
             </div>
           </div>
@@ -430,160 +378,135 @@ const Alertas = () => {
 
         {/* Modal Resolver alerta con notas */}
         {showResolveModal && selectedAlert && (
-          <div
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "rgba(0,0,0,0.5)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 1000,
-            }}
-            onClick={() => setShowResolveModal(false)}
-          >
-            <div
-              className="card"
-              style={{
-                maxWidth: "600px",
-                width: "90%",
-                padding: "1.5rem",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3>Resolver Alerta</h3>
-              <p>Alerta: <strong>{selectedAlert.titulo}</strong></p>
-              <div style={{ marginTop: "1rem" }}>
-                <label>Notas de resolución (opcional)</label>
-                <div className="input-group no-icon" style={{ marginTop: "0.5rem" }}>
+          <div className="admin-modal-overlay" onClick={() => setShowResolveModal(false)}>
+            <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="admin-modal-header">
+                <h3 className="admin-modal-title">Resolver Alerta</h3>
+                <button className="admin-modal-close" onClick={() => setShowResolveModal(false)}>
+                  <FaTimes />
+                </button>
+              </div>
+              <div className="admin-modal-body">
+                <p>Alerta: <strong>{selectedAlert.titulo}</strong></p>
+                <div className="admin-form-group">
+                  <label className="admin-form-label">Notas de resolución (opcional)</label>
                   <textarea
+                    className="admin-form-textarea"
                     value={resolveNotes}
                     onChange={(e) => setResolveNotes(e.target.value)}
                     rows={6}
-                    className="input-textarea"
                     placeholder="Notas de resolución (opcional)"
                   />
                 </div>
               </div>
-              <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem" }}>
-                <button onClick={confirmResolve} className="auth-button" style={{ background: "#4caf50", color: "#fff" }}>Resolver</button>
-                <button onClick={() => setShowResolveModal(false)}>Cancelar</button>
+              <div className="admin-modal-footer">
+                <button className="admin-btn admin-btn-secondary" onClick={() => setShowResolveModal(false)}>
+                  Cancelar
+                </button>
+                <button className="admin-btn admin-btn-success" onClick={confirmResolve}>
+                  Resolver
+                </button>
               </div>
             </div>
           </div>
         )}
+        {/* Modal Ver Detalles */}
         {showModal && selectedAlert && (
-          <div
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "rgba(0,0,0,0.5)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 1000,
-            }}
-            onClick={() => setShowModal(false)}
-          >
-            <div
-              className="card"
-              style={{
-                maxWidth: "700px",
-                width: "90%",
-                maxHeight: "80vh",
-                overflow: "auto",
-                padding: "2rem",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3>Detalles de la Alerta</h3>
-              
-              <div style={{ marginTop: "1.5rem" }}>
-                <div className="card" style={{ padding: "1rem", marginBottom: "0.75rem" }}>
-                  <strong>Tipo de Alerta:</strong>
-                  <span style={{ marginLeft: "0.5rem", color: getSeverityColor(selectedAlert.tipo_alerta) }}>
+          <div className="admin-modal-overlay" onClick={() => setShowModal(false)}>
+            <div className="admin-modal" style={{ maxWidth: "700px" }} onClick={(e) => e.stopPropagation()}>
+              <div className="admin-modal-header">
+                <h3 className="admin-modal-title">Detalles de la Alerta</h3>
+                <button className="admin-modal-close" onClick={() => setShowModal(false)}>
+                  <FaTimes />
+                </button>
+              </div>
+              <div className="admin-modal-body">
+                <div className="admin-form-group">
+                  <label className="admin-form-label">Tipo de Alerta:</label>
+                  <span className={`admin-badge ${selectedAlert.tipo_alerta === 'critica' ? 'admin-badge-danger' : selectedAlert.tipo_alerta === 'alta' ? 'admin-badge-warning' : 'admin-badge-info'}`}>
                     {selectedAlert.tipo_alerta?.toUpperCase()}
                   </span>
                 </div>
 
-                <div className="card" style={{ padding: "1rem", marginBottom: "0.75rem" }}>
-                  <strong>Título:</strong> {selectedAlert.titulo}
+                <div className="admin-form-group">
+                  <label className="admin-form-label">Título:</label>
+                  <p>{selectedAlert.titulo}</p>
                 </div>
 
-                <div className="card" style={{ padding: "1rem", marginBottom: "0.75rem" }}>
-                  <strong>Descripción:</strong>
-                  <p style={{ marginTop: "0.5rem" }}>{selectedAlert.descripcion}</p>
+                <div className="admin-form-group">
+                  <label className="admin-form-label">Descripción:</label>
+                  <p>{selectedAlert.descripcion}</p>
                 </div>
 
-                <div className="card" style={{ padding: "1rem", marginBottom: "0.75rem" }}>
-                  <strong>Usuario Afectado:</strong> {selectedAlert.nombre} {selectedAlert.apellido}
-                  <br />
-                  <strong>Correo:</strong> {selectedAlert.correo}
+                <div className="admin-form-row">
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">Usuario Afectado:</label>
+                    <p>{selectedAlert.nombre} {selectedAlert.apellido}</p>
+                  </div>
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">Correo:</label>
+                    <p>{selectedAlert.correo}</p>
+                  </div>
                 </div>
 
-                <div className="card" style={{ padding: "1rem", marginBottom: "0.75rem" }}>
-                  <strong>Clasificación:</strong> {selectedAlert.clasificacion}
+                <div className="admin-form-group">
+                  <label className="admin-form-label">Clasificación:</label>
+                  <p>{selectedAlert.clasificacion}</p>
                 </div>
 
                 {selectedAlert.contexto && (
-                  <div className="card" style={{ padding: "1rem", marginBottom: "0.75rem" }}>
-                    <strong>Contexto:</strong>
-                    <p style={{ marginTop: "0.5rem" }}>{selectedAlert.contexto}</p>
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">Contexto:</label>
+                    <p>{selectedAlert.contexto}</p>
                   </div>
                 )}
 
-                <div className="card" style={{ padding: "1rem", marginBottom: "0.75rem" }}>
-                  <strong>Niveles Emocionales:</strong>
-                  {selectedAlert.nivel_estres && <div>Estrés: {selectedAlert.nivel_estres.toFixed(2)}%</div>}
-                  {selectedAlert.nivel_ansiedad && <div>Ansiedad: {selectedAlert.nivel_ansiedad.toFixed(2)}%</div>}
-                  {selectedAlert.emocion_dominante && <div>Emoción Dominante: {selectedAlert.emocion_dominante}</div>}
+                <div className="admin-form-group">
+                  <label className="admin-form-label">Niveles Emocionales:</label>
+                  <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+                    {selectedAlert.nivel_estres && <span className="admin-badge admin-badge-warning">Estrés: {selectedAlert.nivel_estres.toFixed(2)}%</span>}
+                    {selectedAlert.nivel_ansiedad && <span className="admin-badge admin-badge-danger">Ansiedad: {selectedAlert.nivel_ansiedad.toFixed(2)}%</span>}
+                    {selectedAlert.emocion_dominante && <span className="admin-badge admin-badge-info">{selectedAlert.emocion_dominante}</span>}
+                  </div>
                 </div>
 
-                <div className="card" style={{ padding: "1rem", marginBottom: "0.75rem" }}>
-                  <strong>Fecha de Creación:</strong> {new Date(selectedAlert.fecha || selectedAlert.fecha_creacion).toLocaleString()}
+                <div className="admin-form-group">
+                  <label className="admin-form-label">Fecha de Creación:</label>
+                  <p>{new Date(selectedAlert.fecha || selectedAlert.fecha_creacion).toLocaleString()}</p>
                 </div>
 
-                  {historial && historial.length > 0 && (
-                    <div className="card" style={{ padding: "1rem", marginBottom: "0.75rem" }}>
-                      <strong>Historial de acciones:</strong>
-                      <ul style={{ marginTop: '0.5rem', maxHeight: '200px', overflow: 'auto' }}>
-                        {historial.map((h) => (
-                          <li key={h.id_historial || h.id} style={{ marginBottom: '0.5rem' }}>
-                            <div style={{ fontSize: '0.9rem' }}>
-                              <strong>{h.accion}</strong> — {h.detalles || ''}
-                            </div>
-                            <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>
-                              {h.usuario_responsable ? `Por: ${h.usuario_responsable}` : ''} {h.fecha_accion ? `• ${new Date(h.fecha_accion).toLocaleString()}` : ''}
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
+                {historial && historial.length > 0 && (
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">Historial de acciones:</label>
+                    <div style={{ maxHeight: '200px', overflow: 'auto', background: 'var(--color-bg)', padding: '0.75rem', borderRadius: '8px' }}>
+                      {historial.map((h) => (
+                        <div key={h.id_historial || h.id} style={{ marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--color-border)' }}>
+                          <strong>{h.accion}</strong> — {h.detalles || ''}
+                          <div className="admin-text-muted" style={{ fontSize: '0.8rem' }}>
+                            {h.usuario_responsable ? `Por: ${h.usuario_responsable}` : ''} {h.fecha_accion ? `• ${new Date(h.fecha_accion).toLocaleString()}` : ''}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  )}
+                  </div>
+                )}
+
                 {selectedAlert.fecha_revision && (
-                  <div className="card" style={{ padding: "1rem", marginBottom: "0.75rem", backgroundColor: "#4caf5010" }}>
-                    <strong>Estado:</strong> Resuelta el {new Date(selectedAlert.fecha_revision).toLocaleString()}
+                  <div className="admin-message admin-message-success">
+                    ✓ Resuelta el {new Date(selectedAlert.fecha_revision).toLocaleString()}
                   </div>
                 )}
               </div>
-
-              <button
-                onClick={() => setShowModal(false)}
-                style={{ marginTop: "1rem", width: "100%" }}
-              >
-                Cerrar
-              </button>
+              <div className="admin-modal-footer">
+                <button className="admin-btn admin-btn-secondary" onClick={() => setShowModal(false)}>
+                  Cerrar
+                </button>
+              </div>
             </div>
           </div>
         )}
-      </main>
-    </>
+      </div>
+    </div>
   );
 };
 

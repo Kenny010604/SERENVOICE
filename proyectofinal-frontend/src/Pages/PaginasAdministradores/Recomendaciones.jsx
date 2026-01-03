@@ -1,15 +1,12 @@
-import React, { useState, useEffect, useContext } from "react";
-import NavbarAdministrador from "../../components/Administrador/NavbarAdministrador";
-import { ThemeContext } from "../../context/themeContextDef";
-import FondoClaro from "../../assets/FondoClaro.svg";
-import FondoOscuro from "../../assets/FondoOscuro.svg";
+import React, { useState, useEffect } from "react";
 import apiClient from "../../services/apiClient";
 import api from "../../config/api";
 import { FaLightbulb, FaFilter, FaChartPie, FaDownload, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import PageCard from "../../components/Shared/PageCard";
 import "../../global.css";
+import "../../styles/StylesAdmin/AdminPages.css";
 
 const Recomendaciones = () => {
-  const { isDark } = useContext(ThemeContext);
   const [recomendaciones, setRecomendaciones] = useState([]);
   const [filteredRecs, setFilteredRecs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -105,148 +102,140 @@ const Recomendaciones = () => {
   };
 
   return (
-    <>
-      <NavbarAdministrador />
-      <main
-        className="container"
-        style={{
-          paddingTop: "2rem",
-          paddingBottom: "100px",
-          backgroundImage: `url(${isDark ? FondoOscuro : FondoClaro})`,
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "center center",
-          backgroundSize: "cover",
-          backgroundAttachment: "fixed"
-        }}
-      >
-        <div className="card reveal" data-revealdelay="60" style={{ maxWidth: "1400px" }}>
-          <h2><FaLightbulb /> Gestión de Recomendaciones</h2>
-          <p style={{ color: "var(--color-text-secondary)" }}>
-            Analiza efectividad de recomendaciones generadas por IA.
-          </p>
-
-          {/* Estadísticas */}
-          <div style={{ marginTop: "1.5rem", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
-            <div className="card" style={{ padding: "1rem", textAlign: "center" }}>
-              <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>📊</div>
-              <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{stats.total || 0}</div>
-              <div style={{ color: "var(--color-text-secondary)", fontSize: "0.9rem" }}>Total</div>
-            </div>
-            <div className="card" style={{ padding: "1rem", textAlign: "center" }}>
-              <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>✅</div>
-              <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{stats.aplicadas || 0}</div>
-              <div style={{ color: "var(--color-text-secondary)", fontSize: "0.9rem" }}>Aplicadas</div>
-            </div>
-            <div className="card" style={{ padding: "1rem", textAlign: "center" }}>
-              <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>👍</div>
-              <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
-                {stats.total > 0 ? ((stats.utiles / stats.total) * 100).toFixed(1) : 0}%
-              </div>
-              <div style={{ color: "var(--color-text-secondary)", fontSize: "0.9rem" }}>Utilidad</div>
-            </div>
-            <div className="card" style={{ padding: "1rem", textAlign: "center" }}>
-              <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>📈</div>
-              <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
-                {stats.total > 0 ? ((stats.aplicadas / stats.total) * 100).toFixed(1) : 0}%
-              </div>
-              <div style={{ color: "var(--color-text-secondary)", fontSize: "0.9rem" }}>Tasa Aplicación</div>
-            </div>
+    <div className="admin-recomendaciones-page">
+      <div className="admin-page-content">
+        {/* Card con título y filtros */}
+        <PageCard size="xl">
+          <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
+            <h2 style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", margin: 0 }}>
+              <FaLightbulb style={{ color: "#ff9800" }} /> Gestión de Recomendaciones
+            </h2>
+            <p style={{ color: "var(--color-text-secondary)", margin: "0.5rem 0 0 0" }}>
+              Administra las recomendaciones del sistema
+            </p>
           </div>
 
-          {/* Filtros */}
-          <div style={{ marginTop: "1.5rem", display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "end" }}>
-            <div className="form-group" style={{ minWidth: "150px" }}>
-              <label>Tipo</label>
-              <select value={filter.tipo} onChange={(e) => setFilter({ ...filter, tipo: e.target.value })}>
-                <option value="todos">Todos</option>
-                <option value="respiracion">Respiración</option>
-                <option value="ejercicio">Ejercicio</option>
-                <option value="meditacion">Meditación</option>
-                <option value="profesional">Profesional</option>
-                <option value="otros">Otros</option>
-              </select>
+          {/* Filtros horizontales */}
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'nowrap', alignItems: 'flex-end', overflowX: 'auto' }}>
+            <div style={{ flex: 1, minWidth: '160px' }}>
+              <div className="input-labels">
+                <label>Tipo</label>
+              </div>
+              <div className="input-group no-icon">
+                <select value={filter.tipo} onChange={(e) => setFilter({ ...filter, tipo: e.target.value })}>
+                  <option value="todos">Todos</option>
+                  <option value="respiracion">Respiración</option>
+                  <option value="ejercicio">Ejercicio</option>
+                  <option value="meditacion">Meditación</option>
+                  <option value="profesional">Profesional</option>
+                  <option value="otros">Otros</option>
+                </select>
+              </div>
             </div>
 
-            <div className="form-group" style={{ minWidth: "150px" }}>
-              <label>Prioridad</label>
-              <select value={filter.prioridad} onChange={(e) => setFilter({ ...filter, prioridad: e.target.value })}>
-                <option value="todas">Todas</option>
-                <option value="alta">Alta</option>
-                <option value="media">Media</option>
-                <option value="baja">Baja</option>
-              </select>
+            <div style={{ flex: 1, minWidth: '160px' }}>
+              <div className="input-labels">
+                <label>Prioridad</label>
+              </div>
+              <div className="input-group no-icon">
+                <select value={filter.prioridad} onChange={(e) => setFilter({ ...filter, prioridad: e.target.value })}>
+                  <option value="todas">Todas</option>
+                  <option value="alta">Alta</option>
+                  <option value="media">Media</option>
+                  <option value="baja">Baja</option>
+                </select>
+              </div>
             </div>
 
-            <div className="form-group" style={{ minWidth: "150px" }}>
-              <label>Aplicada</label>
-              <select value={filter.aplicada} onChange={(e) => setFilter({ ...filter, aplicada: e.target.value })}>
-                <option value="todas">Todas</option>
-                <option value="si">Sí</option>
-                <option value="no">No</option>
-              </select>
+            <div style={{ flex: 1, minWidth: '160px' }}>
+              <div className="input-labels">
+                <label>Aplicada</label>
+              </div>
+              <div className="input-group no-icon">
+                <select value={filter.aplicada} onChange={(e) => setFilter({ ...filter, aplicada: e.target.value })}>
+                  <option value="todas">Todas</option>
+                  <option value="si">Sí</option>
+                  <option value="no">No</option>
+                </select>
+              </div>
             </div>
-
-            <button onClick={exportRecomendaciones} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+            <button onClick={exportRecomendaciones} className="admin-btn admin-btn-secondary">
               <FaDownload /> Exportar
             </button>
           </div>
+        </PageCard>
 
-          <div style={{ marginTop: "0.5rem", color: "var(--color-text-secondary)", fontSize: "0.9rem" }}>
-            Mostrando {filteredRecs.length} de {recomendaciones.length} recomendaciones
+        {/* Estadísticas */}
+        <div className="admin-stats-grid">
+          <div className="admin-stat-card">
+            <div className="admin-stat-icon">📊</div>
+            <div className="admin-stat-value">{stats.total || 0}</div>
+            <div className="admin-stat-label">Total</div>
           </div>
+          <div className="admin-stat-card">
+            <div className="admin-stat-icon">✅</div>
+            <div className="admin-stat-value">{stats.aplicadas || 0}</div>
+            <div className="admin-stat-label">Aplicadas</div>
+          </div>
+          <div className="admin-stat-card">
+            <div className="admin-stat-icon">👍</div>
+            <div className="admin-stat-value">
+              {stats.total > 0 ? ((stats.utiles / stats.total) * 100).toFixed(1) : 0}%
+            </div>
+            <div className="admin-stat-label">Utilidad</div>
+          </div>
+          <div className="admin-stat-card">
+            <div className="admin-stat-icon">📈</div>
+            <div className="admin-stat-value">
+              {stats.total > 0 ? ((stats.aplicadas / stats.total) * 100).toFixed(1) : 0}%
+            </div>
+            <div className="admin-stat-label">Tasa Aplicación</div>
+          </div>
+        </div>
 
-          {msg && <div className="success-message" style={{ marginTop: "1rem" }}>{msg}</div>}
+        <p className="admin-text-muted admin-mb-2">
+          Mostrando {filteredRecs.length} de {recomendaciones.length} recomendaciones
+        </p>
 
-          {loading ? (
+        {msg && <div className="admin-message admin-message-success">{msg}</div>}
+
+        {loading ? (
+          <div className="admin-loading">
+            <div className="admin-loading-spinner"></div>
             <p>Cargando recomendaciones...</p>
-          ) : filteredRecs.length === 0 ? (
+          </div>
+        ) : filteredRecs.length === 0 ? (
+          <div className="admin-empty-state">
+            <FaLightbulb />
+            <h3>Sin recomendaciones</h3>
             <p>No hay recomendaciones que coincidan con los filtros.</p>
-          ) : (
-            <div style={{ marginTop: "1rem" }}>
-              {filteredRecs.map((rec) => (
-                <div
-                  key={rec.id_recomendacion}
-                  className="card"
-                  style={{
-                    padding: "1.25rem",
-                    marginBottom: "0.75rem",
-                    borderLeft: `4px solid ${getPriorityColor(rec.prioridad)}`,
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
+          </div>
+        ) : (
+          <div className="admin-cards-grid" style={{ gridTemplateColumns: "1fr" }}>
+            {filteredRecs.map((rec) => (
+              <div
+                key={rec.id_recomendacion}
+                className="admin-card"
+                style={{ borderLeft: `4px solid ${getPriorityColor(rec.prioridad)}` }}
+              >
+                <div className="admin-card-body">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", flexWrap: "wrap", gap: "1rem" }}>
                     <div style={{ flex: 1 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
                         <span style={{ fontSize: "1.5rem" }}>{getTipoIcon(rec.tipo_recomendacion)}</span>
-                        <span
-                          style={{
-                            padding: "0.25rem 0.5rem",
-                            borderRadius: "4px",
-                            fontSize: "0.75rem",
-                            backgroundColor: `${getPriorityColor(rec.prioridad)}20`,
-                            color: getPriorityColor(rec.prioridad),
-                            textTransform: "uppercase"
-                          }}
-                        >
+                        <span className={`admin-badge ${rec.prioridad === 'alta' ? 'admin-badge-danger' : rec.prioridad === 'media' ? 'admin-badge-warning' : 'admin-badge-success'}`}>
                           {rec.tipo_recomendacion}
                         </span>
-                        <span
-                          style={{
-                            padding: "0.25rem 0.5rem",
-                            borderRadius: "4px",
-                            fontSize: "0.75rem",
-                            backgroundColor: `${getPriorityColor(rec.prioridad)}20`,
-                            color: getPriorityColor(rec.prioridad)
-                          }}
-                        >
+                        <span className={`admin-badge ${rec.prioridad === 'alta' ? 'admin-badge-danger' : rec.prioridad === 'media' ? 'admin-badge-warning' : 'admin-badge-success'}`}>
                           {rec.prioridad}
                         </span>
                       </div>
 
-                      <div style={{ marginBottom: "0.75rem" }}>
-                        {rec.contenido}
-                      </div>
+                      <p style={{ marginBottom: "0.75rem" }}>{rec.contenido}</p>
 
-                      <div style={{ fontSize: "0.9rem", display: "flex", gap: "1.5rem", flexWrap: "wrap", color: "var(--color-text-secondary)" }}>
+                      <div style={{ fontSize: "0.9rem", display: "flex", gap: "1.5rem", flexWrap: "wrap" }} className="admin-text-muted">
                         {rec.usuario && <div><strong>Usuario:</strong> {rec.usuario}</div>}
                         <div><strong>Fecha:</strong> {new Date(rec.fecha_generacion).toLocaleDateString()}</div>
                         {rec.aplica && rec.fecha_aplica && (
@@ -254,19 +243,19 @@ const Recomendaciones = () => {
                         )}
                       </div>
 
-                      <div style={{ marginTop: "0.75rem", display: "flex", gap: "1rem" }}>
+                      <div style={{ marginTop: "0.75rem", display: "flex", gap: "1rem", flexWrap: "wrap" }}>
                         {rec.aplica ? (
-                          <span style={{ color: "#4caf50", display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                          <span className="admin-badge admin-badge-success" style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
                             <FaCheckCircle /> Aplicada
                           </span>
                         ) : (
-                          <span style={{ color: "#f44336", display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                          <span className="admin-badge admin-badge-danger" style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
                             <FaTimesCircle /> No aplicada
                           </span>
                         )}
 
                         {rec.util !== null && (
-                          <span style={{ color: rec.util ? "#4caf50" : "#ff9800" }}>
+                          <span className={`admin-badge ${rec.util ? 'admin-badge-success' : 'admin-badge-warning'}`}>
                             {rec.util ? "👍 Útil" : "👎 No útil"}
                           </span>
                         )}
@@ -274,12 +263,12 @@ const Recomendaciones = () => {
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </main>
-    </>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

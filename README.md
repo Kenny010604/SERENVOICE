@@ -155,13 +155,13 @@
 
 2. **Configurar variables de entorno**
    ```bash
-   # Copiar archivos de ejemplo
+   # Copiar archivo de ejemplo
    cp .env.example .env
-   cp backend/.env.example backend/.env
-   cp proyectofinal-frontend/.env.example proyectofinal-frontend/.env
    ```
+   
+   ℹ️ **Nota**: El proyecto usa un único archivo `.env` en la raíz para todos los componentes (backend, frontend, mobile). Ver [.env.README.md](.env.README.md) para más detalles.
 
-3. **Editar archivos .env** con tus credenciales
+3. **Editar el archivo .env** con tus credenciales
 
 4. **Iniciar con Docker Compose**
    ```bash
@@ -192,9 +192,11 @@ source venv/bin/activate
 # Instalar dependencias
 pip install -r requirements.txt
 
-# Configurar .env
+# Configurar .env (en la raíz del proyecto, no en backend/)
+cd ..
 cp .env.example .env
 # Editar .env con tus credenciales
+cd backend
 
 # Ejecutar migraciones (importar serenvoice.sql)
 mysql -u root -p estudiantes_db < ../serenvoice.sql
@@ -212,9 +214,8 @@ python app.py
 cd proyectofinal-frontend
 
 # Instalar dependencias
-npm install
-
-# Configurar .env
+npEl .env ya está configurado en la raíz del proyecto
+# Vite cargará automáticamente las variables VITE_* desde la raíz.env
 cp .env.example .env
 # Editar .env
 

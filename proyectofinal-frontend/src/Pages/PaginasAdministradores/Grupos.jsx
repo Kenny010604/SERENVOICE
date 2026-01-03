@@ -1,24 +1,34 @@
 import React, { useEffect, useState, useContext } from 'react';
 import groupsService from '../../services/groupsService';
-import { Link, useNavigate } from 'react-router-dom';
-import NavbarAdministrador from "../../components/Administrador/NavbarAdministrador";
+import { useNavigate } from 'react-router-dom';
 import { ThemeContext } from "../../context/themeContextDef";
-import FondoClaro from "../../assets/FondoClaro.svg";
-import FondoOscuro from "../../assets/FondoOscuro.svg";
-import { FaUserFriends, FaChartBar, FaUsers, FaClipboardList, FaFilter, FaPlus, FaDownload } from "react-icons/fa";
+import { FaUserFriends, FaChartBar, FaUsers, FaClipboardList, FaPlus, FaDownload, FaLock, FaGlobe, FaEnvelope, FaKey } from "react-icons/fa";
 import apiClient from '../../services/apiClient';
 import api from "../../config/api";
+import PageCard from "../../components/Shared/PageCard";
+import GrupoStatsModal from "../../components/Administrador/GrupoStatsModal";
+import MiembrosModal from "../../components/Administrador/MiembrosModal";
+import ActividadesModal from "../../components/Administrador/ActividadesModal";
 import "../../global.css";
+import "../../styles/StylesAdmin/AdminPages.css";
 
 export default function Grupos() {
-  const { isDark } = useContext(ThemeContext);
+  useContext(ThemeContext);
   const [grupos, setGrupos] = useState([]);
   const [filteredGrupos, setFilteredGrupos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedGrupo, setSelectedGrupo] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showMiembrosModal, setShowMiembrosModal] = useState(false);
+  const [showActividadesModal, setShowActividadesModal] = useState(false);
+  const [miembros, setMiembros] = useState([]);
+  const [actividades, setActividades] = useState([]);
+  const [loadingMiembros, setLoadingMiembros] = useState(false);
+  const [loadingActividades, setLoadingActividades] = useState(false);
   const [filter, setFilter] = useState({ tipo: "todos", estado: "activos", busqueda: "" });
   const [msg, setMsg] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(15);
   const navigate = useNavigate();
 
   const cargar = async () => {
@@ -56,15 +66,84 @@ export default function Grupos() {
     }
   };
 
-  const viewGrupoStats = async (grupo) => {
+  const viewGrupoStats = (grupo) => {
+    // Ya tenemos todos los datos del grupo, no necesitamos hacer otra llamada API
+    setSelectedGrupo(grupo);
+    setShowModal(true);
+  };
+
+  const viewMiembros = async (grupo) => {
+    setSelectedGrupo(grupo);
+    setShowMiembrosModal(true);
+    setLoadingMiembros(true);
     try {
-      await apiClient.get(api.endpoints.grupos.estadisticasDetalladas(grupo.id_grupo));
-      setSelectedGrupo(grupo);
-      setShowModal(true);
-    } catch (error) {
-      console.error("Error al cargar estadísticas:", error);
-      setSelectedGrupo(grupo);
-      setShowModal(true);
+      const res = await apiClient.get(api.endpoints.grupos.miembros(grupo.id_grupo || grupo.id));
+      setMiembros(res.data || []);
+    } catch (e) {
+      console.error(e);
+      setMiembros([]);
+    } finally {
+      setLoadingMiembros(false);
+    }
+  };
+
+  const viewActividades = async (grupo) => {
+    setSelectedGrupo(grupo);
+    setShowActividadesModal(true);
+    setLoadingActividades(true);
+    try {
+      const res = await apiClient.get(api.endpoints.grupos.actividades(grupo.id_grupo || grupo.id));
+      setActividades(res.data || []);
+    } catch (e) {
+      console.error(e);
+      setActividades([]);
+    } finally {
+      setLoadingActividades(false);
+    }
+  };
+
+  const eliminarMiembro = async (idUsuario) => {
+    if (!window.confirm('¿Estás seguro de eliminar este miembro del grupo?')) return;
+    try {
+      await apiClient.delete(api.endpoints.grupos.eliminarMiembro(selectedGrupo.id_grupo || selectedGrupo.id, idUsuario));
+      setMsg('Miembro eliminado correctamente');
+      setMiembros(miembros.filter(m => m.id_usuario !== idUsuario));
+      cargar(); // Refrescar estadísticas
+    } catch (e) {
+      console.error(e);
+      setMsg('Error al eliminar miembro');
+    }
+  };
+
+  const cambiarRolMiembro = async (idUsuario, nuevoRol) => {
+    try {
+      await apiClient.put(
+        api.endpoints.grupos.actualizarMiembro(selectedGrupo.id_grupo || selectedGrupo.id, idUsuario),
+        { rol_grupo: nuevoRol }
+      );
+      setMsg('Rol actualizado correctamente');
+      // Actualizar estado local
+      setMiembros(miembros.map(m => 
+        (m.id_usuario || m.id) === idUsuario 
+          ? { ...m, rol_grupo: nuevoRol } 
+          : m
+      ));
+    } catch (e) {
+      console.error(e);
+      setMsg('Error al cambiar rol del miembro');
+    }
+  };
+
+  const eliminarActividad = async (idActividad) => {
+    if (!window.confirm('¿Estás seguro de eliminar esta actividad?')) return;
+    try {
+      await apiClient.delete(api.endpoints.grupos.eliminarActividad(idActividad));
+      setMsg('Actividad eliminada correctamente');
+      setActividades(actividades.filter(a => a.id_actividad !== idActividad));
+      cargar(); // Refrescar estadísticas
+    } catch (e) {
+      console.error(e);
+      setMsg('Error al eliminar actividad');
     }
   };
 
@@ -121,279 +200,406 @@ export default function Grupos() {
     }
 
     setFilteredGrupos(filtered);
+    setCurrentPage(1); // Reset a página 1 al cambiar filtros
   }, [filter, grupos]);
 
   return (
-    <>
-      <NavbarAdministrador />
-      <main
-        className="container"
-        style={{
-          paddingTop: "2rem",
-          paddingBottom: "100px",
-          backgroundImage: `url(${isDark ? FondoOscuro : FondoClaro})`,
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "center center",
-          backgroundSize: "cover",
-          backgroundAttachment: "fixed"
-        }}
-      >
-        <div className="card reveal" style={{ maxWidth: "1400px" }}>
-          <h2>
-            <FaUserFriends /> Gestión de Grupos
-          </h2>
-          <p style={{ color: "var(--color-text-secondary)" }}>
-            Administra grupos terapéuticos, actividades y participantes.
-          </p>
+    <div className="admin-grupos-page">
+      <div className="admin-page-content">
+        {/* Card con título y filtros */}
+        <PageCard size="xl">
+          <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
+            <h2 style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", margin: 0 }}>
+              <FaUserFriends style={{ color: "#9c27b0" }} /> Gestión de Grupos
+            </h2>
+            <p style={{ color: "var(--color-text-secondary)", margin: "0.5rem 0 0 0" }}>
+              Administra y gestiona los grupos del sistema
+            </p>
+          </div>
 
-          {/* Filtros y acciones */}
-          <div style={{ marginTop: "1rem", display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "end" }}>
-            <div className="form-group" style={{ flex: "1", minWidth: "200px" }}>
-              <label>Buscar</label>
-              <input
-                type="text"
-                placeholder="Nombre o descripción..."
-                value={filter.busqueda}
-                onChange={(e) => setFilter({ ...filter, busqueda: e.target.value })}
-              />
+          {/* Filtros horizontales */}
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'nowrap', alignItems: 'flex-end', overflowX: 'auto' }}>
+            <div style={{ flex: 2, minWidth: '200px' }}>
+              <div className="input-labels">
+                <label>Buscar</label>
+              </div>
+              <div className="input-group no-icon">
+                <input
+                  type="text"
+                  placeholder="Nombre o descripción..."
+                  value={filter.busqueda}
+                  onChange={(e) => setFilter({ ...filter, busqueda: e.target.value })}
+                />
+              </div>
             </div>
 
-            <div className="form-group" style={{ minWidth: "150px" }}>
-              <label>Tipo</label>
-              <select value={filter.tipo} onChange={(e) => setFilter({ ...filter, tipo: e.target.value })}>
-                <option value="todos">Todos</option>
-                <option value="terapia">Terapia</option>
-                <option value="apoyo">Apoyo</option>
-                <option value="taller">Taller</option>
-                <option value="empresa">Empresa</option>
-                <option value="educativo">Educativo</option>
-                <option value="familiar">Familiar</option>
-                <option value="otro">Otro</option>
-              </select>
+            <div style={{ flex: 1, minWidth: '140px' }}>
+              <div className="input-labels">
+                <label>Tipo</label>
+              </div>
+              <div className="input-group no-icon">
+                <select value={filter.tipo} onChange={(e) => setFilter({ ...filter, tipo: e.target.value })}>
+                  <option value="todos">Todos</option>
+                  <option value="terapia">Terapia</option>
+                  <option value="apoyo">Apoyo</option>
+                  <option value="taller">Taller</option>
+                  <option value="empresa">Empresa</option>
+                  <option value="educativo">Educativo</option>
+                  <option value="familiar">Familiar</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
             </div>
 
-            <div className="form-group" style={{ minWidth: "150px" }}>
-              <label>Estado</label>
-              <select value={filter.estado} onChange={(e) => setFilter({ ...filter, estado: e.target.value })}>
-                <option value="activos">Activos</option>
-                <option value="inactivos">Inactivos</option>
-                <option value="todos">Todos</option>
-              </select>
+            <div style={{ flex: 1, minWidth: '140px' }}>
+              <div className="input-labels">
+                <label>Estado</label>
+              </div>
+              <div className="input-group no-icon">
+                <select value={filter.estado} onChange={(e) => setFilter({ ...filter, estado: e.target.value })}>
+                  <option value="activos">Activos</option>
+                  <option value="inactivos">Inactivos</option>
+                  <option value="todos">Todos</option>
+                </select>
+              </div>
             </div>
-
-            <button onClick={() => navigate('/admin/grupos/nuevo')} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <FaPlus /> Crear Grupo
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1rem' }}>
+            <button onClick={() => navigate('/admin/grupos/nuevo')} className="admin-btn admin-btn-primary">
+              <FaPlus /> Crear
             </button>
-
-            <button onClick={exportGrupos} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <button onClick={exportGrupos} className="admin-btn admin-btn-secondary">
               <FaDownload /> Exportar
             </button>
           </div>
+        </PageCard>
 
-          <div style={{ marginTop: "0.5rem", color: "var(--color-text-secondary)", fontSize: "0.9rem" }}>
-            Mostrando {filteredGrupos.length} de {grupos.length} grupos
+        <p className="admin-text-muted admin-mb-2">
+          Mostrando {Math.min(perPage, filteredGrupos.length - (currentPage - 1) * perPage)} de {filteredGrupos.length} grupos
+        </p>
+
+        {msg && <div className="admin-message admin-message-success">{msg}</div>}
+
+        {loading ? (
+          <div className="admin-loading">
+            <div className="admin-loading-spinner"></div>
+            <p>Cargando grupos...</p>
           </div>
-
-          {msg && <div className="success-message" style={{ marginTop: "1rem" }}>{msg}</div>}
-
-          {loading ? (
-            <div style={{ textAlign: "center", padding: "2rem" }}>Cargando grupos...</div>
-          ) : filteredGrupos.length === 0 ? (
+        ) : filteredGrupos.length === 0 ? (
+          <div className="admin-empty-state">
+            <FaUserFriends />
+            <h3>Sin grupos</h3>
             <p>No hay grupos que coincidan con los filtros.</p>
-          ) : (
-            <div style={{ marginTop: "1rem", overflowX: "auto" }}>
-              <table style={{ width: '100%', borderCollapse: "collapse" }}>
-                <thead>
-                  <tr style={{ textAlign: "left", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
-                    <th style={{ padding: "0.75rem" }}>Nombre</th>
-                    <th style={{ padding: "0.75rem" }}>Tipo</th>
-                    <th style={{ padding: "0.75rem" }}>Facilitador</th>
-                    <th style={{ padding: "0.75rem" }}>Miembros</th>
-                    <th style={{ padding: "0.75rem" }}>Actividades</th>
-                    <th style={{ padding: "0.75rem" }}>Código</th>
-                    <th style={{ padding: "0.75rem" }}>Estado</th>
-                    <th style={{ padding: "0.75rem" }}>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredGrupos.map(g => (
-                    <tr key={g.id_grupo || g.id || g._id} style={{ borderBottom: "1px solid rgba(0,0,0,0.04)", opacity: g.activo ? 1 : 0.6 }}>
-                      <td style={{ padding: "0.75rem" }}>
-                        <strong>{g.nombre_grupo || g.nombre || g.name}</strong>
-                        {g.descripcion && (
-                          <div style={{ fontSize: "0.85rem", color: "var(--color-text-secondary)" }}>
-                            {g.descripcion.substring(0, 50)}{g.descripcion.length > 50 ? '...' : ''}
-                          </div>
-                        )}
-                      </td>
-                      <td style={{ padding: "0.75rem" }}>
-                        <span style={{
-                          padding: "0.25rem 0.5rem",
-                          borderRadius: "4px",
-                          fontSize: "0.75rem",
-                          backgroundColor: "#5ad0d220",
-                          color: "#5ad0d2"
-                        }}>
-                          {g.tipo_grupo || 'N/A'}
-                        </span>
-                      </td>
-                      <td style={{ padding: "0.75rem" }}>
-                        {g.facilitador_nombre ? `${g.facilitador_nombre} ${g.facilitador_apellido}` : 'N/A'}
-                      </td>
-                      <td style={{ padding: "0.75rem" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                          <FaUsers />
-                          {g.miembros_activos || 0} / {g.total_miembros || 0}
-                        </div>
-                      </td>
-                      <td style={{ padding: "0.75rem" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                          <FaClipboardList />
-                          {g.actividades_completadas || 0} / {g.total_actividades || 0}
-                        </div>
-                      </td>
-                      <td style={{ padding: "0.75rem", fontFamily: "monospace" }}>
-                        {g.codigo_acceso || 'N/A'}
-                      </td>
-                      <td style={{ padding: "0.75rem" }}>
-                        <span style={{
-                          padding: "0.25rem 0.5rem",
-                          borderRadius: "4px",
-                          fontSize: "0.85rem",
-                          backgroundColor: g.activo ? "#4caf5020" : "#f4433620",
-                          color: g.activo ? "#4caf50" : "#f44336",
-                        }}>
-                          {g.activo ? "Activo" : "Inactivo"}
-                        </span>
-                      </td>
-                      <td style={{ padding: "0.75rem" }}>
-                        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                          <button
-                            onClick={() => viewGrupoStats(g)}
-                            title="Ver estadísticas"
-                            style={{ fontSize: "0.85rem", padding: "0.4rem 0.8rem" }}
-                          >
-                            <FaChartBar />
-                          </button>
-                          <Link
-                            to={`/admin/grupos/${g.id_grupo || g.id || g._id}/miembros`}
-                            style={{ fontSize: "0.85rem", padding: "0.4rem 0.8rem", textDecoration: "none" }}
-                          >
-                            <button style={{ fontSize: "0.85rem", padding: "0.4rem 0.8rem" }}>
-                              Miembros
-                            </button>
-                          </Link>
-                          <Link
-                            to={`/admin/grupos/${g.id_grupo || g.id || g._id}/actividades`}
-                            style={{ fontSize: "0.85rem", padding: "0.4rem 0.8rem", textDecoration: "none" }}
-                          >
-                            <button style={{ fontSize: "0.85rem", padding: "0.4rem 0.8rem" }}>
-                              Actividades
-                            </button>
-                          </Link>
-                          <button
-                            onClick={() => toggleEstado(g.id_grupo || g.id || g._id, g.activo)}
-                            style={{
-                              fontSize: "0.85rem",
-                              padding: "0.4rem 0.8rem",
-                              backgroundColor: g.activo ? "#ff9800" : "#4caf50",
-                              color: "#fff"
-                            }}
-                          >
-                            {g.activo ? 'Desactivar' : 'Activar'}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-
-        {/* Modal de estadísticas del grupo */}
-        {showModal && selectedGrupo && (
-          <div
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "rgba(0,0,0,0.5)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 1000,
-            }}
-            onClick={() => setShowModal(false)}
-          >
-            <div
-              className="card"
-              style={{
-                maxWidth: "700px",
-                width: "90%",
-                maxHeight: "80vh",
-                overflow: "auto",
-                padding: "2rem",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3>Estadísticas de {selectedGrupo.nombre_grupo}</h3>
-              
-              <div style={{ marginTop: "1.5rem" }}>
-                <div className="card" style={{ padding: "1rem", marginBottom: "0.75rem" }}>
-                  <strong>Tipo de Grupo:</strong> {selectedGrupo.tipo_grupo}
-                </div>
-                <div className="card" style={{ padding: "1rem", marginBottom: "0.75rem" }}>
-                  <strong>Privacidad:</strong> {selectedGrupo.privacidad}
-                </div>
-                <div className="card" style={{ padding: "1rem", marginBottom: "0.75rem" }}>
-                  <strong>Facilitador:</strong> {selectedGrupo.facilitador_nombre} {selectedGrupo.facilitador_apellido}
-                  <br />
-                  <small>{selectedGrupo.facilitador_correo}</small>
-                </div>
-                <div className="card" style={{ padding: "1rem", marginBottom: "0.75rem" }}>
-                  <strong>Total de Miembros:</strong> {selectedGrupo.total_miembros || 0}
-                  <br />
-                  <strong>Miembros Activos:</strong> {selectedGrupo.miembros_activos || 0}
-                  {selectedGrupo.max_participantes && (
-                    <><br /><strong>Máximo de Participantes:</strong> {selectedGrupo.max_participantes}</>
-                  )}
-                </div>
-                <div className="card" style={{ padding: "1rem", marginBottom: "0.75rem" }}>
-                  <strong>Total de Actividades:</strong> {selectedGrupo.total_actividades || 0}
-                  <br />
-                  <strong>Actividades Completadas:</strong> {selectedGrupo.actividades_completadas || 0}
-                  {selectedGrupo.total_actividades > 0 && (
-                    <><br /><strong>Tasa de Completitud:</strong> {((selectedGrupo.actividades_completadas / selectedGrupo.total_actividades) * 100).toFixed(1)}%</>
-                  )}
-                </div>
-                <div className="card" style={{ padding: "1rem", marginBottom: "0.75rem" }}>
-                  <strong>Código de Acceso:</strong> <span style={{ fontFamily: "monospace", fontSize: "1.1rem" }}>{selectedGrupo.codigo_acceso}</span>
-                </div>
-                <div className="card" style={{ padding: "1rem", marginBottom: "0.75rem" }}>
-                  <strong>Fecha de Creación:</strong> {new Date(selectedGrupo.fecha_creacion).toLocaleDateString()}
-                  {selectedGrupo.fecha_inicio && (
-                    <><br /><strong>Fecha de Inicio:</strong> {new Date(selectedGrupo.fecha_inicio).toLocaleDateString()}</>
-                  )}
-                  {selectedGrupo.fecha_fin && (
-                    <><br /><strong>Fecha de Fin:</strong> {new Date(selectedGrupo.fecha_fin).toLocaleDateString()}</>
-                  )}
-                </div>
-              </div>
-
-              <button
-                onClick={() => setShowModal(false)}
-                style={{ marginTop: "1rem", width: "100%" }}
-              >
-                Cerrar
-              </button>
-            </div>
           </div>
+        ) : (
+          <>
+            <div className="admin-cards-grid">
+              {filteredGrupos
+                .slice((currentPage - 1) * perPage, currentPage * perPage)
+                .map(g => {
+              const privacyIcon = g.privacidad === 'publico' ? <FaGlobe /> : g.privacidad === 'por_invitacion' ? <FaEnvelope /> : <FaLock />;
+              const privacyLabel = g.privacidad === 'publico' ? 'Público' : g.privacidad === 'por_invitacion' ? 'Por invitación' : 'Privado';
+              
+              return (
+                <div 
+                  key={g.id_grupo || g.id || g._id} 
+                  className="card grupo-card"
+                  style={{ 
+                    padding: '1.25rem',
+                    opacity: g.activo ? 1 : 0.7,
+                    textAlign: 'left',
+                    margin: 0,
+                    background: 'var(--color-panel-solid)',
+                    border: '1px solid var(--color-border)'
+                  }}
+                >
+                  {/* Header del card */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                    <div style={{ flex: 1 }}>
+                      <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 600, color: 'var(--color-text-main)' }}>
+                        {g.nombre_grupo || g.nombre || g.name}
+                      </h3>
+                      {g.descripcion && (
+                        <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: 'var(--color-text-secondary)', lineHeight: 1.4 }}>
+                          {g.descripcion.substring(0, 70)}{g.descripcion.length > 70 ? '...' : ''}
+                        </p>
+                      )}
+                    </div>
+                    <span className={`admin-badge ${g.activo ? 'admin-badge-success' : 'admin-badge-danger'}`} style={{ marginLeft: '0.5rem', fontSize: '0.7rem' }}>
+                      {g.activo ? "Activo" : "Inactivo"}
+                    </span>
+                  </div>
+
+                  {/* Badges de tipo y privacidad */}
+                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+                    <span style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.25rem',
+                      padding: '0.2rem 0.5rem',
+                      borderRadius: '12px',
+                      fontSize: '0.7rem',
+                      fontWeight: 500,
+                      backgroundColor: 'var(--nav-item-hover-bg)',
+                      color: 'var(--color-primary)'
+                    }}>
+                      {g.tipo_grupo || 'N/A'}
+                    </span>
+                    <span style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.25rem',
+                      padding: '0.2rem 0.5rem',
+                      borderRadius: '12px',
+                      fontSize: '0.7rem',
+                      fontWeight: 500,
+                      backgroundColor: 'var(--color-panel)',
+                      color: 'var(--color-text-secondary)',
+                      border: '1px solid var(--color-border)'
+                    }}>
+                      {privacyIcon} {privacyLabel}
+                    </span>
+                  </div>
+
+                  {/* Stats grid */}
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: '1fr 1fr', 
+                    gap: '0.5rem', 
+                    marginBottom: '0.75rem',
+                    padding: '0.6rem',
+                    background: 'var(--color-panel)',
+                    borderRadius: '10px',
+                    border: '1px solid var(--color-border)'
+                  }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem', color: 'var(--color-primary)' }}>
+                        <FaUsers style={{ fontSize: '0.9rem' }} />
+                        <span style={{ fontSize: '1.1rem', fontWeight: 700 }}>{g.miembros_activos || 0}</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>/ {g.total_miembros || 0}</span>
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginTop: '0.15rem' }}>Miembros</div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem', color: 'var(--color-success)' }}>
+                        <FaClipboardList style={{ fontSize: '0.9rem' }} />
+                        <span style={{ fontSize: '1.1rem', fontWeight: 700 }}>{g.actividades_completadas || 0}</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>/ {g.total_actividades || 0}</span>
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginTop: '0.15rem' }}>Actividades</div>
+                    </div>
+                  </div>
+
+                  {/* Facilitador y código */}
+                  <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginBottom: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.25rem' }}>
+                      <FaUserFriends style={{ color: 'var(--color-primary)', fontSize: '0.85rem' }} />
+                      <span>{g.facilitador_nombre ? `${g.facilitador_nombre} ${g.facilitador_apellido}` : 'Sin facilitador'}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <FaKey style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }} />
+                      <code style={{ background: 'var(--color-panel)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.75rem', border: '1px solid var(--color-border)' }}>
+                        {g.codigo_acceso || 'N/A'}
+                      </code>
+                    </div>
+                  </div>
+
+                  {/* Acciones */}
+                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', borderTop: '1px solid var(--color-border)', paddingTop: '0.75rem' }}>
+                    <button 
+                      onClick={() => viewGrupoStats(g)} 
+                      title="Ver estadísticas"
+                      style={{ 
+                        fontSize: '0.8rem', 
+                        padding: '0.4rem 0.6rem', 
+                        flex: 1, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        gap: '0.35rem',
+                        backgroundColor: 'var(--color-primary)',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        transition: 'opacity 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.target.style.opacity = '0.85'}
+                      onMouseLeave={(e) => e.target.style.opacity = '1'}
+                    >
+                      <FaChartBar /> Stats
+                    </button>
+                    <button 
+                      onClick={() => viewMiembros(g)}
+                      title="Ver miembros"
+                      style={{ 
+                        fontSize: '0.8rem', 
+                        padding: '0.4rem 0.6rem', 
+                        flex: 1, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        gap: '0.35rem',
+                        backgroundColor: 'var(--color-primary)',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        transition: 'opacity 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.target.style.opacity = '0.85'}
+                      onMouseLeave={(e) => e.target.style.opacity = '1'}
+                    >
+                      <FaUsers /> Miembros
+                    </button>
+                    <button 
+                      onClick={() => viewActividades(g)}
+                      title="Ver actividades"
+                      style={{ 
+                        fontSize: '0.8rem', 
+                        padding: '0.4rem 0.6rem', 
+                        flex: 1, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        gap: '0.35rem',
+                        backgroundColor: 'var(--color-primary)',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        transition: 'opacity 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.target.style.opacity = '0.85'}
+                      onMouseLeave={(e) => e.target.style.opacity = '1'}
+                    >
+                      <FaClipboardList /> Actividades
+                    </button>
+                    <button
+                      onClick={() => toggleEstado(g.id_grupo || g.id || g._id, g.activo)}
+                      title={g.activo ? 'Desactivar grupo' : 'Activar grupo'}
+                      style={{
+                        fontSize: '0.8rem',
+                        padding: '0.4rem 0.6rem',
+                        backgroundColor: g.activo ? '#ff6b6b' : 'var(--color-success)',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        flex: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.35rem'
+                      }}
+                    >
+                      {g.activo ? 'Desactivar' : 'Activar'}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+            </div>
+
+            {/* Paginación */}
+            {filteredGrupos.length > perPage && (
+              <div className="admin-pagination">
+                <button
+                  className="admin-pagination-btn"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                >
+                  «
+                </button>
+                <button
+                  className="admin-pagination-btn"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  ‹
+                </button>
+                
+                {(() => {
+                  const totalPages = Math.ceil(filteredGrupos.length / perPage);
+                  const pages = [];
+                  let start = Math.max(1, currentPage - 2);
+                  let end = Math.min(totalPages, start + 4);
+                  if (end - start < 4) start = Math.max(1, end - 4);
+                  
+                  for (let i = start; i <= end; i++) {
+                    pages.push(
+                      <button
+                        key={i}
+                        className={`admin-pagination-btn ${currentPage === i ? 'active' : ''}`}
+                        onClick={() => setCurrentPage(i)}
+                      >
+                        {i}
+                      </button>
+                    );
+                  }
+                  return pages;
+                })()}
+                
+                <button
+                  className="admin-pagination-btn"
+                  onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredGrupos.length / perPage), p + 1))}
+                  disabled={currentPage >= Math.ceil(filteredGrupos.length / perPage)}
+                >
+                  ›
+                </button>
+                <button
+                  className="admin-pagination-btn"
+                  onClick={() => setCurrentPage(Math.ceil(filteredGrupos.length / perPage))}
+                  disabled={currentPage >= Math.ceil(filteredGrupos.length / perPage)}
+                >
+                  »
+                </button>
+                
+                <select
+                  className="admin-pagination-select"
+                  value={perPage}
+                  onChange={(e) => {
+                    setPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                >
+                  <option value="5">5 / pág</option>
+                  <option value="10">10 / pág</option>
+                  <option value="15">15 / pág</option>
+                  <option value="30">30 / pág</option>
+                  <option value="50">50 / pág</option>
+                </select>
+              </div>
+            )}
+          </>
         )}
-      </main>
-    </>
+
+        {/* Modales usando componentes */}
+        <GrupoStatsModal 
+          show={showModal} 
+          grupo={selectedGrupo} 
+          onClose={() => setShowModal(false)} 
+        />
+
+        <MiembrosModal 
+          show={showMiembrosModal}
+          grupo={selectedGrupo}
+          miembros={miembros}
+          loading={loadingMiembros}
+          onClose={() => setShowMiembrosModal(false)}
+          onEliminarMiembro={eliminarMiembro}
+          onCambiarRol={cambiarRolMiembro}
+        />
+
+        <ActividadesModal 
+          show={showActividadesModal}
+          grupo={selectedGrupo}
+          actividades={actividades}
+          loading={loadingActividades}
+          onClose={() => setShowActividadesModal(false)}
+          onEliminarActividad={eliminarActividad}
+        />
+      </div>
+    </div>
   );
 }
