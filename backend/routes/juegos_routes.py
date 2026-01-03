@@ -58,7 +58,7 @@ def juegos_recomendados():
                 print("[JUEGOS] Consultando base de datos (raw SQL)...")
                 # Construir consulta para tipos recomendados
                 placeholders = ','.join(['%s'] * len(tipos_recomendados))
-                sql = f"SELECT id, nombre, descripcion, tipo_juego, duracion_recomendada, objetivo_emocional, icono, activo FROM juegos_terapeuticos WHERE tipo_juego IN ({placeholders}) AND activo = 1 LIMIT 10"
+                sql = f"SELECT id_juego, id_juego as id, nombre, descripcion, tipo_juego, duracion_recomendada, objetivo_emocional, icono, activo FROM juegos_terapeuticos WHERE tipo_juego IN ({placeholders}) AND activo = 1 LIMIT 10"
                 juegos_rows = DatabaseConnection.execute_query(sql, tuple(tipos_recomendados))
                 juegos_data = juegos_rows or []
                 print(f"[JUEGOS] OK - {len(juegos_data)} juegos encontrados en BD (raw)")
@@ -66,15 +66,15 @@ def juegos_recomendados():
                 # Si hay menos de 10, obtener todos los juegos activos y completar
                 if len(juegos_data) < 10:
                     try:
-                        existentes_ids = {j['id'] for j in juegos_data}
-                        sql_all = "SELECT id, nombre, descripcion, tipo_juego, duracion_recomendada, objetivo_emocional, icono, activo FROM juegos_terapeuticos WHERE activo = 1 ORDER BY id"
+                        existentes_ids = {j['id_juego'] for j in juegos_data}
+                        sql_all = "SELECT id_juego, id_juego as id, nombre, descripcion, tipo_juego, duracion_recomendada, objetivo_emocional, icono, activo FROM juegos_terapeuticos WHERE activo = 1 ORDER BY id_juego"
                         all_active = DatabaseConnection.execute_query(sql_all)
                         added = 0
                         for row in all_active:
-                            if row['id'] in existentes_ids:
+                            if row['id_juego'] in existentes_ids:
                                 continue
                             juegos_data.append(row)
-                            existentes_ids.add(row['id'])
+                            existentes_ids.add(row['id_juego'])
                             added += 1
                             if len(juegos_data) >= 10:
                                 break
@@ -396,7 +396,7 @@ def historial_juegos():
 def get_juego(juego_id):
     """Obtener un juego específico por ID"""
     try:
-        sql = "SELECT * FROM juegos_terapeuticos WHERE id = %s"
+        sql = "SELECT * FROM juegos_terapeuticos WHERE id_juego = %s"
         result = DatabaseConnection.execute_query(sql, (juego_id,))
         if result and len(result) > 0:
             return jsonify({'success': True, 'data': result[0]}), 200
@@ -435,7 +435,7 @@ def crear_juego():
         )
         
         # Obtener el juego recién creado
-        sql_last = "SELECT * FROM juegos_terapeuticos WHERE nombre = %s ORDER BY id DESC LIMIT 1"
+        sql_last = "SELECT * FROM juegos_terapeuticos WHERE nombre = %s ORDER BY id_juego DESC LIMIT 1"
         result = DatabaseConnection.execute_query(sql_last, (nombre,))
         
         return jsonify({
@@ -485,7 +485,7 @@ def actualizar_juego(juego_id):
             return jsonify({'success': False, 'error': 'No hay campos para actualizar'}), 400
         
         valores.append(juego_id)
-        sql = f"UPDATE juegos_terapeuticos SET {', '.join(campos)} WHERE id = %s"
+        sql = f"UPDATE juegos_terapeuticos SET {', '.join(campos)} WHERE id_juego = %s"
         DatabaseConnection.execute_query(sql, tuple(valores))
         
         return jsonify({'success': True, 'message': 'Juego actualizado correctamente'}), 200
@@ -502,7 +502,7 @@ def patch_juego(juego_id):
         data = request.get_json() or {}
         
         if 'activo' in data:
-            sql = "UPDATE juegos_terapeuticos SET activo = %s WHERE id = %s"
+            sql = "UPDATE juegos_terapeuticos SET activo = %s WHERE id_juego = %s"
             DatabaseConnection.execute_query(sql, (1 if data['activo'] else 0, juego_id))
             return jsonify({'success': True, 'message': 'Estado actualizado'}), 200
         
@@ -518,7 +518,7 @@ def eliminar_juego(juego_id):
     """Eliminar un juego (admin)"""
     try:
         # Verificar que existe
-        sql_check = "SELECT id FROM juegos_terapeuticos WHERE id = %s"
+        sql_check = "SELECT id_juego FROM juegos_terapeuticos WHERE id_juego = %s"
         result = DatabaseConnection.execute_query(sql_check, (juego_id,))
         if not result:
             return jsonify({'success': False, 'error': 'Juego no encontrado'}), 404
@@ -529,7 +529,7 @@ def eliminar_juego(juego_id):
         
         if sessions and sessions[0]['count'] > 0:
             # Tiene sesiones, solo desactivar
-            sql = "UPDATE juegos_terapeuticos SET activo = 0 WHERE id = %s"
+            sql = "UPDATE juegos_terapeuticos SET activo = 0 WHERE id_juego = %s"
             DatabaseConnection.execute_query(sql, (juego_id,))
             return jsonify({
                 'success': True, 
@@ -537,7 +537,7 @@ def eliminar_juego(juego_id):
             }), 200
         else:
             # No tiene sesiones, eliminar
-            sql = "DELETE FROM juegos_terapeuticos WHERE id = %s"
+            sql = "DELETE FROM juegos_terapeuticos WHERE id_juego = %s"
             DatabaseConnection.execute_query(sql, (juego_id,))
             return jsonify({'success': True, 'message': 'Juego eliminado correctamente'}), 200
     except Exception as e:

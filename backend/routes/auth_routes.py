@@ -1,10 +1,15 @@
 # backend/routes/auth_routes.py
-from flask import Blueprint, request, jsonify, Response
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from flask import Blueprint, request, jsonify, Response, current_app
+from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash, check_password_hash
 from database.connection import DatabaseConnection, get_db_connection
 from models.rol import Rol
 from datetime import datetime, date
+
+# Seguridad
+from utils.seguridad import Seguridad
+from utils.security_middleware import limiter, secure_log
+from services.auditoria_service import auditoria
 
 bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 
@@ -14,6 +19,7 @@ bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 # Permite al frontend cargar imágenes externas (solo googleusercontent.com)
 # ======================================================
 @bp.route('/proxy_image')
+@limiter.limit("30 per minute")  # Rate limit para proxy
 def proxy_image():
     url = request.args.get('url')
     if not url:
@@ -27,6 +33,7 @@ def proxy_image():
         return jsonify({'error': 'Invalid url'}), 400
 
     if not any(h in lower for h in allowed_hosts):
+        secure_log.warning("Intento de proxy a host no permitido", data={"url": url[:100]})
         return jsonify({'error': 'Host not allowed'}), 403
 
     # Fetch the image using urllib to avoid adding external deps
@@ -38,15 +45,19 @@ def proxy_image():
             content_type = resp.headers.get('Content-Type', 'application/octet-stream')
             return Response(data, mimetype=content_type)
     except Exception as e:
-        print(f"[proxy_image] Error fetching {url}: {e}")
-        return jsonify({'error': 'Failed to fetch image', 'details': str(e)}), 502
+        secure_log.error("Error en proxy de imagen", data={"error": str(e)})
+        return jsonify({'error': 'Failed to fetch image'}), 502
 
 
 # ======================================================
 # 🔵 REGISTRO DE USUARIO
 # ======================================================
 @bp.route('/register', methods=['POST'])
+@limiter.limit("5 per minute, 20 per hour")  # Límite estricto para registros
 def register():
+    client_ip = request.remote_addr
+    user_agent = request.headers.get('User-Agent', '')
+    
     try:
         # Verificar si es multipart (con archivo) o JSON
         if request.content_type and 'multipart/form-data' in request.content_type:
@@ -56,7 +67,6 @@ def register():
             correo = request.form.get('correo', '').lower().strip()
             contrasena = request.form.get('contrasena', '')
             genero = request.form.get('genero')
-            # Usar solo 'fecha_nacimiento' (coincide con la BD)
             fecha_nacimiento = request.form.get('fecha_nacimiento')
             usa_medicamentos = request.form.get('usa_medicamentos', 'false').lower() == 'true'
             foto_perfil_file = request.files.get('foto_perfil')
@@ -73,10 +83,13 @@ def register():
             correo = data.get('correo', '').lower().strip()
             contrasena = data.get('contrasena', '')
             genero = data.get('genero')
-            # Usar solo 'fecha_nacimiento' en el JSON
             fecha_nacimiento = data.get('fecha_nacimiento')
             usa_medicamentos = data.get('usa_medicamentos', False)
             foto_perfil_file = None
+
+        # Sanitizar inputs
+        nombres = Seguridad.sanitize_input(nombres)
+        apellidos = Seguridad.sanitize_input(apellidos)
 
         # Validaciones
         if not nombres:
@@ -85,10 +98,18 @@ def register():
             return jsonify({'success': False, 'error': 'Los apellidos son requeridos'}), 400
         if not correo:
             return jsonify({'success': False, 'error': 'El correo es requerido'}), 400
+        
+        # Validar formato de email
+        if not Seguridad.validate_email(correo):
+            return jsonify({'success': False, 'error': 'Formato de correo inválido'}), 400
+        
         if not contrasena:
             return jsonify({'success': False, 'error': 'La contraseña es requerida'}), 400
-        if len(contrasena) < 6:
-            return jsonify({'success': False, 'error': 'La contraseña debe tener mínimo 6 caracteres'}), 400
+        
+        # ✅ Usar validación UNIFICADA de contraseña
+        password_valid, password_msg = Seguridad.validate_password_strength(contrasena)
+        if not password_valid:
+            return jsonify({'success': False, 'error': password_msg}), 400
 
         # Normalizar fecha
         if fecha_nacimiento == "" or fecha_nacimiento is None:
@@ -100,9 +121,8 @@ def register():
                 fecha_dt = datetime.strptime(fecha_nacimiento, "%Y-%m-%d").date()
                 hoy = date.today()
                 edad = hoy.year - fecha_dt.year - ((hoy.month, hoy.day) < (fecha_dt.month, fecha_dt.day))
-                print(f"[REGISTRO] Edad calculada: {edad} anos (fecha: {fecha_nacimiento})")
             except Exception as e:
-                print(f"[ERROR] Error calculando edad: {e}")
+                secure_log.error("Error calculando edad", data={"error": str(e)})
                 edad = None
 
         print(f"[REGISTRO] Datos a guardar: fecha_nacimiento={fecha_nacimiento}, edad={edad}")
@@ -436,8 +456,17 @@ def update_profile():
 # 🟩 LOGIN
 # ======================================================
 @bp.route('/login', methods=['POST'])
+@limiter.limit("5 per minute, 20 per hour")  # Rate limit estricto para login
 def login():
+    client_ip = request.remote_addr
+    user_agent = request.headers.get('User-Agent', '')
+    
     try:
+        # Verificar si la DB está inicializada
+        if not current_app.config.get('DB_CONNECTED', True):
+            secure_log.error("Intento de login con DB desconectada")
+            return jsonify({'success': False, 'error': 'Servicio temporalmente no disponible'}), 503
+        
         data = request.get_json()
 
         correo = data.get('correo', '').lower().strip()
@@ -458,8 +487,17 @@ def login():
 
             user_auth = cursor.fetchone()
 
-        # Validar login
+        # Validar login - NO revelar si el usuario existe o no
         if not user_auth or not check_password_hash(user_auth["contrasena"], contrasena):
+            # Registrar intento fallido en auditoría
+            auditoria.registrar_evento(
+                tipo_evento=auditoria.EVENTO_LOGIN_FALLIDO,
+                descripcion="Credenciales incorrectas",
+                ip_address=client_ip,
+                user_agent=user_agent,
+                exitoso=False
+            )
+            secure_log.warning("Intento de login fallido", data={"correo_hash": hash(correo) % 10000})
             return jsonify({'success': False, 'error': 'Credenciales incorrectas'}), 401
         
         # Verificar si el email está verificado (solo para usuarios locales)
@@ -503,7 +541,18 @@ def login():
             hoy = date.today()
             edad = hoy.year - fecha_dt.year - ((hoy.month, hoy.day) < (fecha_dt.month, fecha_dt.day))
 
+        # Crear access token y refresh token
         token = create_access_token(identity=str(user["id_usuario"]))
+        refresh_token = create_refresh_token(identity=str(user["id_usuario"]))
+        
+        # ✅ Registrar login exitoso en auditoría
+        auditoria.registrar_login(
+            id_usuario=user["id_usuario"],
+            ip=client_ip,
+            user_agent=user_agent,
+            exitoso=True
+        )
+        
         # Crear registro de sesión en la base de datos con metadatos del cliente
         try:
             from models.sesion import Sesion
@@ -570,11 +619,12 @@ def login():
             except Exception:
                 session_id = None
         except Exception as e:
-            print(f"[LOGIN] Error creando Sesion: {e}")
+            secure_log.error("Error creando sesión", data={"error": str(e)})
 
         resp = {
             'success': True,
             'token': token,
+            'refresh_token': refresh_token,  # ✅ Incluir refresh token
             'user': {
                 'id_usuario': user["id_usuario"],
                 'nombre': user["nombre"],
@@ -596,24 +646,62 @@ def login():
         return jsonify(resp)
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        secure_log.error("Error en login", data={"error": str(e)})
+        return jsonify({'success': False, 'error': 'Error interno del servidor'}), 500
+
+
+# ======================================================
+# 🔄 REFRESH TOKEN
+# ======================================================
+@bp.route('/refresh', methods=['POST'])
+@jwt_required(refresh=True)
+@limiter.limit("10 per minute")
+def refresh():
+    """Obtener nuevo access token usando refresh token."""
+    try:
+        current_user_id = get_jwt_identity()
+        new_access_token = create_access_token(identity=current_user_id)
+        
+        secure_log.info("Token renovado", user_id=int(current_user_id))
+        
+        return jsonify({
+            'success': True,
+            'token': new_access_token
+        }), 200
+        
+    except Exception as e:
+        secure_log.error("Error renovando token", data={"error": str(e)})
+        return jsonify({'success': False, 'error': 'Error renovando token'}), 500
+
+
+# ======================================================
+# 🔐 REQUISITOS DE CONTRASEÑA (para mostrar al usuario)
+# ======================================================
+@bp.route('/password-requirements', methods=['GET'])
+def get_password_requirements():
+    """Retorna los requisitos de contraseña actuales."""
+    requirements = Seguridad.get_password_requirements()
+    return jsonify({
+        'success': True,
+        'requirements': requirements
+    }), 200
 
 
 # ======================================================
 # 🟢 GOOGLE AUTH - Login/Register
 # ======================================================
 @bp.route('/google', methods=['POST'])
+@limiter.limit("10 per minute")
 def google_auth():
     """Autenticación con Google OAuth"""
+    client_ip = request.remote_addr
+    user_agent = request.headers.get('User-Agent', '')
+    
     try:
         from models.usuario import Usuario
         from models.rol_usuario import RolUsuario
         
         data = request.get_json()
-        
-        print(f"[GOOGLE AUTH] ===== INICIO GOOGLE AUTH =====")
-        print(f"[GOOGLE AUTH] Datos JSON recibidos: {data}")
-        print(f"[GOOGLE AUTH] Tipo de datos: {type(data)}")
         
         # Aceptar tanto 'correo' como 'email' para compatibilidad
         google_uid = data.get('google_uid') if data else None
@@ -636,6 +724,11 @@ def google_auth():
         if not google_uid or not email:
             print(f"[GOOGLE AUTH] ERROR - Validacion fallida: google_uid={google_uid}, email={email}")
             return jsonify({'success': False, 'error': 'Datos de Google incompletos'}), 400
+
+        # Verificar si la DB está inicializada
+        if not current_app.config.get('DB_CONNECTED', True):
+            print("[GOOGLE AUTH] ERROR - DB no conectada, rechazando petición")
+            return jsonify({'success': False, 'error': 'Servicio temporalmente no disponible (DB desconectada)'}), 503
         
         # Buscar usuario existente por google_uid
         user = Usuario.get_by_google_uid(google_uid)

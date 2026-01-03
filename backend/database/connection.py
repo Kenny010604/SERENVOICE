@@ -30,8 +30,11 @@ class DatabaseConnection:
                 password=os.getenv('DB_PASSWORD', ''),
                 database=os.getenv('DB_NAME', 'serenvoice'),
                 port=int(os.getenv('DB_PORT', 3306)),
+                charset='utf8mb4',
+                collation='utf8mb4_unicode_ci',
+                use_unicode=True,
             )
-            print("[DB] Pool de conexiones inicializado correctamente")
+            print("[DB] Pool de conexiones inicializado correctamente (UTF-8)")
         except Error as e:
             print(f"[DB] Error al crear pool: {e}")
             raise

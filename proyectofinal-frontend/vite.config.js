@@ -1,7 +1,10 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { resolve } from 'path'
 
 export default defineConfig({
+  // Cargar variables de entorno desde la raíz del repositorio
+  envDir: resolve(__dirname, '..'),
   plugins: [react()],
   server: {
     host: '0.0.0.0',

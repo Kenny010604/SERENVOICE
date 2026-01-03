@@ -23,7 +23,9 @@ def generate_recommendations_with_groq(payload: Dict, recent_recommendations: Li
 	Returns a list of dicts with keys: tipo_recomendacion, contenido.
 	"""
 	api_key = os.getenv("GROQ_API_KEY")
-	print(f"[groq_service] GROQ_API_KEY presente: {bool(api_key)}, Groq SDK disponible: {bool(Groq)}")
+	# Mostrar presencia y una versión enmascarada (no imprimir la clave completa)
+	masked = (api_key[:8] + "...") if api_key else ""
+	print(f"[groq_service] GROQ_API_KEY presente: {bool(api_key)}, clave_masked={masked}, Groq SDK disponible: {bool(Groq)}")
 	if not api_key or Groq is None:
 		print(f"[groq_service] No se puede generar recomendaciones: api_key={bool(api_key)}, Groq={bool(Groq)}")
 		return []
@@ -83,12 +85,17 @@ def generate_recommendations_with_groq(payload: Dict, recent_recommendations: Li
 		print(f"[groq_service] Respuesta de Groq: {content}")
 	except Exception as e:
 		print(f"[groq_service] Error llamando a Groq API: {e}")
+		# Mensaje específico si la organización está restringida
+		err_str = str(e).lower()
+		if "organization_restricted" in err_str or "organization has been restricted" in err_str:
+			print("[groq_service] ERROR: La organización o la clave API están restringidas en Groq. Genera una nueva clave en una cuenta/organización con acceso o contacta a soporte de Groq.")
 		import traceback
 		traceback.print_exc()
 		return []
 
 	# Intentar parsear JSON simple
 	import json
+	import re
 	try:
 		cleaned_content = strip_markdown_json(content)
 		data = json.loads(cleaned_content)
@@ -96,8 +103,28 @@ def generate_recommendations_with_groq(payload: Dict, recent_recommendations: Li
 			# lista directa de recomendaciones
 			recs = data
 		elif isinstance(data, dict):
-			recs = data.get("recomendaciones") or data.get("recommendations") or []
+			recs = data.get("recomendaciones") or data.get("recommendations") or [data]
 		else:
+			recs = []
+	except json.JSONDecodeError as e:
+		print(f"[groq_service] JSON simple falló: {e}, intentando parsear múltiples objetos...")
+		# Groq a veces devuelve múltiples objetos JSON separados
+		# Intentar extraer todos los objetos JSON del texto
+		recs = []
+		try:
+			# Buscar todos los objetos JSON en el texto
+			json_pattern = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
+			matches = re.findall(json_pattern, cleaned_content, re.DOTALL)
+			for match in matches:
+				try:
+					obj = json.loads(match)
+					if isinstance(obj, dict):
+						recs.append(obj)
+				except:
+					pass
+			print(f"[groq_service] Extraídos {len(recs)} objetos JSON del texto")
+		except Exception as inner_e:
+			print(f"[groq_service] Error extrayendo JSONs: {inner_e}")
 			recs = []
 	except Exception as e:
 		print(f"[groq_service] Error parseando JSON de Groq: {e}")

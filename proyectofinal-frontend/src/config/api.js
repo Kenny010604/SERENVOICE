@@ -7,6 +7,8 @@ const API_BASE = `${normalize(RAW_API_URL)}/api`;
 // Google OAuth Client ID
 export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
+// NOTA: No loguear el client ID en producción por seguridad
+
 const api = {
   baseURL: API_BASE,
   endpoints: {

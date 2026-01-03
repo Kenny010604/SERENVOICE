@@ -155,53 +155,169 @@ def analyze_voice():
             raise Exception("El servicio de análisis devolvió una respuesta vacía.")
 
         # --------------------------------------------------------
-        # 4) Guardar en BD (solo si hay usuario autenticado)
+        # 4) Preparar datos del análisis ANTES de guardar en BD
         # --------------------------------------------------------
-        audio_db_id = None
-
-        try:
-            conn = DatabaseConnection.get_connection()
-            cursor = conn.cursor()
-
-            insert_query = """
-                INSERT INTO audio
-                (id_usuario, nombre_archivo, ruta_archivo, duracion, fecha_grabacion)
-                VALUES (%s, %s, %s, %s, NOW())
-            """
-
-            # Guardar SOLO el nombre de archivo en ruta_archivo, no la ruta completa
-            cursor.execute(insert_query, (
-                user_id,
-                filename,  # nombre WAV final
-                filename,  # ruta_archivo: solo nombre WAV final
-                duration
-            ))
-
-            conn.commit()
-            audio_db_id = cursor.lastrowid
-            cursor.close()
-            DatabaseConnection.return_connection(conn)
-
-            print(f"[audio_routes] Audio guardado en BD con ID {audio_db_id}")
-
-        except Exception as db_err:
-            print("[audio_routes] Error guardando en BD:", db_err)
-            try:
-                DatabaseConnection.return_connection(conn)
-            except Exception:
-                pass
-
-        # --------------------------------------------------------
-        # 5) Crear ANALISIS + RESULTADO + RECOMENDACIONES + ALERTA
-        # --------------------------------------------------------
+        # Primero generamos las recomendaciones de IA. Si fallan, NO guardamos nada.
+        
         analisis_id = None
         resultado_id = None
+        audio_db_id = None
         recomendaciones_list = []
-        print(f'[audio_routes] Pre-check: audio_db_id={audio_db_id}, user_id={user_id}')
+        
+        # Calcular métricas desde las emociones devueltas
+        emotions = results.get("emotions", []) or []
+        confidence = float(results.get("confidence", 0.0)) * 100.0
+
+        # Inicializar todos los valores de emociones
+        nivel_estres = 0.0
+        nivel_ansiedad = 0.0
+        nivel_felicidad = 0.0
+        nivel_tristeza = 0.0
+        nivel_miedo = 0.0
+        nivel_neutral = 0.0
+        nivel_enojo = 0.0
+        nivel_sorpresa = 0.0
+        emocion_dominante = None
+        max_emotion_value = 0.0
+
+        # Buscar y extraer todas las emociones por nombre
+        for e in emotions:
+            name = (e.get("name") or "").lower()
+            val = float(e.get("value") or 0.0)
+            
+            # Detectar emoción dominante
+            if val > max_emotion_value:
+                max_emotion_value = val
+                emocion_dominante = e.get("name")
+            
+            # Mapear cada emoción
+            if "estrés" in name or "estres" in name:
+                nivel_estres = max(nivel_estres, val)
+            elif "ansiedad" in name:
+                nivel_ansiedad = max(nivel_ansiedad, val)
+            elif "felic" in name or "alegr" in name:
+                nivel_felicidad = max(nivel_felicidad, val)
+            elif "trist" in name:
+                nivel_tristeza = max(nivel_tristeza, val)
+            elif "mied" in name:
+                nivel_miedo = max(nivel_miedo, val)
+            elif "neutral" in name or "neutro" in name:
+                nivel_neutral = max(nivel_neutral, val)
+            elif "enojo" in name or "enoj" in name or "ira" in name:
+                nivel_enojo = max(nivel_enojo, val)
+            elif "sorp" in name:
+                nivel_sorpresa = max(nivel_sorpresa, val)
+
+        # Si no hay etiquetas explícitas de estrés/ansiedad, estimar con otras señales
+        if nivel_estres == 0.0:
+            nivel_estres = max(nivel_enojo * 0.6, nivel_sorpresa * 0.4)
+        if nivel_ansiedad == 0.0:
+            nivel_ansiedad = max(nivel_miedo * 0.6, nivel_tristeza * 0.4)
+
+        # Clasificación por umbrales
+        max_score = max(nivel_estres, nivel_ansiedad)
+        if max_score >= 80:
+            clasificacion = 'muy_alto'
+        elif max_score >= 65:
+            clasificacion = 'alto'
+        elif max_score >= 50:
+            clasificacion = 'moderado'
+        elif max_score >= 30:
+            clasificacion = 'leve'
+        else:
+            clasificacion = 'normal'
+
+        # --------------------------------------------------------
+        # 4.1) Generar recomendaciones IA ANTES de guardar en BD
+        # --------------------------------------------------------
+        clean_recs = []
+        if user_id:
+            try:
+                from services.recomendaciones_ia import generar_recomendaciones
+                print('[audio_routes] Generando recomendaciones IA con Groq ANTES de guardar...')
+                
+                resultado_ctx = {
+                    'clasificacion': clasificacion,
+                    'nivel_estres': nivel_estres,
+                    'nivel_ansiedad': nivel_ansiedad,
+                    'confianza_modelo': confidence,
+                    'duracion': duration,
+                    'emocion_dominante': (emotions[0]['name'] if emotions else None),
+                    'emotions': emotions,
+                }
+                
+                ia_recs = generar_recomendaciones({ 'resultado': resultado_ctx }, user_id=user_id) or []
+                print(f'[audio_routes] Groq devolvió {len(ia_recs)} recomendaciones')
+                
+                # Filtrar recomendaciones válidas
+                TIPOS_VALIDOS = {"respiracion", "pausa_activa", "meditacion", "ejercicio", "profesional"}
+                for r in ia_recs:
+                    tipo = (r.get('tipo_recomendacion') or '').strip()
+                    contenido = (r.get('contenido') or '').strip()
+                    if tipo in TIPOS_VALIDOS and contenido:
+                        clean_recs.append({'tipo_recomendacion': tipo, 'contenido': contenido})
+                    else:
+                        print(f'[audio_routes] WARNING: Recomendacion invalida filtrada: tipo="{tipo}"')
+                
+                print(f'[audio_routes] {len(clean_recs)} recomendaciones válidas después de filtrar')
+                
+            except Exception as ia_err:
+                print('[audio_routes] ERROR generando recomendaciones IA:', ia_err)
+                traceback.print_exc()
+                clean_recs = []
+        
+        # --------------------------------------------------------
+        # 4.2) VALIDAR: Si no hay recomendaciones, NO guardar nada
+        # --------------------------------------------------------
+        if user_id and len(clean_recs) == 0:
+            print('[audio_routes] ERROR: No se generaron recomendaciones de IA. Abortando guardado.')
+            # Eliminar archivo temporal
+            if filepath and os.path.exists(filepath):
+                try:
+                    os.remove(filepath)
+                    print(f'[audio_routes] Archivo temporal eliminado: {filepath}')
+                except Exception as del_err:
+                    print(f'[audio_routes] Error eliminando archivo temporal: {del_err}')
+            
+            return jsonify({
+                'success': False, 
+                'error': 'No se pudieron generar recomendaciones de IA. El análisis no fue guardado. Por favor, verifica la configuración del servicio de IA (Groq API) e intenta nuevamente.',
+                'error_code': 'IA_RECOMMENDATIONS_FAILED',
+                'emotions': results["emotions"],
+                'confidence': results["confidence"],
+            }), 503  # Service Unavailable
+        
+        # --------------------------------------------------------
+        # 5) Guardar en BD (solo si hay usuario autenticado Y recomendaciones)
+        # --------------------------------------------------------
+        print(f'[audio_routes] Pre-check: user_id={user_id}, recomendaciones={len(clean_recs)}')
+        
         try:
-            if audio_db_id and user_id:
-                print(f'[audio_routes] Condicion cumplida: audio_db_id={audio_db_id}, user_id={user_id}')
-                print(f'[audio_routes] Creando análisis para audio_id={audio_db_id}, user_id={user_id}')
+            if user_id:
+                print(f'[audio_routes] Guardando audio en BD para user_id={user_id}')
+                
+                conn = DatabaseConnection.get_connection()
+                cursor = conn.cursor()
+
+                insert_query = """
+                    INSERT INTO audio
+                    (id_usuario, nombre_archivo, ruta_archivo, duracion, fecha_grabacion)
+                    VALUES (%s, %s, %s, %s, NOW())
+                """
+
+                cursor.execute(insert_query, (
+                    user_id,
+                    filename,
+                    filename,
+                    duration
+                ))
+
+                conn.commit()
+                audio_db_id = cursor.lastrowid
+                cursor.close()
+                DatabaseConnection.return_connection(conn)
+
+                print(f"[audio_routes] Audio guardado en BD con ID {audio_db_id}")
                 
                 # Crear registro de análisis
                 from models.analisis import Analisis
@@ -215,69 +331,6 @@ def analyze_voice():
                     raise Exception('No se pudo crear el registro de análisis')
 
                 print(f'[audio_routes] Análisis creado con ID: {analisis_id}')
-
-                # Calcular métricas desde las emociones devueltas
-                emotions = results.get("emotions", []) or []
-                confidence = float(results.get("confidence", 0.0)) * 100.0
-
-                # Inicializar todos los valores de emociones
-                nivel_estres = 0.0
-                nivel_ansiedad = 0.0
-                nivel_felicidad = 0.0
-                nivel_tristeza = 0.0
-                nivel_miedo = 0.0
-                nivel_neutral = 0.0
-                nivel_enojo = 0.0
-                nivel_sorpresa = 0.0
-                emocion_dominante = None
-                max_emotion_value = 0.0
-
-                # Buscar y extraer todas las emociones por nombre
-                for e in emotions:
-                    name = (e.get("name") or "").lower()
-                    val = float(e.get("value") or 0.0)
-                    
-                    # Detectar emoción dominante
-                    if val > max_emotion_value:
-                        max_emotion_value = val
-                        emocion_dominante = e.get("name")
-                    
-                    # Mapear cada emoción
-                    if "estrés" in name or "estres" in name:
-                        nivel_estres = max(nivel_estres, val)
-                    elif "ansiedad" in name:
-                        nivel_ansiedad = max(nivel_ansiedad, val)
-                    elif "felic" in name or "alegr" in name:
-                        nivel_felicidad = max(nivel_felicidad, val)
-                    elif "trist" in name:
-                        nivel_tristeza = max(nivel_tristeza, val)
-                    elif "mied" in name:
-                        nivel_miedo = max(nivel_miedo, val)
-                    elif "neutral" in name or "neutro" in name:
-                        nivel_neutral = max(nivel_neutral, val)
-                    elif "enojo" in name or "enoj" in name or "ira" in name:
-                        nivel_enojo = max(nivel_enojo, val)
-                    elif "sorp" in name:
-                        nivel_sorpresa = max(nivel_sorpresa, val)
-
-                # Si no hay etiquetas explícitas de estrés/ansiedad, estimar con otras señales
-                if nivel_estres == 0.0:
-                    nivel_estres = max(nivel_enojo * 0.6, nivel_sorpresa * 0.4)
-                if nivel_ansiedad == 0.0:
-                    nivel_ansiedad = max(nivel_miedo * 0.6, nivel_tristeza * 0.4)
-
-                # Clasificación por umbrales
-                max_score = max(nivel_estres, nivel_ansiedad)
-                if max_score >= 80:
-                    clasificacion = 'muy_alto'
-                elif max_score >= 65:
-                    clasificacion = 'alto'
-                elif max_score >= 50:
-                    clasificacion = 'moderado'
-                elif max_score >= 30:
-                    clasificacion = 'leve'
-                else:
-                    clasificacion = 'normal'
 
                 # Crear resultado del análisis con todos los niveles emocionales
                 from models.resultado_analisis import ResultadoAnalisis
@@ -296,57 +349,29 @@ def analyze_voice():
                     nivel_sorpresa=round(nivel_sorpresa, 2)
                 )
                 
-                print(f'[audio_routes] Resultado creado con ID: {resultado_id}, emociones: felicidad={nivel_felicidad}, tristeza={nivel_tristeza}, miedo={nivel_miedo}, neutral={nivel_neutral}, enojo={nivel_enojo}, sorpresa={nivel_sorpresa}')
+                print(f'[audio_routes] Resultado creado con ID: {resultado_id}')
 
                 if not resultado_id:
                     raise Exception('No se pudo crear el registro de resultado de análisis')
 
-                # Generar recomendaciones con IA (Groq)
+                # Guardar recomendaciones en BD (ya fueron generadas y validadas antes)
                 try:
-                    from services.recomendaciones_ia import generar_recomendaciones, guardar_en_bd
-                    print('[audio_routes] Generando recomendaciones IA con Groq...')
-                    
-                    resultado_ctx = {
-                        'clasificacion': clasificacion,
-                        'nivel_estres': nivel_estres,
-                        'nivel_ansiedad': nivel_ansiedad,
-                        'confianza_modelo': confidence,
-                        'duracion': duration,
-                        'emocion_dominante': (emotions[0]['name'] if emotions else None),
-                        'emotions': emotions,
-                    }
-                    
-                    ia_recs = generar_recomendaciones({ 'resultado': resultado_ctx }, user_id=user_id) or []
-                    print(f'[audio_routes] Groq devolvió {len(ia_recs)} recomendaciones: {ia_recs}')
-                    # Limpiar campos extra antes de persistir (solo tipo_recomendacion y contenido)
-                    # Filtrar recomendaciones con tipo vacío o inválido
+                    from services.recomendaciones_ia import guardar_en_bd
                     TIPOS_VALIDOS = {"respiracion", "pausa_activa", "meditacion", "ejercicio", "profesional"}
-                    clean_recs = []
-                    for r in ia_recs:
-                        tipo = (r.get('tipo_recomendacion') or '').strip()
-                        contenido = (r.get('contenido') or '').strip()
-                        if tipo in TIPOS_VALIDOS and contenido:
-                            clean_recs.append({'tipo_recomendacion': tipo, 'contenido': contenido})
-                        else:
-                            print(f'[audio_routes] WARNING: Recomendacion invalida filtrada: tipo="{tipo}", contenido="{contenido[:50]}..."')
-                    print(f'[audio_routes] {len(clean_recs)} recomendaciones validas despues de filtrar')
-                    try:
-                        count = guardar_en_bd(resultado_id, clean_recs, user_id=user_id)
-                        print(f'[audio_routes] {count} recomendaciones IA persistidas en BD.')
-                    except Exception as persist_err:
-                        print('[audio_routes] Error persistiendo recomendaciones IA:', persist_err)
-                        traceback.print_exc()
+                    
+                    count = guardar_en_bd(resultado_id, clean_recs, user_id=user_id)
+                    print(f'[audio_routes] {count} recomendaciones IA persistidas en BD.')
+                    
                     # Leer desde BD para respuesta
                     from models.recomendacion import Recomendacion as _Rec
                     guardadas = _Rec.get_by_result(resultado_id) or []
                     print(f'[audio_routes] Leidas {len(guardadas)} recomendaciones desde BD para resultado_id={resultado_id}')
-                    print(f'[audio_routes] DEBUG: TIPOS_VALIDOS = {TIPOS_VALIDOS}')
-                    # Filtrar tipos inválidos al leer desde BD (última línea de defensa)
-                    recomendaciones_list = []
+                    
+                    # Filtrar tipos inválidos al leer desde BD
                     for idx, g in enumerate(guardadas):
                         tipo_raw = g.get('tipo_recomendacion') if isinstance(g, dict) else getattr(g, 'tipo_recomendacion', None)
                         contenido_raw = g.get('contenido') if isinstance(g, dict) else getattr(g, 'contenido', None)
-                        tipo = (tipo_raw or '').strip().lower()  # IMPORTANTE: convertir a minúsculas
+                        tipo = (tipo_raw or '').strip().lower()
                         contenido = (contenido_raw or '').strip()
                         print(f'[audio_routes] DEBUG [{idx+1}/{len(guardadas)}]: tipo_raw={repr(tipo_raw)}, tipo_lower={repr(tipo)}, valido={tipo in TIPOS_VALIDOS}, contenido_len={len(contenido)}')
 
@@ -393,11 +418,18 @@ def analyze_voice():
                     except Exception:
                         pass
             else:
-                print(f'[audio_routes] WARNING: Saltando creacion de analisis/resultado/recomendaciones porque audio_db_id={audio_db_id} o user_id={user_id} es None')
+                print(f'[audio_routes] Modo invitado: user_id={user_id}, no se guarda en BD')
 
         except Exception as pipeline_err:
             print('[audio_routes] Error creando análisis/resultado/recomendaciones/alerta:', pipeline_err)
-            # Si falla la creación de análisis/resultado, informar en la respuesta
+            traceback.print_exc()
+            # Eliminar archivo si hubo error
+            if filepath and os.path.exists(filepath):
+                try:
+                    os.remove(filepath)
+                    print(f'[audio_routes] Archivo eliminado tras error: {filepath}')
+                except Exception:
+                    pass
             return jsonify({'success': False, 'error': str(pipeline_err)}), 500
 
         # --------------------------------------------------------

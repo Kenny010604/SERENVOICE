@@ -1,8 +1,8 @@
 // src/services/apiClient.js
 import axios from "axios";
 import apiConfig from "../config/api";
-import authService from './authService';
-import logger from '../utils/logger';
+import secureStorage from '../utils/secureStorage';
+import secureLogger from '../utils/secureLogger';
 
 // ==============================
 // CONFIGURACIÓN BASE (EXPO SAFE)
@@ -19,6 +19,7 @@ const API_BASE_URL = deriveBaseUrl();
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: false,
+  timeout: 30000, // 30 segundos timeout
 });
 
 // ==============================
@@ -34,7 +35,8 @@ const normalizeUrl = (url) => {
 // ==============================
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    // Usar secureStorage en lugar de localStorage para el token
+    const token = secureStorage.getAccessToken() || localStorage.getItem("token");
     config.url = normalizeUrl(config.url);
 
     if (token) {
@@ -46,11 +48,14 @@ apiClient.interceptors.request.use(
       config.headers['Content-Type'] = 'application/json';
     }
 
-    logger.debug(`REQUEST: ${config.method.toUpperCase()} ${config.baseURL}${config.url}`);
+    // Agregar headers de seguridad
+    config.headers['X-Requested-With'] = 'XMLHttpRequest';
+
+    secureLogger.debug(`REQUEST: ${config.method.toUpperCase()} ${config.url}`);
     return config;
   },
   (error) => {
-    logger.error("REQUEST ERROR:", error);
+    secureLogger.error("REQUEST ERROR:", error);
     return Promise.reject(error);
   }
 );
@@ -60,40 +65,59 @@ apiClient.interceptors.request.use(
 // ==============================
 apiClient.interceptors.response.use(
   (response) => {
-    logger.debug(`RESPONSE ${response.status}: ${response.config.url}`);
+    secureLogger.debug(`RESPONSE ${response.status}: ${response.config.url}`);
     return response;
   },
-  (error) => {
+  async (error) => {
     // Ignore cancellations (AbortController / axios cancel)
     const isCanceled = error?.code === 'ERR_CANCELED' || (axios.isCancel && axios.isCancel(error));
     const status = error.response?.status;
     const url = error.config?.url;
 
     if (isCanceled) {
-      logger.debug(`REQUEST CANCELED: ${url}`);
+      secureLogger.debug(`REQUEST CANCELED: ${url}`);
       return Promise.reject(error);
     }
 
-    logger.error(`ERROR RESPONSE ${status} en ${url}`);
+    secureLogger.error(`ERROR RESPONSE ${status} en ${url}`);
 
     if (status === 401) {
-      logger.warn("Token expirado o inválido (interceptor)");
+      secureLogger.warn("Token expirado o inválido (interceptor)");
 
       // Si la petición incluyó el header `X-Skip-Auth-Redirect`, no forzamos
       // la redirección automática. Esto permite llamadas de polling/filtrado
       // que no deben interrumpir la experiencia del usuario.
       const skipRedirect = error.config?.headers?.['X-Skip-Auth-Redirect'] || error.config?.skipAuthRedirect;
       if (skipRedirect) {
-        logger.debug('Skipping auto-redirect for request due to X-Skip-Auth-Redirect header');
+        secureLogger.debug('Skipping auto-redirect for request due to X-Skip-Auth-Redirect header');
         return Promise.reject(error);
       }
 
-      try {
-        // Forzar logout local y redirigir al login para obtener credenciales nuevas
-        authService.logout();
-      } catch (err) {
-        logger.warn('Error during auto-logout:', err);
+      // Intentar refresh del token antes de hacer logout
+      const refreshToken = secureStorage.getRefreshToken();
+      if (refreshToken && !error.config._retry) {
+        error.config._retry = true;
+        try {
+          const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, {
+            headers: { 'Authorization': `Bearer ${refreshToken}` }
+          });
+          
+          if (response.data.token) {
+            secureStorage.setAccessToken(response.data.token);
+            error.config.headers.Authorization = `Bearer ${response.data.token}`;
+            return apiClient(error.config);
+          }
+        } catch (refreshError) {
+          secureLogger.warn('Token refresh failed');
+        }
       }
+
+      // Limpiar storage y redirigir
+      secureStorage.clearTokens();
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("session_id");
+      
       // Redirigir a la página de login
       if (typeof window !== 'undefined') {
         window.setTimeout(() => { window.location.href = '/login'; }, 150);
@@ -103,6 +127,21 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// ==============================
+// HELPER PARA OBTENER AUDIO CON AUTH HEADER (sin token en URL)
+// ==============================
+export const getAuthenticatedBlobUrl = async (endpoint) => {
+  try {
+    const response = await apiClient.get(endpoint, {
+      responseType: 'blob'
+    });
+    return URL.createObjectURL(response.data);
+  } catch (error) {
+    secureLogger.error('Error fetching authenticated blob:', error);
+    throw error;
+  }
+};
 
 // ==============================
 // API DE JUEGOS

@@ -3,7 +3,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 import { FaGoogle } from 'react-icons/fa';
 import authService from '../../services/authService';
 import { useNavigate } from 'react-router-dom';
-import logger from '../../utils/logger';
+import secureLogger from '../../utils/secureLogger';
 
 const GoogleLoginButton = () => {
   const navigate = useNavigate();
@@ -12,7 +12,7 @@ const GoogleLoginButton = () => {
     scope: 'openid email profile https://www.googleapis.com/auth/user.birthday.read https://www.googleapis.com/auth/user.gender.read',
     onSuccess: async (tokenResponse) => {
       try {
-        logger.debug('[GOOGLE LOGIN] Token recibido de Google');
+        secureLogger.debug('[GOOGLE LOGIN] Iniciando autenticación');
         
         // Obtener información básica del usuario
         const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
@@ -21,7 +21,7 @@ const GoogleLoginButton = () => {
           },
         });
         const userInfo = await userInfoResponse.json();
-        logger.debug('[GOOGLE LOGIN] Información básica del usuario:', userInfo);
+        // NO loguear datos personales del usuario
 
         // Obtener información extendida (fecha de nacimiento y género) usando People API
         const peopleResponse = await fetch(
@@ -33,9 +33,7 @@ const GoogleLoginButton = () => {
           }
         );
         const peopleData = await peopleResponse.json();
-        logger.debug('[GOOGLE LOGIN] Información extendida (People API):', peopleData);
-        logger.debug('[GOOGLE LOGIN] Birthdays completo:', JSON.stringify(peopleData.birthdays, null, 2));
-        logger.debug('[GOOGLE LOGIN] Genders completo:', JSON.stringify(peopleData.genders, null, 2));
+        // NO loguear datos personales sensibles (birthdays, genders)
 
         // Extraer fecha de nacimiento y género de People API
         let fechaNacimiento = null;
@@ -50,9 +48,9 @@ const GoogleLoginButton = () => {
             if (year && month && day) {
               // Formato: YYYY-MM-DD
               fechaNacimiento = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-              logger.debug('[GOOGLE LOGIN] Fecha de nacimiento extraída:', fechaNacimiento);
+              secureLogger.debug('[GOOGLE LOGIN] Fecha de nacimiento procesada');
             } else {
-              logger.debug('[GOOGLE LOGIN] Fecha sin año completo, se ignorará:', birthday.date);
+              secureLogger.debug('[GOOGLE LOGIN] Fecha incompleta, ignorada');
             }
           }
         }
@@ -69,7 +67,7 @@ const GoogleLoginButton = () => {
               'unknown': null
             };
             genero = genderMap[gender.value.toLowerCase()] || null;
-            logger.debug('[GOOGLE LOGIN] Género extraído:', genero, '(original:', gender.value, ')');
+            secureLogger.debug('[GOOGLE LOGIN] Género procesado');
           }
         }
 
@@ -84,7 +82,7 @@ const GoogleLoginButton = () => {
           genero: genero
         };
 
-        logger.debug('[GOOGLE LOGIN] Enviando al backend:', googleData);
+        secureLogger.debug('[GOOGLE LOGIN] Enviando datos al backend');
 
         // Enviar al backend
         const data = await authService.googleAuth(googleData);
@@ -95,7 +93,7 @@ const GoogleLoginButton = () => {
 
         // Verificar si el usuario necesita completar su perfil
         if (!data.user.edad || !data.user.genero) {
-          logger.debug('[GOOGLE LOGIN] Usuario necesita completar perfil');
+          secureLogger.debug('[GOOGLE LOGIN] Perfil incompleto, redirigiendo');
           // Redirigir a completar perfil si falta información básica
           navigate('/actualizar-perfil', { 
             state: { 
@@ -113,12 +111,12 @@ const GoogleLoginButton = () => {
           navigate('/dashboard');
         }
       } catch (error) {
-        logger.error('[GOOGLE LOGIN] Error:', error);
-        alert('Error al iniciar sesión con Google: ' + error.message);
+        secureLogger.error('[GOOGLE LOGIN] Error en autenticación');
+        alert('Error al iniciar sesión con Google. Por favor intenta de nuevo.');
       }
     },
     onError: () => {
-      logger.error('[GOOGLE LOGIN] Error en autenticación de Google');
+      secureLogger.error('[GOOGLE LOGIN] Error de conexión con Google');
       alert('Error al conectar con Google. Por favor intenta de nuevo.');
     },
   });

@@ -2,7 +2,7 @@ services:
   # Base de datos MySQL
   mysql_estudiantes:
     image: mysql:8.0
-    container_name: mysql_estudiantes
+    container_name: serenvoice
     env_file:
       - .env
     environment:

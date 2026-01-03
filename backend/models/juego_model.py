@@ -4,7 +4,7 @@ from datetime import datetime
 class JuegoTerapeutico(db.Model):
     __tablename__ = 'juegos_terapeuticos'
     
-    id = db.Column(db.Integer, primary_key=True)
+    id_juego = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
     tipo_juego = db.Column(db.String(20), nullable=False)
     descripcion = db.Column(db.Text)
@@ -18,7 +18,8 @@ class JuegoTerapeutico(db.Model):
     
     def to_dict(self):
         return {
-            'id': self.id,
+            'id_juego': self.id_juego,
+            'id': self.id_juego,  # Alias para compatibilidad con frontend
             'nombre': self.nombre,
             'tipo_juego': self.tipo_juego,
             'descripcion': self.descripcion,
@@ -37,7 +38,7 @@ class SesionJuego(db.Model):
     # Avoid DB-level ForeignKey here to prevent SQLAlchemy metadata errors when
     # the `usuario` table is not declared as a SQLAlchemy model.
     id_usuario = db.Column(db.Integer, nullable=False)
-    id_juego = db.Column(db.Integer, db.ForeignKey('juegos_terapeuticos.id'), nullable=False)
+    id_juego = db.Column(db.Integer, db.ForeignKey('juegos_terapeuticos.id_juego'), nullable=False)
     
     fecha_inicio = db.Column(db.DateTime, default=datetime.utcnow)
     fecha_fin = db.Column(db.DateTime)

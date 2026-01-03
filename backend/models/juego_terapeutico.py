@@ -7,7 +7,7 @@ class JuegoTerapeutico:
     @staticmethod
     def get_by_id(id_juego):
         """Obtener juego por ID"""
-        query = "SELECT * FROM juegos_terapeuticos WHERE id = %s AND activo = 1"
+        query = "SELECT * FROM juegos_terapeuticos WHERE id_juego = %s AND activo = 1"
         results = DatabaseConnection.execute_query(query, (id_juego,))
         return results[0] if results else None
     
@@ -76,13 +76,13 @@ class JuegoTerapeutico:
             return False
         
         values.append(id_juego)
-        query = f"UPDATE juegos_terapeuticos SET {', '.join(updates)} WHERE id = %s"
+        query = f"UPDATE juegos_terapeuticos SET {', '.join(updates)} WHERE id_juego = %s"
         DatabaseConnection.execute_query(query, tuple(values), fetch=False)
         return True
     
     @staticmethod
     def delete(id_juego):
         """Eliminar juego (soft delete)"""
-        query = "UPDATE juegos_terapeuticos SET activo = 0 WHERE id = %s"
+        query = "UPDATE juegos_terapeuticos SET activo = 0 WHERE id_juego = %s"
         DatabaseConnection.execute_query(query, (id_juego,), fetch=False)
         return True

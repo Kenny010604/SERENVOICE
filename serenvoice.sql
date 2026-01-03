@@ -25,6 +25,7 @@ DELIMITER $$
 --
 -- Procedimientos
 --
+DROP PROCEDURE IF EXISTS `sp_crear_notificacion`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_crear_notificacion` (IN `p_id_usuario` INT, IN `p_codigo_plantilla` VARCHAR(100), IN `p_variables` JSON, IN `p_id_referencia` INT, IN `p_tipo_referencia` VARCHAR(50))   BEGIN
   DECLARE v_titulo VARCHAR(200);
   DECLARE v_mensaje TEXT;
@@ -72,6 +73,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_crear_notificacion` (IN `p_id_us
   SELECT LAST_INSERT_ID() AS id_notificacion;
 END$$
 
+DROP PROCEDURE IF EXISTS `sp_crear_notificacion_alerta`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_crear_notificacion_alerta` (IN `p_id_usuario` INT, IN `p_codigo_plantilla` VARCHAR(100), IN `p_variables` JSON, IN `p_id_referencia` INT, IN `p_tipo_referencia` VARCHAR(50))   BEGIN
   DECLARE v_titulo VARCHAR(200);
   DECLARE v_mensaje TEXT;
@@ -147,6 +149,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_crear_notificacion_alerta` (IN `
   SELECT v_id_notificacion AS id_notificacion;
 END$$
 
+DROP PROCEDURE IF EXISTS `sp_evaluar_alerta`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_evaluar_alerta` (IN `p_id_resultado` INT)   BEGIN
   DECLARE v_estres FLOAT;
   DECLARE v_ansiedad FLOAT;
@@ -231,6 +234,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_evaluar_alerta` (IN `p_id_result
   
 END$$
 
+DROP PROCEDURE IF EXISTS `sp_evaluar_escalamiento`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_evaluar_escalamiento` ()   BEGIN
   DECLARE v_done INT DEFAULT 0;
   DECLARE v_id_usuario INT;
@@ -298,6 +302,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_evaluar_escalamiento` ()   BEGIN
   CLOSE cur_usuarios;
 END$$
 
+DROP PROCEDURE IF EXISTS `sp_generar_datos_prueba`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_generar_datos_prueba` ()   BEGIN
     DECLARE v_user_id INT DEFAULT 1;
     DECLARE v_audio_count INT;
@@ -717,6 +722,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_generar_datos_prueba` ()   BEGIN
         
 END$$
 
+DROP PROCEDURE IF EXISTS `sp_resolver_alerta`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_resolver_alerta` (IN `p_id_alerta` INT, IN `p_id_facilitador` INT, IN `p_notas` TEXT)   BEGIN
   DECLARE v_id_usuario INT;
   
@@ -762,6 +768,7 @@ DELIMITER ;
 -- Estructura de tabla para la tabla `actividades_grupo`
 --
 
+DROP TABLE IF EXISTS `actividades_grupo`;
 CREATE TABLE `actividades_grupo` (
   `id_actividad` int(11) NOT NULL,
   `id_grupo` int(11) NOT NULL,
@@ -779,6 +786,7 @@ CREATE TABLE `actividades_grupo` (
 -- Disparadores `actividades_grupo`
 --
 DELIMITER $$
+DROP TRIGGER IF EXISTS `trg_notificar_actividad_grupo`;
 CREATE TRIGGER `trg_notificar_actividad_grupo` AFTER INSERT ON `actividades_grupo` FOR EACH ROW BEGIN
   -- Notificar a todos los miembros activos del grupo
   INSERT INTO notificaciones (
@@ -809,6 +817,7 @@ DELIMITER ;
 -- Estructura de tabla para la tabla `alerta_analisis`
 --
 
+DROP TABLE IF EXISTS `alerta_analisis`;
 CREATE TABLE `alerta_analisis` (
   `id_alerta` int(11) NOT NULL,
   `id_resultado` int(11) NOT NULL,
@@ -862,6 +871,7 @@ INSERT INTO `alerta_analisis` (`id_alerta`, `id_resultado`, `tipo_alerta`, `tipo
 -- Disparadores `alerta_analisis`
 --
 DELIMITER $$
+DROP TRIGGER IF EXISTS `trg_notificar_alerta_mejorado`;
 CREATE TRIGGER `trg_notificar_alerta_mejorado` AFTER INSERT ON `alerta_analisis` FOR EACH ROW BEGIN
   DECLARE v_id_usuario INT;
   DECLARE v_nombre_usuario VARCHAR(100);
@@ -997,6 +1007,7 @@ DELIMITER ;
 -- Estructura de tabla para la tabla `analisis`
 --
 
+DROP TABLE IF EXISTS `analisis`;
 CREATE TABLE `analisis` (
   `id_analisis` int(11) NOT NULL,
   `id_audio` int(11) NOT NULL,
@@ -1561,6 +1572,7 @@ INSERT INTO `analisis` (`id_analisis`, `id_audio`, `modelo_usado`, `fecha_analis
 -- Estructura de tabla para la tabla `audio`
 --
 
+DROP TABLE IF EXISTS `audio`;
 CREATE TABLE `audio` (
   `id_audio` int(11) NOT NULL,
   `id_usuario` int(11) NOT NULL,
@@ -2137,6 +2149,7 @@ INSERT INTO `audio` (`id_audio`, `id_usuario`, `nombre_archivo`, `ruta_archivo`,
 -- Estructura de tabla para la tabla `grupos`
 --
 
+DROP TABLE IF EXISTS `grupos`;
 CREATE TABLE `grupos` (
   `id_grupo` int(11) NOT NULL,
   `nombre_grupo` varchar(200) NOT NULL,
@@ -2177,6 +2190,7 @@ INSERT INTO `grupos` (`id_grupo`, `nombre_grupo`, `descripcion`, `codigo_acceso`
 -- Estructura de tabla para la tabla `grupo_miembros`
 --
 
+DROP TABLE IF EXISTS `grupo_miembros`;
 CREATE TABLE `grupo_miembros` (
   `id_grupo_miembro` int(11) NOT NULL,
   `id_grupo` int(11) NOT NULL,
@@ -2243,6 +2257,7 @@ INSERT INTO `grupo_miembros` (`id_grupo_miembro`, `id_grupo`, `id_usuario`, `rol
 -- Disparadores `grupo_miembros`
 --
 DELIMITER $$
+DROP TRIGGER IF EXISTS `trg_notificar_invitacion_grupo`;
 CREATE TRIGGER `trg_notificar_invitacion_grupo` AFTER INSERT ON `grupo_miembros` FOR EACH ROW BEGIN
   IF NEW.rol_grupo = 'participante' THEN
     INSERT INTO notificaciones (
@@ -2272,6 +2287,7 @@ DELIMITER ;
 -- Estructura de tabla para la tabla `historial_alerta`
 --
 
+DROP TABLE IF EXISTS `historial_alerta`;
 CREATE TABLE `historial_alerta` (
   `id_historial` int(11) NOT NULL,
   `id_alerta` int(11) NOT NULL,
@@ -2287,6 +2303,7 @@ CREATE TABLE `historial_alerta` (
 -- Estructura de tabla para la tabla `juegos_terapeuticos`
 --
 
+DROP TABLE IF EXISTS `juegos_terapeuticos`;
 CREATE TABLE `juegos_terapeuticos` (
   `id` int(11) NOT NULL,
   `nombre` varchar(100) NOT NULL,
@@ -2315,6 +2332,7 @@ INSERT INTO `juegos_terapeuticos` (`id`, `nombre`, `tipo_juego`, `descripcion`, 
 -- Estructura de tabla para la tabla `notificaciones`
 --
 
+DROP TABLE IF EXISTS `notificaciones`;
 CREATE TABLE `notificaciones` (
   `id_notificacion` int(11) NOT NULL,
   `id_usuario` int(11) NOT NULL COMMENT 'Destinatario',
@@ -4025,6 +4043,7 @@ INSERT INTO `notificaciones` (`id_notificacion`, `id_usuario`, `tipo_notificacio
 -- Estructura de tabla para la tabla `participacion_actividad`
 --
 
+DROP TABLE IF EXISTS `participacion_actividad`;
 CREATE TABLE `participacion_actividad` (
   `id_participacion` int(11) NOT NULL,
   `id_actividad` int(11) NOT NULL,
@@ -4042,6 +4061,7 @@ CREATE TABLE `participacion_actividad` (
 -- Estructura de tabla para la tabla `plantillas_notificacion`
 --
 
+DROP TABLE IF EXISTS `plantillas_notificacion`;
 CREATE TABLE `plantillas_notificacion` (
   `id_plantilla` int(11) NOT NULL,
   `codigo` varchar(100) NOT NULL COMMENT 'invitacion_grupo, nueva_recomendacion',
@@ -4078,6 +4098,7 @@ INSERT INTO `plantillas_notificacion` (`id_plantilla`, `codigo`, `tipo_notificac
 -- Estructura de tabla para la tabla `preferencias_notificacion`
 --
 
+DROP TABLE IF EXISTS `preferencias_notificacion`;
 CREATE TABLE `preferencias_notificacion` (
   `id_preferencia` int(11) NOT NULL,
   `id_usuario` int(11) NOT NULL,
@@ -4110,6 +4131,7 @@ CREATE TABLE `preferencias_notificacion` (
 -- Estructura de tabla para la tabla `recomendaciones`
 --
 
+DROP TABLE IF EXISTS `recomendaciones`;
 CREATE TABLE `recomendaciones` (
   `id_recomendacion` int(11) NOT NULL,
   `id_resultado` int(11) NOT NULL,
@@ -5760,6 +5782,7 @@ INSERT INTO `recomendaciones` (`id_recomendacion`, `id_resultado`, `tipo_recomen
 -- Disparadores `recomendaciones`
 --
 DELIMITER $$
+DROP TRIGGER IF EXISTS `trg_notificar_recomendacion`;
 CREATE TRIGGER `trg_notificar_recomendacion` AFTER INSERT ON `recomendaciones` FOR EACH ROW BEGIN
   INSERT INTO notificaciones (
     id_usuario, tipo_notificacion, titulo, mensaje, icono,
@@ -5789,6 +5812,7 @@ DELIMITER ;
 -- Estructura de tabla para la tabla `reporte`
 --
 
+DROP TABLE IF EXISTS `reporte`;
 CREATE TABLE `reporte` (
   `id_reporte` int(11) NOT NULL,
   `id_usuario` int(11) NOT NULL,
@@ -5805,6 +5829,7 @@ CREATE TABLE `reporte` (
 -- Estructura de tabla para la tabla `reporte_resultado`
 --
 
+DROP TABLE IF EXISTS `reporte_resultado`;
 CREATE TABLE `reporte_resultado` (
   `id_reporte_resultado` int(11) NOT NULL,
   `id_reporte` int(11) NOT NULL,
@@ -5817,6 +5842,7 @@ CREATE TABLE `reporte_resultado` (
 -- Estructura de tabla para la tabla `resultado_analisis`
 --
 
+DROP TABLE IF EXISTS `resultado_analisis`;
 CREATE TABLE `resultado_analisis` (
   `id_resultado` int(11) NOT NULL,
   `id_analisis` int(11) NOT NULL,
@@ -6387,6 +6413,7 @@ INSERT INTO `resultado_analisis` (`id_resultado`, `id_analisis`, `nivel_estres`,
 -- Disparadores `resultado_analisis`
 --
 DELIMITER $$
+DROP TRIGGER IF EXISTS `trg_evaluar_resultado`;
 CREATE TRIGGER `trg_evaluar_resultado` AFTER INSERT ON `resultado_analisis` FOR EACH ROW BEGIN
   CALL sp_evaluar_alerta(NEW.id_resultado);
 END
@@ -6399,6 +6426,7 @@ DELIMITER ;
 -- Estructura de tabla para la tabla `rol`
 --
 
+DROP TABLE IF EXISTS `rol`;
 CREATE TABLE `rol` (
   `id_rol` int(11) NOT NULL,
   `nombre_rol` varchar(50) NOT NULL,
@@ -6420,6 +6448,7 @@ INSERT INTO `rol` (`id_rol`, `nombre_rol`, `descripcion`, `activo`) VALUES
 -- Estructura de tabla para la tabla `rol_usuario`
 --
 
+DROP TABLE IF EXISTS `rol_usuario`;
 CREATE TABLE `rol_usuario` (
   `id_rol_usuario` int(11) NOT NULL,
   `id_usuario` int(11) NOT NULL,
@@ -6519,6 +6548,7 @@ INSERT INTO `rol_usuario` (`id_rol_usuario`, `id_usuario`, `id_rol`, `fecha_crea
 -- Estructura de tabla para la tabla `sesion`
 --
 
+DROP TABLE IF EXISTS `sesion`;
 CREATE TABLE `sesion` (
   `id_sesion` int(11) NOT NULL,
   `id_usuario` int(11) NOT NULL,
@@ -6574,6 +6604,7 @@ INSERT INTO `sesion` (`id_sesion`, `id_usuario`, `fecha_inicio`, `fecha_fin`, `d
 -- Estructura de tabla para la tabla `sesiones_juego`
 --
 
+DROP TABLE IF EXISTS `sesiones_juego`;
 CREATE TABLE `sesiones_juego` (
   `id` int(11) NOT NULL,
   `id_usuario` int(11) NOT NULL,
@@ -6608,6 +6639,7 @@ INSERT INTO `sesiones_juego` (`id`, `id_usuario`, `id_juego`, `fecha_inicio`, `f
 -- Estructura de tabla para la tabla `usuario`
 --
 
+DROP TABLE IF EXISTS `usuario`;
 CREATE TABLE `usuario` (
   `id_usuario` int(11) NOT NULL,
   `nombre` varchar(100) NOT NULL,
@@ -6718,258 +6750,90 @@ INSERT INTO `usuario` (`id_usuario`, `nombre`, `apellido`, `correo`, `contrasena
 -- --------------------------------------------------------
 
 --
--- Estructura Stand-in para la vista `vista_alertas_activas`
--- (Véase abajo para la vista actual)
---
-CREATE TABLE `vista_alertas_activas` (
-`id_alerta` int(11)
-,`nombre` varchar(100)
-,`apellido` varchar(100)
-,`correo` varchar(150)
-,`tipo_alerta` enum('baja','media','alta','critica')
-,`tipo_recomendacion` enum('advertencia','critica','informativa')
-,`titulo` varchar(200)
-,`descripcion` text
-,`fecha` date
-,`nivel_estres` float
-,`nivel_ansiedad` float
-,`clasificacion` enum('normal','leve','moderado','alto','muy_alto')
-,`emocion_dominante` varchar(50)
-);
 
 -- --------------------------------------------------------
 
 --
--- Estructura Stand-in para la vista `vista_analisis_completos`
--- (Véase abajo para la vista actual)
---
-CREATE TABLE `vista_analisis_completos` (
-`id_analisis` int(11)
-,`nombre` varchar(100)
-,`apellido` varchar(100)
-,`correo` varchar(150)
-,`nombre_archivo` varchar(255)
-,`duracion_audio` float
-,`fecha_grabacion` datetime
-,`modelo_usado` varchar(100)
-,`fecha_analisis` date
-,`estado_analisis` enum('procesando','completado','error')
-,`duracion_procesamiento` float
-,`nivel_estres` float
-,`nivel_ansiedad` float
-,`clasificacion` enum('normal','leve','moderado','alto','muy_alto')
-,`confianza_modelo` float
-,`emocion_dominante` varchar(50)
-);
 
 -- --------------------------------------------------------
 
 --
--- Estructura Stand-in para la vista `vista_grupos_estadisticas`
--- (Véase abajo para la vista actual)
---
-CREATE TABLE `vista_grupos_estadisticas` (
-`id_grupo` int(11)
-,`nombre_grupo` varchar(200)
-,`tipo_grupo` enum('terapia','apoyo','taller','empresa','educativo','familiar','otro')
-,`privacidad` enum('publico','privado','por_invitacion')
-,`codigo_acceso` varchar(20)
-,`facilitador_nombre` varchar(100)
-,`facilitador_apellido` varchar(100)
-,`facilitador_correo` varchar(150)
-,`fecha_creacion` datetime
-,`activo` tinyint(1)
-,`total_miembros` bigint(21)
-,`max_participantes` int(11)
-,`miembros_activos` bigint(21)
-,`total_actividades` bigint(21)
-,`actividades_completadas` bigint(21)
-);
 
 -- --------------------------------------------------------
 
 --
--- Estructura Stand-in para la vista `vista_notificaciones_pendientes`
--- (Véase abajo para la vista actual)
---
-CREATE TABLE `vista_notificaciones_pendientes` (
-`id_notificacion` int(11)
-,`id_usuario` int(11)
-,`nombre` varchar(100)
-,`apellido` varchar(100)
-,`correo` varchar(150)
-,`tipo_notificacion` enum('invitacion_grupo','actividad_grupo','recordatorio_actividad','recomendacion','alerta_critica','mensaje_facilitador','logro_desbloqueado','recordatorio_analisis','actualizacion_grupo','sistema')
-,`titulo` varchar(200)
-,`mensaje` text
-,`icono` varchar(50)
-,`url_accion` varchar(500)
-,`prioridad` enum('baja','media','alta','urgente')
-,`fecha_creacion` datetime
-,`horas_sin_leer` bigint(21)
-);
 
 -- --------------------------------------------------------
 
 --
--- Estructura Stand-in para la vista `vista_participacion_grupos`
--- (Véase abajo para la vista actual)
---
-CREATE TABLE `vista_participacion_grupos` (
-`id_grupo_miembro` int(11)
-,`id_grupo` int(11)
-,`nombre_grupo` varchar(200)
-,`tipo_grupo` enum('terapia','apoyo','taller','empresa','educativo','familiar','otro')
-,`id_usuario` int(11)
-,`nombre` varchar(100)
-,`apellido` varchar(100)
-,`correo` varchar(150)
-,`rol_grupo` enum('facilitador','co_facilitador','participante','observador')
-,`fecha_ingreso` datetime
-,`estado` enum('activo','inactivo','suspendido')
-,`actividades_totales` bigint(21)
-,`actividades_completadas` bigint(21)
-,`porcentaje_completado` decimal(26,2)
-);
 
 -- --------------------------------------------------------
 
 --
--- Estructura Stand-in para la vista `vista_sesiones_completas`
--- (Véase abajo para la vista actual)
---
-CREATE TABLE `vista_sesiones_completas` (
-`sesion_id` int(11)
-,`id_usuario` int(11)
-,`usuario_nombre` varchar(100)
-,`usuario_correo` varchar(150)
-,`id_juego` int(11)
-,`juego_nombre` varchar(100)
-,`tipo_juego` varchar(20)
-,`objetivo_emocional` varchar(20)
-,`juego_icono` varchar(10)
-,`fecha_inicio` datetime
-,`fecha_fin` datetime
-,`duracion_segundos` int(11)
-,`duracion_formato` varchar(26)
-,`puntuacion` int(11)
-,`nivel_alcanzado` int(11)
-,`completado` tinyint(1)
-,`estado_antes` varchar(20)
-,`estado_despues` varchar(20)
-,`mejora_percibida` varchar(20)
-,`emoji_mejora` varchar(4)
-,`notas` text
-);
 
 -- --------------------------------------------------------
 
 --
--- Estructura Stand-in para la vista `vista_stats_notificaciones`
--- (Véase abajo para la vista actual)
---
-CREATE TABLE `vista_stats_notificaciones` (
-`id_usuario` int(11)
-,`nombre` varchar(100)
-,`apellido` varchar(100)
-,`total_notificaciones` bigint(21)
-,`no_leidas` decimal(22,0)
-,`leidas` decimal(22,0)
-,`archivadas` decimal(22,0)
-,`urgentes_pendientes` decimal(22,0)
-,`ultima_notificacion` datetime
-);
 
 -- --------------------------------------------------------
 
 --
--- Estructura Stand-in para la vista `vista_usuarios_estadisticas`
--- (Véase abajo para la vista actual)
---
-CREATE TABLE `vista_usuarios_estadisticas` (
-`id_usuario` int(11)
-,`nombre` varchar(100)
-,`apellido` varchar(100)
-,`correo` varchar(150)
-,`fecha_registro` date
-,`edad` int(11)
-,`total_audios` bigint(21)
-,`total_analisis` bigint(21)
-,`promedio_estres` double
-,`promedio_ansiedad` double
-,`ultimo_analisis` date
-);
 
 -- --------------------------------------------------------
 
 --
 -- Estructura para la vista `vista_alertas_activas`
 --
-DROP TABLE IF EXISTS `vista_alertas_activas`;
-
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vista_alertas_activas`  AS SELECT `al`.`id_alerta` AS `id_alerta`, `u`.`nombre` AS `nombre`, `u`.`apellido` AS `apellido`, `u`.`correo` AS `correo`, `al`.`tipo_alerta` AS `tipo_alerta`, `al`.`tipo_recomendacion` AS `tipo_recomendacion`, `al`.`titulo` AS `titulo`, `al`.`descripcion` AS `descripcion`, `al`.`fecha` AS `fecha`, `ra`.`nivel_estres` AS `nivel_estres`, `ra`.`nivel_ansiedad` AS `nivel_ansiedad`, `ra`.`clasificacion` AS `clasificacion`, `ra`.`emocion_dominante` AS `emocion_dominante` FROM ((((`alerta_analisis` `al` join `resultado_analisis` `ra` on(`al`.`id_resultado` = `ra`.`id_resultado`)) join `analisis` `an` on(`ra`.`id_analisis` = `an`.`id_analisis`)) join `audio` `au` on(`an`.`id_audio` = `au`.`id_audio`)) join `usuario` `u` on(`au`.`id_usuario` = `u`.`id_usuario`)) WHERE `al`.`activo` = 1 AND `al`.`tipo_alerta` in ('alta','critica') ORDER BY `al`.`fecha_creacion` DESC, `al`.`tipo_alerta` DESC ;
+CREATE OR REPLACE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vista_alertas_activas`  AS SELECT `al`.`id_alerta` AS `id_alerta`, `u`.`nombre` AS `nombre`, `u`.`apellido` AS `apellido`, `u`.`correo` AS `correo`, `al`.`tipo_alerta` AS `tipo_alerta`, `al`.`tipo_recomendacion` AS `tipo_recomendacion`, `al`.`titulo` AS `titulo`, `al`.`descripcion` AS `descripcion`, `al`.`fecha` AS `fecha`, `ra`.`nivel_estres` AS `nivel_estres`, `ra`.`nivel_ansiedad` AS `nivel_ansiedad`, `ra`.`clasificacion` AS `clasificacion`, `ra`.`emocion_dominante` AS `emocion_dominante` FROM ((((`alerta_analisis` `al` join `resultado_analisis` `ra` on(`al`.`id_resultado` = `ra`.`id_resultado`)) join `analisis` `an` on(`ra`.`id_analisis` = `an`.`id_analisis`)) join `audio` `au` on(`an`.`id_audio` = `au`.`id_audio`)) join `usuario` `u` on(`au`.`id_usuario` = `u`.`id_usuario`)) WHERE `al`.`activo` = 1 AND `al`.`tipo_alerta` in ('alta','critica') ORDER BY `al`.`fecha_creacion` DESC, `al`.`tipo_alerta` DESC ;
 
 -- --------------------------------------------------------
 
 --
 -- Estructura para la vista `vista_analisis_completos`
 --
-DROP TABLE IF EXISTS `vista_analisis_completos`;
-
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vista_analisis_completos`  AS SELECT `an`.`id_analisis` AS `id_analisis`, `u`.`nombre` AS `nombre`, `u`.`apellido` AS `apellido`, `u`.`correo` AS `correo`, `au`.`nombre_archivo` AS `nombre_archivo`, `au`.`duracion` AS `duracion_audio`, `au`.`fecha_grabacion` AS `fecha_grabacion`, `an`.`modelo_usado` AS `modelo_usado`, `an`.`fecha_analisis` AS `fecha_analisis`, `an`.`estado_analisis` AS `estado_analisis`, `an`.`duracion_procesamiento` AS `duracion_procesamiento`, `ra`.`nivel_estres` AS `nivel_estres`, `ra`.`nivel_ansiedad` AS `nivel_ansiedad`, `ra`.`clasificacion` AS `clasificacion`, `ra`.`confianza_modelo` AS `confianza_modelo`, `ra`.`emocion_dominante` AS `emocion_dominante` FROM (((`analisis` `an` join `audio` `au` on(`an`.`id_audio` = `au`.`id_audio`)) join `usuario` `u` on(`au`.`id_usuario` = `u`.`id_usuario`)) left join `resultado_analisis` `ra` on(`an`.`id_analisis` = `ra`.`id_analisis`)) WHERE `an`.`activo` = 1 AND `au`.`activo` = 1 ORDER BY `an`.`fecha_analisis` DESC ;
+CREATE OR REPLACE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vista_analisis_completos`  AS SELECT `an`.`id_analisis` AS `id_analisis`, `u`.`nombre` AS `nombre`, `u`.`apellido` AS `apellido`, `u`.`correo` AS `correo`, `au`.`nombre_archivo` AS `nombre_archivo`, `au`.`duracion` AS `duracion_audio`, `au`.`fecha_grabacion` AS `fecha_grabacion`, `an`.`modelo_usado` AS `modelo_usado`, `an`.`fecha_analisis` AS `fecha_analisis`, `an`.`estado_analisis` AS `estado_analisis`, `an`.`duracion_procesamiento` AS `duracion_procesamiento`, `ra`.`nivel_estres` AS `nivel_estres`, `ra`.`nivel_ansiedad` AS `nivel_ansiedad`, `ra`.`clasificacion` AS `clasificacion`, `ra`.`confianza_modelo` AS `confianza_modelo`, `ra`.`emocion_dominante` AS `emocion_dominante` FROM (((`analisis` `an` join `audio` `au` on(`an`.`id_audio` = `au`.`id_audio`)) join `usuario` `u` on(`au`.`id_usuario` = `u`.`id_usuario`)) left join `resultado_analisis` `ra` on(`an`.`id_analisis` = `ra`.`id_analisis`)) WHERE `an`.`activo` = 1 AND `au`.`activo` = 1 ORDER BY `an`.`fecha_analisis` DESC ;
 
 -- --------------------------------------------------------
 
 --
 -- Estructura para la vista `vista_grupos_estadisticas`
 --
-DROP TABLE IF EXISTS `vista_grupos_estadisticas`;
-
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vista_grupos_estadisticas`  AS SELECT `g`.`id_grupo` AS `id_grupo`, `g`.`nombre_grupo` AS `nombre_grupo`, `g`.`tipo_grupo` AS `tipo_grupo`, `g`.`privacidad` AS `privacidad`, `g`.`codigo_acceso` AS `codigo_acceso`, `u`.`nombre` AS `facilitador_nombre`, `u`.`apellido` AS `facilitador_apellido`, `u`.`correo` AS `facilitador_correo`, `g`.`fecha_creacion` AS `fecha_creacion`, `g`.`activo` AS `activo`, count(distinct `gm`.`id_usuario`) AS `total_miembros`, `g`.`max_participantes` AS `max_participantes`, count(distinct case when `gm`.`estado` = 'activo' then `gm`.`id_usuario` end) AS `miembros_activos`, count(distinct `ag`.`id_actividad`) AS `total_actividades`, count(distinct case when `ag`.`completada` = 1 then `ag`.`id_actividad` end) AS `actividades_completadas` FROM (((`grupos` `g` join `usuario` `u` on(`g`.`id_facilitador` = `u`.`id_usuario`)) left join `grupo_miembros` `gm` on(`g`.`id_grupo` = `gm`.`id_grupo`)) left join `actividades_grupo` `ag` on(`g`.`id_grupo` = `ag`.`id_grupo`)) WHERE `g`.`activo` = 1 GROUP BY `g`.`id_grupo` ;
+CREATE OR REPLACE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vista_grupos_estadisticas`  AS SELECT `g`.`id_grupo` AS `id_grupo`, `g`.`nombre_grupo` AS `nombre_grupo`, `g`.`tipo_grupo` AS `tipo_grupo`, `g`.`privacidad` AS `privacidad`, `g`.`codigo_acceso` AS `codigo_acceso`, `u`.`nombre` AS `facilitador_nombre`, `u`.`apellido` AS `facilitador_apellido`, `u`.`correo` AS `facilitador_correo`, `g`.`fecha_creacion` AS `fecha_creacion`, `g`.`activo` AS `activo`, count(distinct `gm`.`id_usuario`) AS `total_miembros`, `g`.`max_participantes` AS `max_participantes`, count(distinct case when `gm`.`estado` = 'activo' then `gm`.`id_usuario` end) AS `miembros_activos`, count(distinct `ag`.`id_actividad`) AS `total_actividades`, count(distinct case when `ag`.`completada` = 1 then `ag`.`id_actividad` end) AS `actividades_completadas` FROM (((`grupos` `g` join `usuario` `u` on(`g`.`id_facilitador` = `u`.`id_usuario`)) left join `grupo_miembros` `gm` on(`g`.`id_grupo` = `gm`.`id_grupo`)) left join `actividades_grupo` `ag` on(`g`.`id_grupo` = `ag`.`id_grupo`)) WHERE `g`.`activo` = 1 GROUP BY `g`.`id_grupo` ;
 
 -- --------------------------------------------------------
 
 --
 -- Estructura para la vista `vista_notificaciones_pendientes`
 --
-DROP TABLE IF EXISTS `vista_notificaciones_pendientes`;
-
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vista_notificaciones_pendientes`  AS SELECT `n`.`id_notificacion` AS `id_notificacion`, `n`.`id_usuario` AS `id_usuario`, `u`.`nombre` AS `nombre`, `u`.`apellido` AS `apellido`, `u`.`correo` AS `correo`, `n`.`tipo_notificacion` AS `tipo_notificacion`, `n`.`titulo` AS `titulo`, `n`.`mensaje` AS `mensaje`, `n`.`icono` AS `icono`, `n`.`url_accion` AS `url_accion`, `n`.`prioridad` AS `prioridad`, `n`.`fecha_creacion` AS `fecha_creacion`, timestampdiff(HOUR,`n`.`fecha_creacion`,current_timestamp()) AS `horas_sin_leer` FROM (`notificaciones` `n` join `usuario` `u` on(`n`.`id_usuario` = `u`.`id_usuario`)) WHERE `n`.`activo` = 1 AND `n`.`leida` = 0 AND `n`.`archivada` = 0 AND (`n`.`fecha_expiracion` is null OR `n`.`fecha_expiracion` > current_timestamp()) ORDER BY `n`.`prioridad` DESC, `n`.`fecha_creacion` DESC ;
+CREATE OR REPLACE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vista_notificaciones_pendientes`  AS SELECT `n`.`id_notificacion` AS `id_notificacion`, `n`.`id_usuario` AS `id_usuario`, `u`.`nombre` AS `nombre`, `u`.`apellido` AS `apellido`, `u`.`correo` AS `correo`, `n`.`tipo_notificacion` AS `tipo_notificacion`, `n`.`titulo` AS `titulo`, `n`.`mensaje` AS `mensaje`, `n`.`icono` AS `icono`, `n`.`url_accion` AS `url_accion`, `n`.`prioridad` AS `prioridad`, `n`.`fecha_creacion` AS `fecha_creacion`, timestampdiff(HOUR,`n`.`fecha_creacion`,current_timestamp()) AS `horas_sin_leer` FROM (`notificaciones` `n` join `usuario` `u` on(`n`.`id_usuario` = `u`.`id_usuario`)) WHERE `n`.`activo` = 1 AND `n`.`leida` = 0 AND `n`.`archivada` = 0 AND (`n`.`fecha_expiracion` is null OR `n`.`fecha_expiracion` > current_timestamp()) ORDER BY `n`.`prioridad` DESC, `n`.`fecha_creacion` DESC ;
 
 -- --------------------------------------------------------
 
 --
 -- Estructura para la vista `vista_participacion_grupos`
 --
-DROP TABLE IF EXISTS `vista_participacion_grupos`;
-
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vista_participacion_grupos`  AS SELECT `gm`.`id_grupo_miembro` AS `id_grupo_miembro`, `g`.`id_grupo` AS `id_grupo`, `g`.`nombre_grupo` AS `nombre_grupo`, `g`.`tipo_grupo` AS `tipo_grupo`, `u`.`id_usuario` AS `id_usuario`, `u`.`nombre` AS `nombre`, `u`.`apellido` AS `apellido`, `u`.`correo` AS `correo`, `gm`.`rol_grupo` AS `rol_grupo`, `gm`.`fecha_ingreso` AS `fecha_ingreso`, `gm`.`estado` AS `estado`, count(distinct `pa`.`id_participacion`) AS `actividades_totales`, count(distinct case when `pa`.`completada` = 1 then `pa`.`id_participacion` end) AS `actividades_completadas`, CASE WHEN count(distinct `pa`.`id_participacion`) > 0 THEN round(count(distinct case when `pa`.`completada` = 1 then `pa`.`id_participacion` end) * 100.0 / count(distinct `pa`.`id_participacion`),2) ELSE 0 END AS `porcentaje_completado` FROM ((((`grupo_miembros` `gm` join `grupos` `g` on(`gm`.`id_grupo` = `g`.`id_grupo`)) join `usuario` `u` on(`gm`.`id_usuario` = `u`.`id_usuario`)) left join `participacion_actividad` `pa` on(`gm`.`id_usuario` = `pa`.`id_usuario`)) left join `actividades_grupo` `ag` on(`pa`.`id_actividad` = `ag`.`id_actividad` and `ag`.`id_grupo` = `g`.`id_grupo`)) WHERE `gm`.`activo` = 1 AND `g`.`activo` = 1 GROUP BY `gm`.`id_grupo_miembro` ;
+CREATE OR REPLACE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vista_participacion_grupos`  AS SELECT `gm`.`id_grupo_miembro` AS `id_grupo_miembro`, `g`.`id_grupo` AS `id_grupo`, `g`.`nombre_grupo` AS `nombre_grupo`, `g`.`tipo_grupo` AS `tipo_grupo`, `u`.`id_usuario` AS `id_usuario`, `u`.`nombre` AS `nombre`, `u`.`apellido` AS `apellido`, `u`.`correo` AS `correo`, `gm`.`rol_grupo` AS `rol_grupo`, `gm`.`fecha_ingreso` AS `fecha_ingreso`, `gm`.`estado` AS `estado`, count(distinct `pa`.`id_participacion`) AS `actividades_totales`, count(distinct case when `pa`.`completada` = 1 then `pa`.`id_participacion` end) AS `actividades_completadas`, CASE WHEN count(distinct `pa`.`id_participacion`) > 0 THEN round(count(distinct case when `pa`.`completada` = 1 then `pa`.`id_participacion` end) * 100.0 / count(distinct `pa`.`id_participacion`),2) ELSE 0 END AS `porcentaje_completado` FROM ((((`grupo_miembros` `gm` join `grupos` `g` on(`gm`.`id_grupo` = `g`.`id_grupo`)) join `usuario` `u` on(`gm`.`id_usuario` = `u`.`id_usuario`)) left join `participacion_actividad` `pa` on(`gm`.`id_usuario` = `pa`.`id_usuario`)) left join `actividades_grupo` `ag` on(`pa`.`id_actividad` = `ag`.`id_actividad` and `ag`.`id_grupo` = `g`.`id_grupo`)) WHERE `gm`.`activo` = 1 AND `g`.`activo` = 1 GROUP BY `gm`.`id_grupo_miembro` ;
 
 -- --------------------------------------------------------
 
 --
 -- Estructura para la vista `vista_sesiones_completas`
 --
-DROP TABLE IF EXISTS `vista_sesiones_completas`;
-
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vista_sesiones_completas`  AS SELECT `sj`.`id` AS `sesion_id`, `sj`.`id_usuario` AS `id_usuario`, `u`.`nombre` AS `usuario_nombre`, `u`.`correo` AS `usuario_correo`, `sj`.`id_juego` AS `id_juego`, `jt`.`nombre` AS `juego_nombre`, `jt`.`tipo_juego` AS `tipo_juego`, `jt`.`objetivo_emocional` AS `objetivo_emocional`, `jt`.`icono` AS `juego_icono`, `sj`.`fecha_inicio` AS `fecha_inicio`, `sj`.`fecha_fin` AS `fecha_fin`, `sj`.`duracion_segundos` AS `duracion_segundos`, concat(floor(`sj`.`duracion_segundos` / 60),'m ',`sj`.`duracion_segundos` MOD 60,'s') AS `duracion_formato`, `sj`.`puntuacion` AS `puntuacion`, `sj`.`nivel_alcanzado` AS `nivel_alcanzado`, `sj`.`completado` AS `completado`, `sj`.`estado_antes` AS `estado_antes`, `sj`.`estado_despues` AS `estado_despues`, `sj`.`mejora_percibida` AS `mejora_percibida`, CASE `sj`.`mejora_percibida` WHEN 'mucho_mejor' THEN 'ðŸ˜Š' WHEN 'mejor' THEN 'ðŸ™‚' WHEN 'igual' THEN 'ðŸ˜' WHEN 'peor' THEN 'ðŸ˜Ÿ' WHEN 'mucho_peor' THEN 'ðŸ˜¢' ELSE 'â“' END AS `emoji_mejora`, `sj`.`notas` AS `notas` FROM ((`sesiones_juego` `sj` join `usuario` `u` on(`sj`.`id_usuario` = `u`.`id_usuario`)) join `juegos_terapeuticos` `jt` on(`sj`.`id_juego` = `jt`.`id`)) ORDER BY `sj`.`fecha_inicio` DESC ;
+CREATE OR REPLACE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vista_sesiones_completas`  AS SELECT `sj`.`id` AS `sesion_id`, `sj`.`id_usuario` AS `id_usuario`, `u`.`nombre` AS `usuario_nombre`, `u`.`correo` AS `usuario_correo`, `sj`.`id_juego` AS `id_juego`, `jt`.`nombre` AS `juego_nombre`, `jt`.`tipo_juego` AS `tipo_juego`, `jt`.`objetivo_emocional` AS `objetivo_emocional`, `jt`.`icono` AS `juego_icono`, `sj`.`fecha_inicio` AS `fecha_inicio`, `sj`.`fecha_fin` AS `fecha_fin`, `sj`.`duracion_segundos` AS `duracion_segundos`, concat(floor(`sj`.`duracion_segundos` / 60),'m ',`sj`.`duracion_segundos` MOD 60,'s') AS `duracion_formato`, `sj`.`puntuacion` AS `puntuacion`, `sj`.`nivel_alcanzado` AS `nivel_alcanzado`, `sj`.`completado` AS `completado`, `sj`.`estado_antes` AS `estado_antes`, `sj`.`estado_despues` AS `estado_despues`, `sj`.`mejora_percibida` AS `mejora_percibida`, CASE `sj`.`mejora_percibida` WHEN 'mucho_mejor' THEN 'ðŸ˜Š' WHEN 'mejor' THEN 'ðŸ™‚' WHEN 'igual' THEN 'ðŸ˜' WHEN 'peor' THEN 'ðŸ˜Ÿ' WHEN 'mucho_peor' THEN 'ðŸ˜¢' ELSE 'â“' END AS `emoji_mejora`, `sj`.`notas` AS `notas` FROM ((`sesiones_juego` `sj` join `usuario` `u` on(`sj`.`id_usuario` = `u`.`id_usuario`)) join `juegos_terapeuticos` `jt` on(`sj`.`id_juego` = `jt`.`id`)) ORDER BY `sj`.`fecha_inicio` DESC ;
 
 -- --------------------------------------------------------
 
 --
 -- Estructura para la vista `vista_stats_notificaciones`
 --
-DROP TABLE IF EXISTS `vista_stats_notificaciones`;
-
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vista_stats_notificaciones`  AS SELECT `u`.`id_usuario` AS `id_usuario`, `u`.`nombre` AS `nombre`, `u`.`apellido` AS `apellido`, count(0) AS `total_notificaciones`, sum(case when `n`.`leida` = 0 then 1 else 0 end) AS `no_leidas`, sum(case when `n`.`leida` = 1 then 1 else 0 end) AS `leidas`, sum(case when `n`.`archivada` = 1 then 1 else 0 end) AS `archivadas`, sum(case when `n`.`prioridad` = 'urgente' and `n`.`leida` = 0 then 1 else 0 end) AS `urgentes_pendientes`, max(`n`.`fecha_creacion`) AS `ultima_notificacion` FROM (`usuario` `u` left join `notificaciones` `n` on(`u`.`id_usuario` = `n`.`id_usuario` and `n`.`activo` = 1)) WHERE `u`.`activo` = 1 GROUP BY `u`.`id_usuario` ;
+CREATE OR REPLACE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vista_stats_notificaciones`  AS SELECT `u`.`id_usuario` AS `id_usuario`, `u`.`nombre` AS `nombre`, `u`.`apellido` AS `apellido`, count(0) AS `total_notificaciones`, sum(case when `n`.`leida` = 0 then 1 else 0 end) AS `no_leidas`, sum(case when `n`.`leida` = 1 then 1 else 0 end) AS `leidas`, sum(case when `n`.`archivada` = 1 then 1 else 0 end) AS `archivadas`, sum(case when `n`.`prioridad` = 'urgente' and `n`.`leida` = 0 then 1 else 0 end) AS `urgentes_pendientes`, max(`n`.`fecha_creacion`) AS `ultima_notificacion` FROM (`usuario` `u` left join `notificaciones` `n` on(`u`.`id_usuario` = `n`.`id_usuario` and `n`.`activo` = 1)) WHERE `u`.`activo` = 1 GROUP BY `u`.`id_usuario` ;
 
 -- --------------------------------------------------------
 
 --
 -- Estructura para la vista `vista_usuarios_estadisticas`
 --
-DROP TABLE IF EXISTS `vista_usuarios_estadisticas`;
-
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vista_usuarios_estadisticas`  AS SELECT `u`.`id_usuario` AS `id_usuario`, `u`.`nombre` AS `nombre`, `u`.`apellido` AS `apellido`, `u`.`correo` AS `correo`, `u`.`fecha_registro` AS `fecha_registro`, `u`.`edad` AS `edad`, count(distinct `au`.`id_audio`) AS `total_audios`, count(distinct `an`.`id_analisis`) AS `total_analisis`, avg(`ra`.`nivel_estres`) AS `promedio_estres`, avg(`ra`.`nivel_ansiedad`) AS `promedio_ansiedad`, max(`an`.`fecha_analisis`) AS `ultimo_analisis` FROM (((`usuario` `u` left join `audio` `au` on(`u`.`id_usuario` = `au`.`id_usuario` and `au`.`activo` = 1)) left join `analisis` `an` on(`au`.`id_audio` = `an`.`id_audio` and `an`.`activo` = 1)) left join `resultado_analisis` `ra` on(`an`.`id_analisis` = `ra`.`id_analisis` and `ra`.`activo` = 1)) WHERE `u`.`activo` = 1 GROUP BY `u`.`id_usuario` ;
+CREATE OR REPLACE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vista_usuarios_estadisticas`  AS SELECT `u`.`id_usuario` AS `id_usuario`, `u`.`nombre` AS `nombre`, `u`.`apellido` AS `apellido`, `u`.`correo` AS `correo`, `u`.`fecha_registro` AS `fecha_registro`, `u`.`edad` AS `edad`, count(distinct `au`.`id_audio`) AS `total_audios`, count(distinct `an`.`id_analisis`) AS `total_analisis`, avg(`ra`.`nivel_estres`) AS `promedio_estres`, avg(`ra`.`nivel_ansiedad`) AS `promedio_ansiedad`, max(`an`.`fecha_analisis`) AS `ultimo_analisis` FROM (((`usuario` `u` left join `audio` `au` on(`u`.`id_usuario` = `au`.`id_usuario` and `au`.`activo` = 1)) left join `analisis` `an` on(`au`.`id_audio` = `an`.`id_audio` and `an`.`activo` = 1)) left join `resultado_analisis` `ra` on(`an`.`id_analisis` = `ra`.`id_analisis` and `ra`.`activo` = 1)) WHERE `u`.`activo` = 1 GROUP BY `u`.`id_usuario` ;
 
 --
 -- Índices para tablas volcadas

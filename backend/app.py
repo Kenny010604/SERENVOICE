@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Flask, jsonify, send_from_directory, request
+from flask import Flask, jsonify, send_from_directory, request, g
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flasgger import Swagger
@@ -21,16 +21,28 @@ from database.config import Config
 from database.connection import DatabaseConnection
 from services.audio_service import AudioService
 
+# ============================================
+# SECURITY MIDDLEWARE
+# ============================================
+from utils.security_middleware import (
+    limiter,
+    add_security_headers,
+    get_cors_config,
+    add_request_id,
+    log_request_completion,
+    secure_log
+)
+
 # ===============================
 # ENV
 # ===============================
 try:
     from dotenv import load_dotenv
     from pathlib import Path
-    # Cargar .env desde la raíz del proyecto
+    # Cargar .env desde la raíz del proyecto (override=True para sobrescribir)
     root_dir = Path(__file__).parent.parent
     env_path = root_dir / '.env'
-    load_dotenv(dotenv_path=env_path)
+    load_dotenv(dotenv_path=env_path, override=True)
 except Exception:
     pass
 
@@ -74,6 +86,12 @@ except Exception:
 
 def create_app():
     app = Flask(__name__)
+    
+    # ===============================
+    # DESACTIVAR REDIRECT POR TRAILING SLASH
+    # Evita redirects 308 que causan problemas con HTTPS
+    # ===============================
+    app.url_map.strict_slashes = False
 
     # ===============================
     # CONFIG
@@ -83,35 +101,77 @@ def create_app():
     app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
 
     # ===============================
-    # ✅ CORS SIMPLIFICADO Y CORREGIDO
+    # ✅ RATE LIMITING
     # ===============================
-    # Habilitar CORS para rutas API y para el blueprint de juegos (/juegos/*)
+    if Config.RATELIMIT_ENABLED:
+        limiter.init_app(app)
+        print("[SECURITY] Rate Limiting habilitado")
+    else:
+        print("[SECURITY] Rate Limiting deshabilitado")
+
+    # ===============================
+    # ✅ CORS SEGURO (NO WILDCARD)
+    # ===============================
+    cors_config = get_cors_config()
     CORS(
         app,
         resources={
-            r"/api/*": {"origins": "*"},
-            r"/juegos/*": {"origins": "*"},
-            r"/grupos*": {"origins": "*"}
-        },
-        supports_credentials=True,
-        methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        allow_headers=["Content-Type", "Authorization"],
-        expose_headers=["Content-Type", "Authorization"]
+            r"/api/*": cors_config,
+            r"/juegos/*": cors_config,
+            r"/grupos*": cors_config
+        }
     )
+    print(f"[SECURITY] CORS configurado para: {cors_config['origins'][:3]}...")
 
     # ===============================
-    # ✅ MANEJADOR EXPLÍCITO PARA OPTIONS
+    # ✅ SECURITY HEADERS & REQUEST TRACKING
     # ===============================
     @app.before_request
-    def handle_options():
+    def before_request_handler():
+        # Añadir ID único a cada request
+        add_request_id()
+        
+        # Manejar preflight OPTIONS
         if request.method == "OPTIONS":
             response = app.make_default_options_response()
             return response
 
+    @app.after_request
+    def after_request_handler(response):
+        # Añadir security headers a todas las respuestas
+        response = add_security_headers(response)
+        # Log de finalización (opcional)
+        response = log_request_completion(response)
+        return response
+
     # ===============================
-    # JWT
+    # JWT CON CONFIGURACIÓN MEJORADA
     # ===============================
-    JWTManager(app)
+    jwt = JWTManager(app)
+    
+    # Callbacks de error JWT personalizados (sin exponer detalles)
+    @jwt.expired_token_loader
+    def expired_token_callback(jwt_header, jwt_payload):
+        secure_log.warning("Token expirado", data={"sub": jwt_payload.get("sub")})
+        return jsonify({
+            'success': False,
+            'error': 'Token expirado. Por favor, inicia sesión nuevamente.'
+        }), 401
+
+    @jwt.invalid_token_loader
+    def invalid_token_callback(error_string):
+        secure_log.warning("Token inválido recibido")
+        return jsonify({
+            'success': False,
+            'error': 'Token inválido'
+        }), 401
+
+    @jwt.unauthorized_loader
+    def missing_token_callback(error_string):
+        return jsonify({
+            'success': False,
+            'error': 'Token de autorización requerido'
+        }), 401
 
     # ===============================
     # AUDIO SERVICE
@@ -318,14 +378,24 @@ def create_app():
 if __name__ == "__main__":
     app = create_app()
     port = int(os.getenv("PORT", 5000))
+    
+    # Mostrar información de seguridad
+    print("\n" + "="*60)
+    print("🔒 CONFIGURACIÓN DE SEGURIDAD:")
+    print("="*60)
+    print(f"  Entorno: {Config.FLASK_ENV}")
+    print(f"  Rate Limiting: {'✅ Habilitado' if Config.RATELIMIT_ENABLED else '❌ Deshabilitado'}")
+    print(f"  CORS Origins: {Config.ALLOWED_ORIGINS[:2]}...")
+    print(f"  JWT Expira en: {Config.JWT_ACCESS_TOKEN_EXPIRES}")
+    print(f"  Security Headers: ✅ Habilitados")
+    print("="*60 + "\n")
 
     print(f"[SERVER] http://0.0.0.0:{port}")
     print(f"[DOCS]   http://localhost:{port}/api/docs")
-    print(f"[CORS]   Habilitado para todos los orígenes")
 
     app.run(
         host="0.0.0.0",
         port=port,
-        debug=True,
+        debug=Config.DEBUG,
         use_reloader=False
     )

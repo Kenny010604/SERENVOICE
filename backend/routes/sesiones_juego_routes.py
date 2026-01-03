@@ -94,8 +94,8 @@ def get_estadisticas():
         """)
         puntuacion_promedio = cursor.fetchone()['puntuacion_promedio'] or 0
 
-        # Juegos disponibles (usar PK `id` de la tabla juegos_terapeuticos)
-        cursor.execute("SELECT id as id, nombre FROM juegos_terapeuticos WHERE activo = TRUE")
+        # Juegos disponibles (usar PK `id_juego` de la tabla juegos_terapeuticos)
+        cursor.execute("SELECT id_juego, nombre FROM juegos_terapeuticos WHERE activo = TRUE")
         juegos = cursor.fetchall()
         
         cursor.close()
