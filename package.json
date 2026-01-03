@@ -3,10 +3,14 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
+    "@shopify/react-native-skia": "^2.2.12",
     "concurrently": "^9.2.1",
-    "expo-image-picker": "^17.0.10"
+    "expo-image-picker": "^17.0.10",
+    "react-native-gesture-handler": "^2.30.0"
   },
   "devDependencies": {
+    "@types/react": "~19.1.10",
+    "typescript": "~5.9.2",
     "vite": "^7.2.4"
   },
   "scripts": {

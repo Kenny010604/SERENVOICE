@@ -60,6 +60,11 @@ def register():
             fecha_nacimiento = request.form.get('fecha_nacimiento')
             usa_medicamentos = request.form.get('usa_medicamentos', 'false').lower() == 'true'
             foto_perfil_file = request.files.get('foto_perfil')
+            print(f"[DEBUG] request.files: {request.files}")
+            if foto_perfil_file:
+                print(f"[DEBUG] foto_perfil_file.filename: {foto_perfil_file.filename}")
+            else:
+                print("[DEBUG] No se recibió foto_perfil_file")
         else:
             # Datos JSON (sin foto)
             data = request.get_json()
@@ -114,6 +119,10 @@ def register():
 
             # Procesar foto de perfil si existe
             foto_perfil_path = None
+            # Forzar creación de carpeta antes de guardar
+            import os
+            upload_folder = os.path.join(os.getcwd(), 'uploads', 'perfiles')
+            os.makedirs(upload_folder, exist_ok=True)
             if foto_perfil_file and foto_perfil_file.filename:
                 import os
                 from werkzeug.utils import secure_filename

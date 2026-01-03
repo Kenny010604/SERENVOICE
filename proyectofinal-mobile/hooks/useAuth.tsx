@@ -116,7 +116,8 @@ export function useAuth() {
   // 🔵 REGISTRO
   // ==========================================
   const register = async (
-    userData: RegisterData
+    userData: RegisterData | FormData,
+    isMultipart?: boolean
   ): Promise<{ success: boolean; requiresVerification?: boolean }> => {
     try {
       setLoading(true);
@@ -124,13 +125,24 @@ export function useAuth() {
 
       console.log('📝 Registrando usuario:', userData);
 
-      const response = await fetch(`${Config.API_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
+      let response;
+      if (isMultipart) {
+        response = await fetch(`${Config.API_URL}/api/auth/register`, {
+          method: 'POST',
+          headers: {
+            // No se debe poner Content-Type, fetch lo pone automáticamente para FormData
+          },
+          body: userData as FormData,
+        });
+      } else {
+        response = await fetch(`${Config.API_URL}/api/auth/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(userData),
+        });
+      }
 
       const result = await response.json();
       console.log('📥 Respuesta registro:', result);

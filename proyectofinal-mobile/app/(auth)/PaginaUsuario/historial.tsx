@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import {
   Mic,
   AlertTriangle,
 } from "lucide-react-native";
+import { useRouter } from "expo-router";
 
 import { useAnalisis } from "../../../hooks/useAnalisis";
 import { useAuth } from "../../../hooks/useAuth";
@@ -29,6 +30,7 @@ interface HistorialItem {
 }
 
 const Historial: React.FC = () => {
+  const router = useRouter();
   const { user } = useAuth(); // 👈 usuario logueado
   const { getHistory, loading } = useAnalisis();
 
@@ -39,7 +41,7 @@ const Historial: React.FC = () => {
   const isValidNumber = (v: unknown): v is number =>
     typeof v === "number" && !isNaN(v as number) && isFinite(v as number);
 
-  const cargarHistorial = useCallback(async () => {
+  const cargarHistorial = async () => {
     try {
       setError(null);
 
@@ -64,11 +66,27 @@ const Historial: React.FC = () => {
       console.error("❌ Error historial:", err.message);
       setError("No se pudo cargar el historial del usuario.");
     }
-  }, [getHistory]);
+  };
 
   useEffect(() => {
-    if (user) cargarHistorial();
-  }, [user, cargarHistorial]);
+    if (user) {
+      cargarHistorial();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  // Función para formatear fecha
+  const formatearFecha = (fecha: string): string => {
+    if (!fecha) return "—";
+    const date = new Date(fecha);
+    return date.toLocaleDateString('es-ES', { 
+      day: 'numeric', 
+      month: 'long', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
   // =============================
   // 🔄 LOADING
@@ -149,7 +167,7 @@ const Historial: React.FC = () => {
       ) : (
         history.map((item, index) => (
           <View key={item.id ? `item-${item.id}` : `item-${index}`} style={styles.card}>
-            <Text style={styles.date}>{item.fecha}</Text>
+            <Text style={styles.date}>{formatearFecha(item.fecha)}</Text>
 
             <View style={styles.row}>
               <Mic size={18} color="#6B7280" />
@@ -191,7 +209,10 @@ const Historial: React.FC = () => {
               }
             })()}
 
-            <TouchableOpacity style={styles.button}>
+            <TouchableOpacity 
+              style={styles.button}
+              onPress={() => router.push(`/(auth)/PaginaUsuario/resultado-detallado/${item.id}`)}
+            >
               <Eye size={18} color="#FFF" />
               <Text style={styles.buttonText}>Ver detalle</Text>
             </TouchableOpacity>
