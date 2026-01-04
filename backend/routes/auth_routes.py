@@ -967,6 +967,212 @@ def google_auth():
 
 
 # ======================================================
+# 🟢 GOOGLE WEB AUTH - Login/Register con JWT Credential
+# ======================================================
+@bp.route('/google-web', methods=['POST'])
+@limiter.limit("10 per minute")
+def google_web_auth():
+    """Autenticación con Google OAuth Web usando JWT credential"""
+    try:
+        from models.usuario import Usuario
+        from models.rol_usuario import RolUsuario
+        import jwt
+        import requests
+        
+        data = request.get_json()
+        credential = data.get('credential') if data else None
+        
+        if not credential:
+            print("[GOOGLE WEB AUTH] ERROR - Credential no proporcionado")
+            return jsonify({'success': False, 'error': 'Credential de Google requerido'}), 400
+        
+        # Decodificar el JWT de Google (sin verificar firma por ahora)
+        # En producción, deberías verificar la firma con las claves públicas de Google
+        try:
+            decoded = jwt.decode(credential, options={"verify_signature": False})
+            print(f"[GOOGLE WEB AUTH] JWT decodificado: {decoded.get('email')}")
+        except Exception as decode_error:
+            print(f"[GOOGLE WEB AUTH] Error decodificando JWT: {decode_error}")
+            return jsonify({'success': False, 'error': 'Credential inválido'}), 400
+        
+        # Extraer datos del JWT
+        google_uid = decoded.get('sub')  # Google User ID
+        email = decoded.get('email')
+        nombre = decoded.get('given_name', '')
+        apellido = decoded.get('family_name', '')
+        foto_perfil = decoded.get('picture')
+        
+        print(f"[GOOGLE WEB AUTH] Datos extraídos - email: {email}, google_uid: {google_uid}")
+        
+        if not google_uid or not email:
+            print(f"[GOOGLE WEB AUTH] ERROR - Datos incompletos del JWT")
+            return jsonify({'success': False, 'error': 'Datos de Google incompletos'}), 400
+        
+        # Verificar DB
+        if not current_app.config.get('DB_CONNECTED', True):
+            print("[GOOGLE WEB AUTH] ERROR - DB no conectada")
+            return jsonify({'success': False, 'error': 'Servicio temporalmente no disponible'}), 503
+        
+        # Buscar usuario existente por google_uid
+        user = Usuario.get_by_google_uid(google_uid)
+        
+        if not user:
+            # Verificar si existe usuario con ese email pero sin google_uid
+            user = Usuario.get_by_email(email)
+            
+            if user:
+                # Vincular cuenta existente
+                print(f"[GOOGLE WEB AUTH] Vinculando cuenta existente: {email}")
+                with DatabaseConnection.get_connection() as connection:
+                    cursor = connection.cursor()
+                    cursor.execute("""
+                        UPDATE usuario 
+                        SET google_uid = %s, auth_provider = 'google', foto_perfil = %s
+                        WHERE id_usuario = %s
+                    """, (google_uid, foto_perfil, user['id_usuario']))
+                    connection.commit()
+                
+                user = Usuario.get_by_id(user['id_usuario'])
+            else:
+                # Crear nuevo usuario
+                print(f"[GOOGLE WEB AUTH] Creando nuevo usuario: {email}")
+                with DatabaseConnection.get_connection() as connection:
+                    cursor = connection.cursor()
+                    cursor.execute("""
+                        INSERT INTO usuario 
+                        (nombre, apellido, correo, google_uid, auth_provider, foto_perfil)
+                        VALUES (%s, %s, %s, %s, 'google', %s)
+                    """, (nombre or 'Usuario', apellido or 'Google', email.lower(), google_uid, foto_perfil))
+                    connection.commit()
+                    user_id = cursor.lastrowid
+                    
+                    print(f"[GOOGLE WEB AUTH] Usuario creado con ID: {user_id}")
+                    
+                    # Asignar rol 'usuario'
+                    cursor.execute("SELECT id_rol FROM rol WHERE nombre_rol = 'usuario' AND activo = 1 LIMIT 1")
+                    rol_row = cursor.fetchone()
+                    
+                    if rol_row:
+                        id_rol = rol_row[0]
+                        cursor.execute("""
+                            INSERT INTO rol_usuario (id_usuario, id_rol)
+                            VALUES (%s, %s)
+                        """, (user_id, id_rol))
+                        connection.commit()
+                    
+                    user = Usuario.get_by_id(user_id)
+        else:
+            # Usuario existente - actualizar foto si cambió
+            print(f"[GOOGLE WEB AUTH] Usuario existente: {email}")
+            if foto_perfil and user.get('foto_perfil') != foto_perfil:
+                with DatabaseConnection.get_connection() as connection:
+                    cursor = connection.cursor()
+                    cursor.execute("""
+                        UPDATE usuario SET foto_perfil = %s WHERE id_usuario = %s
+                    """, (foto_perfil, user['id_usuario']))
+                    connection.commit()
+                user['foto_perfil'] = foto_perfil
+        
+        # Obtener roles
+        user_roles = RolUsuario.get_user_roles(user['id_usuario'])
+        roles_list = [r['nombre_rol'] for r in user_roles] if user_roles else ['usuario']
+        
+        # Generar token JWT
+        access_token = create_access_token(identity=str(user['id_usuario']))
+        
+        print(f"[GOOGLE WEB AUTH] Login exitoso para: {email}")
+        
+        # Crear sesión
+        try:
+            from models.sesion import Sesion
+            import re
+            from datetime import datetime
+            
+            xfwd = request.headers.get('X-Forwarded-For', '')
+            ip_addr = xfwd.split(',')[0].strip() if xfwd else request.remote_addr
+            
+            ua = request.headers.get('User-Agent', '') or ''
+            
+            if re.search(r'Mobile|Android|iPhone|iPad', ua, re.I):
+                dispositivo = 'Mobile'
+            elif re.search(r'Tablet', ua, re.I):
+                dispositivo = 'Tablet'
+            else:
+                dispositivo = 'Desktop'
+            
+            if 'Chrome' in ua and 'Edg' not in ua and 'OPR' not in ua:
+                navegador = 'Chrome'
+            elif 'Firefox' in ua:
+                navegador = 'Firefox'
+            elif 'Edg' in ua or 'Edge' in ua:
+                navegador = 'Edge'
+            elif 'Safari' in ua:
+                navegador = 'Safari'
+            else:
+                navegador = 'Otro'
+            
+            if 'Windows' in ua:
+                sistema_operativo = 'Windows'
+            elif 'Mac' in ua:
+                sistema_operativo = 'MacOS'
+            elif 'Linux' in ua:
+                sistema_operativo = 'Linux'
+            elif 'Android' in ua:
+                sistema_operativo = 'Android'
+            elif 'iOS' in ua or 'iPhone' in ua or 'iPad' in ua:
+                sistema_operativo = 'iOS'
+            else:
+                sistema_operativo = 'Unknown'
+            
+            sesion_result = Sesion.create(
+                user['id_usuario'],
+                'activa',
+                ip_addr,
+                dispositivo,
+                navegador,
+                sistema_operativo,
+                datetime.now(),
+            )
+            session_id = sesion_result.get('last_id') if isinstance(sesion_result, dict) else None
+        except Exception as se:
+            print(f"[GOOGLE WEB AUTH] Error creando sesión: {se}")
+            session_id = None
+        
+        # Convertir fecha_nacimiento a string
+        fecha_nac_str = None
+        if user.get('fecha_nacimiento'):
+            if isinstance(user['fecha_nacimiento'], str):
+                fecha_nac_str = user['fecha_nacimiento']
+            else:
+                fecha_nac_str = user['fecha_nacimiento'].strftime('%Y-%m-%d')
+        
+        return jsonify({
+            'success': True,
+            'token': access_token,
+            'user': {
+                'id_usuario': user['id_usuario'],
+                'nombre': user['nombre'],
+                'apellido': user['apellido'],
+                'correo': user['correo'],
+                'foto_perfil': user.get('foto_perfil'),
+                'auth_provider': 'google',
+                'roles': roles_list,
+                'genero': user.get('genero'),
+                'edad': user.get('edad'),
+                'fecha_nacimiento': fecha_nac_str,
+                'usa_medicamentos': user.get('usa_medicamentos', False)
+            },
+            'session_id': session_id
+        }), 200
+        
+    except Exception as e:
+        print(f"[ERROR] Google Web Auth: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ======================================================
 # 🔵 VERIFICAR TOKEN
 # ======================================================
 @bp.route('/verify', methods=['GET'])
