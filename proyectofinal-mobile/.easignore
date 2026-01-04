@@ -1,0 +1,30 @@
+# Ignorar archivos innecesarios para el build
+node_modules/
+.expo/
+.vscode/
+*.log
+*.md
+.git/
+.gitignore
+__tests__/
+coverage/
+docs/
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+
+# Archivos de desarrollo
+.env.local
+.env.development
+*.map
+
+# Carpetas temporales
+tmp/
+temp/
+.cache/
+
+# IDE
+.idea/
+*.swp
+*.swo
