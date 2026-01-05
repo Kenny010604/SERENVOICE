@@ -71,7 +71,7 @@ const ProfileScreen = ({ navigation }) => {
       id: 'notifications',
       icon: 'notifications-outline',
       label: 'Notificaciones',
-      onPress: () => navigation.navigate('Notifications'),
+      onPress: () => navigation.navigate('Settings'),
     },
     {
       id: 'recommendations',

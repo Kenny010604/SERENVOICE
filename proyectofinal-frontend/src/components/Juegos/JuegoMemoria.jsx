@@ -1,5 +1,6 @@
 // src/components/Juegos/JuegoMemoria.jsx
 import React, { useState, useEffect } from "react";
+import "../../styles/Juegos.css";
 
 const JuegoMemoria = ({ juego, onFinish, onExit }) => {
   const [cartas, setCartas] = useState([]);
@@ -74,65 +75,50 @@ const JuegoMemoria = ({ juego, onFinish, onExit }) => {
     const puntuacion = calcularPuntuacion();
 
     return (
-      <div className="card" style={{ maxWidth: 600, margin: "50px auto", padding: 40, textAlign: "center" }}>
-        <div style={{ fontSize: "5rem", marginBottom: 20 }}>🎉</div>
-        <h1>¡Felicitaciones!</h1>
-        <p style={{ fontSize: "1.2rem", color: "#666", marginTop: 20 }}>
-          Completaste el juego en {movimientos} movimientos
-        </p>
-        <div style={{ 
-          fontSize: "3rem", 
-          color: "#4CAF50", 
-          fontWeight: "bold",
-          marginTop: 20 
-        }}>
-          {puntuacion} puntos
-        </div>
-        <div style={{ display: "flex", gap: 15, justifyContent: "center", marginTop: 30 }}>
-          <button
-            className="auth-button"
-            style={{ background: "#4CAF50" }}
-            onClick={iniciarJuego}
-          >
-            🔄 Jugar de nuevo
-          </button>
-          <button
-            className="auth-button"
-            style={{ background: "#2196F3" }}
-            onClick={() => onFinish(puntuacion, true)}
-          >
-            ✅ Finalizar
-          </button>
+      <div className="juego-container size-sm">
+        <div className="juego-completado">
+          <div className="completado-emoji">🎉</div>
+          <h1>¡Felicitaciones!</h1>
+          <p className="completado-mensaje">
+            Completaste el juego en {movimientos} movimientos
+          </p>
+          <div className="completado-puntos">
+            {puntuacion} puntos
+          </div>
+          <div className="juego-buttons">
+            <button
+              className="juego-btn juego-btn-success"
+              onClick={iniciarJuego}
+            >
+              🔄 Jugar de nuevo
+            </button>
+            <button
+              className="juego-btn juego-btn-info"
+              onClick={() => onFinish(puntuacion, true)}
+            >
+              ✅ Finalizar
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="card" style={{ maxWidth: 900, margin: "20px auto", padding: 40 }}>
+    <div className="juego-container size-xl">
       {/* Header */}
-      <div style={{ textAlign: "center", marginBottom: 30 }}>
-        <div style={{ fontSize: "3rem", marginBottom: 10 }}>🧠</div>
+      <div className="juego-header">
+        <div className="juego-emoji">🧠</div>
         <h1>{juego.nombre}</h1>
-        <p style={{ color: "#666" }}>{juego.descripcion}</p>
+        <p>{juego.descripcion}</p>
       </div>
 
       {!juegoIniciado ? (
         // Pantalla inicial
         <div style={{ textAlign: "center" }}>
-          <div style={{ 
-            background: "#f0f9ff", 
-            padding: 30, 
-            borderRadius: 12, 
-            marginBottom: 30 
-          }}>
+          <div className="juego-instrucciones">
             <h2>📋 Cómo jugar</h2>
-            <ul style={{ 
-              textAlign: "left", 
-              maxWidth: 400, 
-              margin: "20px auto",
-              lineHeight: "2"
-            }}>
+            <ul>
               <li>🃏 Voltea dos cartas en cada turno</li>
               <li>🎯 Encuentra todos los pares de emojis</li>
               <li>🧠 Usa tu memoria para recordar las posiciones</li>
@@ -140,12 +126,7 @@ const JuegoMemoria = ({ juego, onFinish, onExit }) => {
             </ul>
           </div>
           <button
-            className="auth-button"
-            style={{ 
-              fontSize: "1.2rem", 
-              padding: "15px 40px",
-              background: "#4CAF50"
-            }}
+            className="juego-btn juego-btn-success juego-btn-large"
             onClick={iniciarJuego}
           >
             ▶️ Comenzar Juego
@@ -154,36 +135,23 @@ const JuegoMemoria = ({ juego, onFinish, onExit }) => {
       ) : (
         <>
           {/* Panel de información */}
-          <div style={{ 
-            display: "flex", 
-            justifyContent: "space-around", 
-            marginBottom: 30,
-            padding: 20,
-            background: "#f5f5f5",
-            borderRadius: 12
-          }}>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "2rem" }}>🎯</div>
-              <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{movimientos}</div>
-              <div style={{ color: "#666", fontSize: "0.9rem" }}>Movimientos</div>
+          <div className="juego-stats">
+            <div className="stat-item">
+              <div className="stat-emoji">🎯</div>
+              <div className="stat-value">{movimientos}</div>
+              <div className="stat-label">Movimientos</div>
             </div>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "2rem" }}>✅</div>
-              <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
+            <div className="stat-item">
+              <div className="stat-emoji">✅</div>
+              <div className="stat-value">
                 {cartasEmparejadas.length / 2}/{cartas.length / 2}
               </div>
-              <div style={{ color: "#666", fontSize: "0.9rem" }}>Pares encontrados</div>
+              <div className="stat-label">Pares encontrados</div>
             </div>
           </div>
 
           {/* Grid de cartas */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
-            gap: 15,
-            maxWidth: 600,
-            margin: "0 auto"
-          }}>
+          <div className="juego-card-grid">
             {cartas.map((carta) => {
               const volteada = cartasVolteadas.includes(carta.id) || cartasEmparejadas.includes(carta.id);
               const emparejada = cartasEmparejadas.includes(carta.id);
@@ -192,31 +160,14 @@ const JuegoMemoria = ({ juego, onFinish, onExit }) => {
                 <div
                   key={carta.id}
                   onClick={() => !volteada && voltearCarta(carta.id)}
+                  className={`juego-card ${
+                    volteada 
+                      ? (emparejada ? 'card-matched' : 'card-revealed')
+                      : 'card-hidden'
+                  }`}
                   style={{
-                    aspectRatio: "1",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "3rem",
-                    background: volteada 
-                      ? (emparejada ? "#4CAF50" : "#2196F3")
-                      : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                    borderRadius: 12,
                     cursor: volteada ? "default" : "pointer",
-                    transition: "all 0.3s",
                     transform: volteada ? "rotateY(0)" : "rotateY(180deg)",
-                    boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
-                    opacity: emparejada ? 0.6 : 1
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!volteada) {
-                      e.currentTarget.style.transform = "rotateY(180deg) scale(1.05)";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!volteada) {
-                      e.currentTarget.style.transform = "rotateY(180deg) scale(1)";
-                    }
                   }}
                 >
                   {volteada ? carta.emoji : "?"}
@@ -226,22 +177,15 @@ const JuegoMemoria = ({ juego, onFinish, onExit }) => {
           </div>
 
           {/* Botones */}
-          <div style={{ 
-            display: "flex", 
-            gap: 15, 
-            justifyContent: "center", 
-            marginTop: 30 
-          }}>
+          <div className="juego-buttons">
             <button
-              className="auth-button"
-              style={{ background: "#FF9800" }}
+              className="juego-btn juego-btn-warning"
               onClick={iniciarJuego}
             >
               🔄 Reiniciar
             </button>
             <button
-              className="auth-button"
-              style={{ background: "#9e9e9e" }}
+              className="juego-btn juego-btn-secondary"
               onClick={onExit}
             >
               ⏸️ Salir

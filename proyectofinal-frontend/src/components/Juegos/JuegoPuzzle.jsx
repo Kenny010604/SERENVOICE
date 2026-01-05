@@ -1,5 +1,6 @@
 // src/components/Juegos/JuegoPuzzle.jsx
 import React, { useState, useEffect, useCallback } from "react";
+import "../../styles/Juegos.css";
 
 const JuegoPuzzle = ({ juego, onFinish, onExit }) => {
   const [piezas, setPiezas] = useState([]);
@@ -113,68 +114,57 @@ const JuegoPuzzle = ({ juego, onFinish, onExit }) => {
     const puntuacion = calcularPuntuacion();
 
     return (
-      <div className="card" style={{ maxWidth: 600, margin: "50px auto", padding: 40, textAlign: "center" }}>
-        <div style={{ fontSize: "5rem", marginBottom: 20 }}>🎉</div>
-        <h1>¡Puzzle Resuelto!</h1>
-        <div style={{ marginTop: 20 }}>
-          <p style={{ fontSize: "1.2rem", color: "#666" }}>
-            Tiempo: {formatearTiempo(segundos)}
-          </p>
-          <p style={{ fontSize: "1.2rem", color: "#666" }}>
-            Movimientos: {movimientos}
-          </p>
-        </div>
-        <div style={{ 
-          fontSize: "3rem", 
-          color: "#4CAF50", 
-          fontWeight: "bold",
-          marginTop: 20 
-        }}>
-          {puntuacion} puntos
-        </div>
-        <div style={{ display: "flex", gap: 15, justifyContent: "center", marginTop: 30 }}>
-          <button
-            className="auth-button"
-            style={{ background: "#4CAF50" }}
-            onClick={iniciarJuego}
-          >
-            🔄 Jugar de nuevo
-          </button>
-          <button
-            className="auth-button"
-            style={{ background: "#2196F3" }}
-            onClick={() => onFinish(puntuacion, true)}
-          >
-            ✅ Finalizar
-          </button>
+      <div className="juego-container size-xl">
+        <div className="juego-completado">
+          <div className="completado-emoji">🎉</div>
+          <h1>¡Puzzle Resuelto!</h1>
+          <div className="juego-stats">
+            <div className="stat-item">
+              <div className="stat-emoji">⏱️</div>
+              <div className="stat-value">{formatearTiempo(segundos)}</div>
+              <div className="stat-label">Tiempo</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-emoji">🎯</div>
+              <div className="stat-value">{movimientos}</div>
+              <div className="stat-label">Movimientos</div>
+            </div>
+          </div>
+          <div className="completado-puntos">
+            {puntuacion} puntos
+          </div>
+          <div className="juego-buttons">
+            <button
+              className="juego-btn juego-btn-success"
+              onClick={iniciarJuego}
+            >
+              🔄 Jugar de nuevo
+            </button>
+            <button
+              className="juego-btn juego-btn-info"
+              onClick={() => onFinish(puntuacion, true)}
+            >
+              ✅ Finalizar
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="card" style={{ maxWidth: 700, margin: "20px auto", padding: 40 }}>
-      <div style={{ textAlign: "center", marginBottom: 30 }}>
-        <div style={{ fontSize: "3rem", marginBottom: 10 }}>🧩</div>
+    <div className="juego-container size-xl">
+      <div className="juego-header">
+        <div className="juego-emoji">🧩</div>
         <h1>{juego.nombre}</h1>
-        <p style={{ color: "#666" }}>{juego.descripcion}</p>
+        <p>{juego.descripcion}</p>
       </div>
 
       {!juegoIniciado ? (
         <div style={{ textAlign: "center" }}>
-          <div style={{ 
-            background: "#f0f9ff", 
-            padding: 30, 
-            borderRadius: 12, 
-            marginBottom: 30 
-          }}>
+          <div className="juego-instrucciones">
             <h2>📋 Cómo jugar</h2>
-            <ul style={{ 
-              textAlign: "left", 
-              maxWidth: 400, 
-              margin: "20px auto",
-              lineHeight: "2"
-            }}>
+            <ul>
               <li>🔢 Ordena los números del 1 al 8</li>
               <li>🖱️ Haz clic en las piezas junto al espacio vacío</li>
               <li>🎯 El objetivo es ordenarlos en secuencia</li>
@@ -182,12 +172,7 @@ const JuegoPuzzle = ({ juego, onFinish, onExit }) => {
             </ul>
           </div>
           <button
-            className="auth-button"
-            style={{ 
-              fontSize: "1.2rem", 
-              padding: "15px 40px",
-              background: "#4CAF50"
-            }}
+            className="juego-btn juego-btn-success juego-btn-large"
             onClick={iniciarJuego}
           >
             ▶️ Comenzar Juego
@@ -196,35 +181,21 @@ const JuegoPuzzle = ({ juego, onFinish, onExit }) => {
       ) : (
         <>
           {/* Stats */}
-          <div style={{ 
-            display: "flex", 
-            justifyContent: "space-around", 
-            marginBottom: 30,
-            padding: 20,
-            background: "#f5f5f5",
-            borderRadius: 12
-          }}>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "2rem" }}>⏱️</div>
-              <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{formatearTiempo(segundos)}</div>
-              <div style={{ color: "#666", fontSize: "0.9rem" }}>Tiempo</div>
+          <div className="juego-stats">
+            <div className="stat-item">
+              <div className="stat-emoji">⏱️</div>
+              <div className="stat-value">{formatearTiempo(segundos)}</div>
+              <div className="stat-label">Tiempo</div>
             </div>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "2rem" }}>🎯</div>
-              <div style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{movimientos}</div>
-              <div style={{ color: "#666", fontSize: "0.9rem" }}>Movimientos</div>
+            <div className="stat-item">
+              <div className="stat-emoji">🎯</div>
+              <div className="stat-value">{movimientos}</div>
+              <div className="stat-label">Movimientos</div>
             </div>
           </div>
 
           {/* Grid del puzzle */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${TAMANO}, 1fr)`,
-            gap: 10,
-            maxWidth: 400,
-            margin: "0 auto",
-            aspectRatio: "1"
-          }}>
+          <div className="juego-puzzle-grid">
             {piezas.map((numero, index) => {
               const esVacio = numero === 0;
               const vecinos = obtenerVecinos(piezas.indexOf(0));
@@ -235,33 +206,15 @@ const JuegoPuzzle = ({ juego, onFinish, onExit }) => {
                 <div
                   key={index}
                   onClick={() => !esVacio && handleClick(index)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "3rem",
-                    fontWeight: "bold",
-                    background: esVacio 
-                      ? "#f5f5f5" 
+                  className={`juego-puzzle-tile ${
+                    esVacio 
+                      ? 'tile-empty' 
                       : estaEnPosicionCorrecta 
-                        ? "linear-gradient(135deg, #4CAF50, #45a049)"
-                        : "linear-gradient(135deg, #2196F3, #1976D2)",
-                    color: "white",
-                    borderRadius: 12,
+                        ? 'tile-correct'
+                        : 'tile-filled'
+                  }`}
+                  style={{
                     cursor: esVacio ? "default" : esMovible ? "pointer" : "not-allowed",
-                    transition: "all 0.2s",
-                    boxShadow: esVacio ? "none" : "0 4px 8px rgba(0,0,0,0.2)",
-                    userSelect: "none"
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!esVacio && esMovible) {
-                      e.currentTarget.style.transform = "scale(1.05)";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!esVacio) {
-                      e.currentTarget.style.transform = "scale(1)";
-                    }
                   }}
                 >
                   {esVacio ? "" : numero}
@@ -271,22 +224,15 @@ const JuegoPuzzle = ({ juego, onFinish, onExit }) => {
           </div>
 
           {/* Botones */}
-          <div style={{ 
-            display: "flex", 
-            gap: 15, 
-            justifyContent: "center", 
-            marginTop: 30 
-          }}>
+          <div className="juego-buttons">
             <button
-              className="auth-button"
-              style={{ background: "#FF9800" }}
+              className="juego-btn juego-btn-warning"
               onClick={iniciarJuego}
             >
               🔄 Reiniciar
             </button>
             <button
-              className="auth-button"
-              style={{ background: "#9e9e9e" }}
+              className="juego-btn juego-btn-secondary"
               onClick={onExit}
             >
               ⏸️ Salir

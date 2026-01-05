@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 04-01-2026 a las 22:29:52
+-- Tiempo de generación: 05-01-2026 a las 00:43:52
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.0.30
 
@@ -838,7 +838,16 @@ INSERT INTO `analisis` (`id_analisis`, `id_audio`, `modelo_usado`, `fecha_analis
 (555, 559, 'emotion_cnn', '2026-01-03', 'completado', NULL, 0, 1),
 (556, 560, 'emotion_cnn', '2026-01-03', 'completado', NULL, 0, 1),
 (557, 561, 'modelo_v1.0', '2026-01-03', 'completado', NULL, 0, 1),
-(558, 562, 'modelo_v1.0', '2026-01-04', 'completado', NULL, 0, 1);
+(558, 562, 'modelo_v1.0', '2026-01-04', 'completado', NULL, 0, 1),
+(559, 563, 'modelo_v1.0', '2026-01-04', 'completado', NULL, 0, 1),
+(560, 564, 'modelo_v1.0', '2026-01-04', 'completado', NULL, 0, 1),
+(561, 565, 'modelo_v1.0', '2026-01-04', 'completado', NULL, 0, 1),
+(562, 566, 'modelo_v1.0', '2026-01-04', 'completado', NULL, 0, 1),
+(563, 567, 'modelo_v1.0', '2026-01-04', 'completado', NULL, 0, 1),
+(564, 568, 'modelo_v1.0', '2026-01-04', 'completado', NULL, 0, 1),
+(565, 569, 'modelo_v1.0', '2026-01-04', 'completado', NULL, 0, 1),
+(566, 570, 'modelo_v1.0', '2026-01-04', 'completado', NULL, 0, 1),
+(567, 571, 'modelo_v1.0', '2026-01-04', 'completado', NULL, 0, 1);
 
 -- --------------------------------------------------------
 
@@ -1425,7 +1434,16 @@ INSERT INTO `audio` (`id_audio`, `id_usuario`, `nombre_archivo`, `ruta_archivo`,
 (559, 77, 'test_alto_003.wav', '/uploads/test_alto_003.wav', 8, 409600, '2026-01-03 19:17:28', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 1),
 (560, 77, 'test_medio_004.wav', '/uploads/test_medio_004.wav', 15, 768000, '2026-01-03 19:17:28', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 1),
 (561, 77, '20260103_191854_926056_9e1241_grabacion.wav', '20260103_191854_926056_9e1241_grabacion.wav', 6.684, NULL, '2026-01-03 19:18:56', 48.66, 0.04, 8.7, 0.1, 0, 10.1, 81.1, 0, 1, 0, 1),
-(562, 79, '20260104_162645_994900_8f4f25_grabacion.wav', '20260104_162645_994900_8f4f25_grabacion.wav', 0, NULL, '2026-01-04 16:26:53', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 1);
+(562, 79, '20260104_162645_994900_8f4f25_grabacion.wav', '20260104_162645_994900_8f4f25_grabacion.wav', 0, NULL, '2026-01-04 16:26:53', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 1),
+(563, 79, '20260104_163219_116421_c3dcd1_grabacion.wav', '20260104_163219_116421_c3dcd1_grabacion.wav', 0, NULL, '2026-01-04 16:32:20', 47.7, 0.12, 18, 0.3, 0, 2, 79.5, 0, 1, 0, 1),
+(564, 79, '20260104_163236_154773_fca46b_grabacion.wav', '20260104_163236_154773_fca46b_grabacion.wav', 0, NULL, '2026-01-04 16:32:36', 0.08, 0.44, 98.3, 1.1, 0, 0.3, 0, 0.2, 1, 0, 1),
+(565, 79, '20260104_163359_444956_642a9f_grabacion.wav', '20260104_163359_444956_642a9f_grabacion.wav', 0, NULL, '2026-01-04 16:34:00', 7.56, 6.04, 71.6, 15.1, 0.4, 0.3, 12.6, 0, 1, 0, 1),
+(566, 79, '20260104_163740_102022_0820f4_grabacion.wav', '20260104_163740_102022_0820f4_grabacion.wav', 0, NULL, '2026-01-04 16:37:41', 47.34, 6.4, 0.3, 16, 0.2, 4.5, 78.9, 0.1, 1, 0, 1),
+(567, 79, '20260104_164308_392784_8a9151_grabacion.wav', '20260104_164308_392784_8a9151_grabacion.wav', 0, NULL, '2026-01-04 16:43:10', 48.78, 3.32, 9.2, 8.3, 0.1, 1, 81.3, 0.1, 1, 0, 1),
+(568, 79, '20260104_164624_603404_a0e616_grabacion.wav', '20260104_164624_603404_a0e616_grabacion.wav', 0, NULL, '2026-01-04 16:46:26', 1.14, 10.56, 71, 26.4, 0.1, 0.4, 1.9, 0.2, 1, 0, 1),
+(569, 79, '20260104_165047_198908_d02ea5_grabacion.wav', '20260104_165047_198908_d02ea5_grabacion.wav', 0, NULL, '2026-01-04 16:50:49', 53.58, 0.04, 7.9, 0.1, 0, 0.2, 89.3, 2.5, 1, 0, 1),
+(570, 79, '20260104_165620_074428_17ad67_grabacion.wav', '20260104_165620_074428_17ad67_grabacion.wav', 0, NULL, '2026-01-04 16:56:22', 7.14, 7.56, 65.5, 18.9, 0.1, 3.3, 11.9, 0.2, 1, 0, 1),
+(571, 77, '20260104_172318_682374_6a5846_grabacion.wav', '20260104_172318_682374_6a5846_grabacion.wav', 11, NULL, '2026-01-04 17:23:21', 57.84, 0.92, 0, 2.3, 0, 1.1, 96.4, 0.1, 1, 0, 1);
 
 -- --------------------------------------------------------
 
@@ -1615,11 +1633,11 @@ CREATE TABLE `juegos_terapeuticos` (
 --
 
 INSERT INTO `juegos_terapeuticos` (`id_juego`, `nombre`, `tipo_juego`, `descripcion`, `objetivo_emocional`, `duracion_recomendada`, `icono`, `activo`) VALUES
-(1, 'Respiración Profunda', 'respiracion', 'Ejercicio guiado de respiración para reducir la ansiedad', 'ansiedad', 5, 'ðŸ«', 1),
-(2, 'Jardín Zen', 'mindfulness', 'Crea tu jardín zen virtual mientras practicas la atención plena', 'estres', 10, 'ðŸ§˜', 1),
-(3, 'Diario de Gratitud', 'mandala', 'Escribe tres cosas por las que estás agradecido hoy', 'felicidad', 7, 'ðŸ“', 1),
-(4, 'Laberinto Mental', 'puzzle', 'Encuentra la salida mientras practicas la concentración', 'ansiedad', 8, 'ðŸŽ¯', 1),
-(5, 'Música Terapéutica', 'memoria', 'Escucha y crea melodías relajantes', 'estres', 15, 'ðŸŽµ', 1);
+(1, 'Respiración Guiada', 'respiracion', 'Ejercicio guiado de respiración 4-4-6 para reducir la ansiedad y el estrés. Inhala, mantén y exhala siguiendo el ritmo visual.', 'ansiedad', 5, '🌬️', 1),
+(2, 'Jardín Zen', 'mindfulness', 'Crea tu jardín zen virtual mientras practicas la atención plena. Planta flores, árboles y cuida tu espacio de paz interior.', 'estres', 10, '🌳', 1),
+(3, 'Mandala Creativo', 'mandala', 'Colorea mandalas terapéuticos para relajarte y fomentar la creatividad. Elige colores y patrones para expresar tu estado emocional.', 'estres', 7, '🎨', 1),
+(4, 'Puzzle Numérico', 'puzzle', 'Resuelve el puzzle deslizante 3x3 ordenando los números del 1 al 8. Ejercita tu mente mientras te concentras en el presente.', 'ansiedad', 8, '🧩', 1),
+(5, 'Juego de Memoria', 'memoria', 'Encuentra los pares de emojis iguales ejercitando tu memoria. Un juego relajante que mejora la concentración y reduce el estrés.', 'estres', 15, '🃏', 1);
 
 -- --------------------------------------------------------
 
@@ -3337,7 +3355,43 @@ INSERT INTO `notificaciones` (`id_notificacion`, `id_usuario`, `tipo_notificacio
 (1683, 77, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Practica respiración diafragmática durante 8 minutos, enfocándote en expandir tu pecho y estomago mientras inhalas', '?', '/recomendaciones/1642', 1642, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-03 19:18:56', 0, 0, 1),
 (1684, 77, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Medita enfocándote en el color rojo, visualizando una llama que crece en intensidad y calidez, durante 12 minutos', '?', '/recomendaciones/1643', 1643, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-03 19:18:56', 0, 0, 1),
 (1685, 77, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Haz un paseo rápido de 25 minutos alrededor de tu bloque de edificios para liberar endorfinas', '?', '/recomendaciones/1644', 1644, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-03 19:18:56', 0, 0, 1),
-(1686, 77, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Toma un descanso de 15 minutos para dibujar o pintar algo que te haga sentir alegre', '?', '/recomendaciones/1645', 1645, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-03 19:18:56', 0, 0, 1);
+(1686, 77, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Toma un descanso de 15 minutos para dibujar o pintar algo que te haga sentir alegre', '?', '/recomendaciones/1645', 1645, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-03 19:18:56', 0, 0, 1),
+(1687, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Practica la respiración diafragmática durante 7 minutos, inspirando por la nariz y espirando por la boca', '?', '/recomendaciones/1646', 1646, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:32:20', 0, 0, 1),
+(1688, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Toma un descanso de 15 minutos para hacer un paseo en silencio por un parque cercano', '?', '/recomendaciones/1647', 1647, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:32:20', 0, 0, 1),
+(1689, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Medita visualizando un lugar tranquilo y relajante durante 12 minutos, enfocándote en los detalles sensoriales', '?', '/recomendaciones/1648', 1648, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:32:20', 0, 0, 1),
+(1690, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Haz 20 minutos de estiramientos dinámicos para liberar tensiones musculares y mejorar la flexibilidad', '?', '/recomendaciones/1649', 1649, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:32:20', 0, 0, 1),
+(1691, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Cierra los ojos y visualiza un lugar de felicidad para 7 minutos', '?', '/recomendaciones/1650', 1650, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:32:36', 0, 0, 1),
+(1692, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Haz una caminata rápida de 10 minutos por el vecindario', '?', '/recomendaciones/1651', 1651, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:32:36', 0, 0, 1),
+(1693, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Haz 3 series de 10 flexiones de brazos con descansos de 30 segundos entre cada serie', '?', '/recomendaciones/1652', 1652, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:32:36', 0, 0, 1),
+(1694, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Practica la respiración diaphragmática con un ritmo de 6 respiraciones por minuto durante 8 minutos', '?', '/recomendaciones/1653', 1653, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:32:36', 0, 0, 1),
+(1695, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Practica la visualización de un lugar tranquilo durante 15 minutos antes de dormir', '?', '/recomendaciones/1654', 1654, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:34:00', 0, 0, 1),
+(1696, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Haz una caminata rápida de 30 minutos para liberar endorfinas', '?', '/recomendaciones/1655', 1655, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:34:00', 0, 0, 1),
+(1697, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Practica la técnica de respiración diafragmática durante 8 minutos mientras te sientas en una postura cómoda', '?', '/recomendaciones/1656', 1656, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:34:00', 0, 0, 1),
+(1698, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Realiza 20 minutos de estiramientos dinámicos suaves para mejorar tu flexibilidad y reducir el estrés', '?', '/recomendaciones/1657', 1657, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:34:00', 0, 0, 1),
+(1699, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Practica la técnica de respiración circular durante 7 minutos', '?', '/recomendaciones/1658', 1658, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:37:41', 0, 0, 1),
+(1700, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Toma un descanso de 15 minutos para hacer una caminata meditativa alrededor de tu casa', '?', '/recomendaciones/1659', 1659, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:37:41', 0, 0, 1),
+(1701, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Medita enfocándote en la sensación de tus pies en el suelo durante 8 minutos', '?', '/recomendaciones/1660', 1660, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:37:41', 0, 0, 1),
+(1702, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Haz 12 minutos de estiramientos dinámicos para liberar tensión muscular', '?', '/recomendaciones/1661', 1661, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:37:41', 0, 0, 1),
+(1703, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Haz 10 minutos de sentadillas lentas para liberar energía reprimida', '?', '/recomendaciones/1662', 1662, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:43:10', 0, 0, 1),
+(1704, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Practica la visualización de un lugar relajante durante 12 minutos', '?', '/recomendaciones/1663', 1663, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:43:10', 0, 0, 1),
+(1705, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Toma un descanso de 25 minutos para caminar alrededor de la casa y cambiar de ambiente', '?', '/recomendaciones/1664', 1664, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:43:10', 0, 0, 1),
+(1706, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Realiza 5 minutos de respiración diafragmática mientras te enfocas en la sensación de la respiración', '?', '/recomendaciones/1665', 1665, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:43:10', 0, 0, 1),
+(1707, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Practica una visualización de relajación durante 10 minutos, visualizando un lugar tranquilo y hermoso', '?', '/recomendaciones/1666', 1666, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:46:26', 0, 0, 1),
+(1708, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Haz una caminata rápida de 20 minutos alrededor de tu casa para aumentar tu energía', '?', '/recomendaciones/1667', 1667, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:46:26', 0, 0, 1),
+(1709, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Realiza 15 minutos de estiramientos dinámicos para mejorar tu flexibilidad y reducir el estrés', '?', '/recomendaciones/1668', 1668, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:46:26', 0, 0, 1),
+(1710, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Practica la técnica de respiración circular durante 5 minutos, enfocándote en la sensación del aire en tus pulmones', '?', '/recomendaciones/1669', 1669, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:46:26', 0, 0, 1),
+(1711, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Practica una técnica de relajación progresiva visualizando un entorno natural pacífico durante 15 minutos', '?', '/recomendaciones/1670', 1670, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:50:49', 0, 0, 1),
+(1712, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Realiza una caminata rápida de 30 minutos al aire libre para renovar energías', '?', '/recomendaciones/1671', 1671, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:50:49', 0, 0, 1),
+(1713, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Haz una sesión de estiramientos dinámicos de 20 minutos para liberar tensión muscular', '?', '/recomendaciones/1672', 1672, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:50:49', 0, 0, 1),
+(1714, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Practica la técnica de respiración diafragmática durante 10 minutos para calmar la mente', '?', '/recomendaciones/1673', 1673, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:50:49', 0, 0, 1),
+(1715, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Practica visualización positiva durante 15 minutos, imaginándote en un lugar hermoso y relajado', '?', '/recomendaciones/1674', 1674, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:56:22', 0, 0, 1),
+(1716, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Haz 20 minutos de caminata ligera al aire libre, enfocándote en los sonidos y sensaciones de la naturaleza', '?', '/recomendaciones/1675', 1675, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:56:22', 0, 0, 1),
+(1717, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Practica la técnica de respiración circular durante 7 minutos, enfocándote en la sensación de la respiración en tu cuerpo', '?', '/recomendaciones/1676', 1676, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:56:22', 0, 0, 1),
+(1718, 79, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Toma un descanso de 25 minutos y haz algo creativo que te guste, como dibujar o escribir una carta a un amigo', '?', '/recomendaciones/1677', 1677, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 16:56:22', 0, 0, 1),
+(1719, 77, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Practica la técnica de respiración diafragmática durante 7 minutos', '?', '/recomendaciones/1678', 1678, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 17:23:21', 0, 0, 1),
+(1720, 77, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Realiza un paseo corto de 15 minutos en un entorno natural', '?', '/recomendaciones/1679', 1679, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 17:23:21', 0, 0, 1),
+(1721, 77, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Practica una visualización de relajación visualizando un lugar tranquilo durante 12 minutos', '?', '/recomendaciones/1680', 1680, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 17:23:21', 0, 0, 1),
+(1722, 77, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Haz una sesión de estiramientos dinámicos de 10 minutos', '?', '/recomendaciones/1681', 1681, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 17:23:21', 0, 0, 1);
 
 -- --------------------------------------------------------
 
@@ -5082,7 +5136,43 @@ INSERT INTO `recomendaciones` (`id_recomendacion`, `id_resultado`, `tipo_recomen
 (1642, 557, 'respiracion', 'Practica respiración diafragmática durante 8 minutos, enfocándote en expandir tu pecho y estomago mientras inhalas', 'media', '2026-01-03', 0, NULL, NULL, 1),
 (1643, 557, 'meditacion', 'Medita enfocándote en el color rojo, visualizando una llama que crece en intensidad y calidez, durante 12 minutos', 'media', '2026-01-03', 0, NULL, NULL, 1),
 (1644, 557, 'ejercicio', 'Haz un paseo rápido de 25 minutos alrededor de tu bloque de edificios para liberar endorfinas', 'media', '2026-01-03', 0, NULL, NULL, 1),
-(1645, 557, 'pausa_activa', 'Toma un descanso de 15 minutos para dibujar o pintar algo que te haga sentir alegre', 'media', '2026-01-03', 0, NULL, NULL, 1);
+(1645, 557, 'pausa_activa', 'Toma un descanso de 15 minutos para dibujar o pintar algo que te haga sentir alegre', 'media', '2026-01-03', 0, NULL, NULL, 1),
+(1646, 559, 'respiracion', 'Practica la respiración diafragmática durante 7 minutos, inspirando por la nariz y espirando por la boca', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1647, 559, 'pausa_activa', 'Toma un descanso de 15 minutos para hacer un paseo en silencio por un parque cercano', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1648, 559, 'meditacion', 'Medita visualizando un lugar tranquilo y relajante durante 12 minutos, enfocándote en los detalles sensoriales', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1649, 559, 'ejercicio', 'Haz 20 minutos de estiramientos dinámicos para liberar tensiones musculares y mejorar la flexibilidad', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1650, 560, 'meditacion', 'Cierra los ojos y visualiza un lugar de felicidad para 7 minutos', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1651, 560, 'pausa_activa', 'Haz una caminata rápida de 10 minutos por el vecindario', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1652, 560, 'ejercicio', 'Haz 3 series de 10 flexiones de brazos con descansos de 30 segundos entre cada serie', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1653, 560, 'respiracion', 'Practica la respiración diaphragmática con un ritmo de 6 respiraciones por minuto durante 8 minutos', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1654, 561, 'meditacion', 'Practica la visualización de un lugar tranquilo durante 15 minutos antes de dormir', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1655, 561, 'pausa_activa', 'Haz una caminata rápida de 30 minutos para liberar endorfinas', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1656, 561, 'respiracion', 'Practica la técnica de respiración diafragmática durante 8 minutos mientras te sientas en una postura cómoda', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1657, 561, 'ejercicio', 'Realiza 20 minutos de estiramientos dinámicos suaves para mejorar tu flexibilidad y reducir el estrés', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1658, 562, 'respiracion', 'Practica la técnica de respiración circular durante 7 minutos', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1659, 562, 'pausa_activa', 'Toma un descanso de 15 minutos para hacer una caminata meditativa alrededor de tu casa', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1660, 562, 'meditacion', 'Medita enfocándote en la sensación de tus pies en el suelo durante 8 minutos', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1661, 562, 'ejercicio', 'Haz 12 minutos de estiramientos dinámicos para liberar tensión muscular', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1662, 563, 'ejercicio', 'Haz 10 minutos de sentadillas lentas para liberar energía reprimida', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1663, 563, 'meditacion', 'Practica la visualización de un lugar relajante durante 12 minutos', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1664, 563, 'pausa_activa', 'Toma un descanso de 25 minutos para caminar alrededor de la casa y cambiar de ambiente', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1665, 563, 'respiracion', 'Realiza 5 minutos de respiración diafragmática mientras te enfocas en la sensación de la respiración', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1666, 564, 'meditacion', 'Practica una visualización de relajación durante 10 minutos, visualizando un lugar tranquilo y hermoso', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1667, 564, 'pausa_activa', 'Haz una caminata rápida de 20 minutos alrededor de tu casa para aumentar tu energía', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1668, 564, 'ejercicio', 'Realiza 15 minutos de estiramientos dinámicos para mejorar tu flexibilidad y reducir el estrés', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1669, 564, 'respiracion', 'Practica la técnica de respiración circular durante 5 minutos, enfocándote en la sensación del aire en tus pulmones', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1670, 565, 'meditacion', 'Practica una técnica de relajación progresiva visualizando un entorno natural pacífico durante 15 minutos', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1671, 565, 'pausa_activa', 'Realiza una caminata rápida de 30 minutos al aire libre para renovar energías', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1672, 565, 'ejercicio', 'Haz una sesión de estiramientos dinámicos de 20 minutos para liberar tensión muscular', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1673, 565, 'respiracion', 'Practica la técnica de respiración diafragmática durante 10 minutos para calmar la mente', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1674, 566, 'meditacion', 'Practica visualización positiva durante 15 minutos, imaginándote en un lugar hermoso y relajado', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1675, 566, 'ejercicio', 'Haz 20 minutos de caminata ligera al aire libre, enfocándote en los sonidos y sensaciones de la naturaleza', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1676, 566, 'respiracion', 'Practica la técnica de respiración circular durante 7 minutos, enfocándote en la sensación de la respiración en tu cuerpo', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1677, 566, 'pausa_activa', 'Toma un descanso de 25 minutos y haz algo creativo que te guste, como dibujar o escribir una carta a un amigo', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1678, 567, 'respiracion', 'Practica la técnica de respiración diafragmática durante 7 minutos', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1679, 567, 'pausa_activa', 'Realiza un paseo corto de 15 minutos en un entorno natural', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1680, 567, 'meditacion', 'Practica una visualización de relajación visualizando un lugar tranquilo durante 12 minutos', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1681, 567, 'ejercicio', 'Haz una sesión de estiramientos dinámicos de 10 minutos', 'media', '2026-01-04', 0, NULL, NULL, 1);
 
 --
 -- Disparadores `recomendaciones`
@@ -5715,17 +5805,16 @@ INSERT INTO `resultado_analisis` (`id_resultado`, `id_analisis`, `nivel_estres`,
 (554, 554, 65, 55, 'alto', 87.3, 'Tristeza', 2, 72, 8, 2, 15, 1, '2026-01-03 19:17:27', 1),
 (555, 555, 45, 68, 'alto', 82.1, 'Miedo', 3, 12, 65, 8, 10, 2, '2026-01-03 19:17:28', 1),
 (556, 556, 48, 35, 'moderado', 78.9, 'Enojo', 5, 20, 10, 8, 55, 2, '2026-01-03 19:17:28', 1),
-(557, 557, 48.66, 0.04, 'leve', 81.07, 'Enojo', 8.7, 0.1, 0, 10.1, 81.1, 0, '2026-01-03 19:18:56', 1);
-
---
--- Disparadores `resultado_analisis`
---
-DELIMITER $$
-CREATE TRIGGER `trg_evaluar_resultado` AFTER INSERT ON `resultado_analisis` FOR EACH ROW BEGIN
-  CALL sp_evaluar_alerta(NEW.id_resultado);
-END
-$$
-DELIMITER ;
+(557, 557, 48.66, 0.04, 'leve', 81.07, 'Enojo', 8.7, 0.1, 0, 10.1, 81.1, 0, '2026-01-03 19:18:56', 1),
+(559, 559, 47.7, 0.12, 'leve', 79.54, 'Enojo', 18, 0.3, 0, 2, 79.5, 0, '2026-01-04 16:32:20', 1),
+(560, 560, 0.08, 0.44, 'normal', 98.31, 'Felicidad', 98.3, 1.1, 0, 0.3, 0, 0.2, '2026-01-04 16:32:36', 1),
+(561, 561, 7.56, 6.04, 'normal', 71.61, 'Felicidad', 71.6, 15.1, 0.4, 0.3, 12.6, 0, '2026-01-04 16:34:00', 1),
+(562, 562, 47.34, 6.4, 'leve', 78.91, 'Enojo', 0.3, 16, 0.2, 4.5, 78.9, 0.1, '2026-01-04 16:37:41', 1),
+(563, 563, 48.78, 3.32, 'leve', 81.35, 'Enojo', 9.2, 8.3, 0.1, 1, 81.3, 0.1, '2026-01-04 16:43:10', 1),
+(564, 564, 1.14, 10.56, 'normal', 70.96, 'Felicidad', 71, 26.4, 0.1, 0.4, 1.9, 0.2, '2026-01-04 16:46:26', 1),
+(565, 565, 53.58, 0.04, 'moderado', 89.28, 'Enojo', 7.9, 0.1, 0, 0.2, 89.3, 2.5, '2026-01-04 16:50:49', 1),
+(566, 566, 7.14, 7.56, 'normal', 65.48, 'Felicidad', 65.5, 18.9, 0.1, 3.3, 11.9, 0.2, '2026-01-04 16:56:22', 1),
+(567, 567, 57.84, 0.92, 'moderado', 96.43, 'Enojo', 0, 2.3, 0, 1.1, 96.4, 0.1, '2026-01-04 17:23:21', 1);
 
 -- --------------------------------------------------------
 
@@ -5920,7 +6009,10 @@ INSERT INTO `sesion` (`id_sesion`, `id_usuario`, `fecha_inicio`, `fecha_fin`, `d
 (43, 77, '2026-01-04 13:59:38', NULL, NULL, '192.168.1.33', 'Desktop', 'Edge', 'Windows', '2026-01-04 13:59:38', 'activa', 1),
 (44, 77, '2026-01-04 14:11:44', NULL, NULL, '192.168.1.33', 'Mobile', 'Chrome', 'Android', '2026-01-04 14:11:44', 'activa', 1),
 (45, 79, '2026-01-04 16:22:08', NULL, NULL, '192.168.1.33', 'Mobile', 'Edge', 'Linux', '2026-01-04 16:22:08', 'activa', 1),
-(46, 79, '2026-01-04 16:26:25', NULL, NULL, '192.168.1.33', 'Mobile', 'Edge', 'Linux', '2026-01-04 16:26:25', 'activa', 1);
+(46, 79, '2026-01-04 16:26:25', NULL, NULL, '192.168.1.33', 'Mobile', 'Edge', 'Linux', '2026-01-04 16:26:25', 'activa', 1),
+(47, 77, '2026-01-04 17:22:44', NULL, NULL, '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 17:22:44', 'activa', 1),
+(48, 77, '2026-01-04 18:00:32', NULL, NULL, '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 18:00:32', 'activa', 1),
+(49, 77, '2026-01-04 18:09:13', NULL, NULL, '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 18:09:13', 'activa', 1);
 
 -- --------------------------------------------------------
 
@@ -5961,7 +6053,23 @@ INSERT INTO `sesiones_juego` (`id`, `id_usuario`, `id_juego`, `fecha_inicio`, `f
 (10, 77, 5, '2026-01-03 22:31:02', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
 (11, 77, 4, '2026-01-03 22:59:35', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
 (12, 77, 5, '2026-01-03 23:00:07', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
-(13, 77, 1, '2026-01-03 23:01:02', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL);
+(13, 77, 1, '2026-01-03 23:01:02', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
+(14, 77, 4, '2026-01-04 23:00:40', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
+(15, 77, 4, '2026-01-04 23:04:57', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
+(16, 77, 5, '2026-01-04 23:05:00', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
+(17, 77, 1, '2026-01-04 23:05:06', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
+(18, 77, 2, '2026-01-04 23:05:09', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
+(19, 77, 2, '2026-01-04 23:06:04', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
+(20, 77, 3, '2026-01-04 23:07:05', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
+(21, 77, 4, '2026-01-04 23:09:22', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
+(22, 77, 4, '2026-01-04 23:10:27', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
+(23, 77, 5, '2026-01-04 23:10:30', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
+(24, 77, 5, '2026-01-04 23:10:42', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
+(25, 77, 1, '2026-01-04 23:10:48', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
+(26, 77, 2, '2026-01-04 23:10:51', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
+(27, 77, 4, '2026-01-04 23:12:07', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
+(28, 77, 5, '2026-01-04 23:12:52', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
+(29, 77, 1, '2026-01-04 23:13:41', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -6522,13 +6630,13 @@ ALTER TABLE `alerta_analisis`
 -- AUTO_INCREMENT de la tabla `analisis`
 --
 ALTER TABLE `analisis`
-  MODIFY `id_analisis` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=559;
+  MODIFY `id_analisis` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=568;
 
 --
 -- AUTO_INCREMENT de la tabla `audio`
 --
 ALTER TABLE `audio`
-  MODIFY `id_audio` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=563;
+  MODIFY `id_audio` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=572;
 
 --
 -- AUTO_INCREMENT de la tabla `grupos`
@@ -6558,7 +6666,7 @@ ALTER TABLE `juegos_terapeuticos`
 -- AUTO_INCREMENT de la tabla `notificaciones`
 --
 ALTER TABLE `notificaciones`
-  MODIFY `id_notificacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1687;
+  MODIFY `id_notificacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1723;
 
 --
 -- AUTO_INCREMENT de la tabla `participacion_actividad`
@@ -6582,7 +6690,7 @@ ALTER TABLE `preferencias_notificacion`
 -- AUTO_INCREMENT de la tabla `recomendaciones`
 --
 ALTER TABLE `recomendaciones`
-  MODIFY `id_recomendacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1646;
+  MODIFY `id_recomendacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1682;
 
 --
 -- AUTO_INCREMENT de la tabla `reporte`
@@ -6600,7 +6708,7 @@ ALTER TABLE `reporte_resultado`
 -- AUTO_INCREMENT de la tabla `resultado_analisis`
 --
 ALTER TABLE `resultado_analisis`
-  MODIFY `id_resultado` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=559;
+  MODIFY `id_resultado` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=568;
 
 --
 -- AUTO_INCREMENT de la tabla `rol`
@@ -6618,13 +6726,13 @@ ALTER TABLE `rol_usuario`
 -- AUTO_INCREMENT de la tabla `sesion`
 --
 ALTER TABLE `sesion`
-  MODIFY `id_sesion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
+  MODIFY `id_sesion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
 
 --
 -- AUTO_INCREMENT de la tabla `sesiones_juego`
 --
 ALTER TABLE `sesiones_juego`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT de la tabla `usuario`

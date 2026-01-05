@@ -456,7 +456,7 @@ def update_profile():
 # 🟩 LOGIN
 # ======================================================
 @bp.route('/login', methods=['POST'])
-@limiter.limit("5 per minute, 20 per hour")  # Rate limit estricto para login
+@limiter.limit("20 per minute, 100 per hour")  # Rate limit más permisivo para desarrollo
 def login():
     client_ip = request.remote_addr
     user_agent = request.headers.get('User-Agent', '')
@@ -471,6 +471,7 @@ def login():
 
         correo = data.get('correo', '').lower().strip()
         contrasena = data.get('contrasena', '')
+        recordarme = data.get('recordarme', False)  # Parámetro de "Recuérdame"
 
         if not correo or not contrasena:
             return jsonify({'success': False, 'error': 'Correo y contraseña son requeridos'}), 400
@@ -541,9 +542,21 @@ def login():
             hoy = date.today()
             edad = hoy.year - fecha_dt.year - ((hoy.month, hoy.day) < (fecha_dt.month, fecha_dt.day))
 
-        # Crear access token y refresh token
-        token = create_access_token(identity=str(user["id_usuario"]))
-        refresh_token = create_refresh_token(identity=str(user["id_usuario"]))
+        # Crear access token y refresh token con tiempos de expiración según "recordarme"
+        from datetime import timedelta
+        
+        if recordarme:
+            # Si el usuario marcó "Recuérdame", extender el tiempo de expiración
+            # Access token: 7 días, Refresh token: 30 días
+            access_expires = timedelta(days=7)
+            refresh_expires = timedelta(days=30)
+        else:
+            # Sesión normal: Access token corto, Refresh token 7 días
+            access_expires = timedelta(hours=8)  # 8 horas
+            refresh_expires = timedelta(days=7)
+        
+        token = create_access_token(identity=str(user["id_usuario"]), expires_delta=access_expires)
+        refresh_token = create_refresh_token(identity=str(user["id_usuario"]), expires_delta=refresh_expires)
         
         # ✅ Registrar login exitoso en auditoría
         auditoria.registrar_login(
@@ -553,19 +566,18 @@ def login():
             exitoso=True
         )
         
-        # Crear registro de sesión en la base de datos con metadatos del cliente
+        # ✅ Almacenar refresh token en base de datos para persistencia
         try:
-            from models.sesion import Sesion
-            # IP (respetar proxy headers si existen)
-            xfwd = request.headers.get('X-Forwarded-For', '')
-            if xfwd:
-                ip_addr = xfwd.split(',')[0].strip()
-            else:
-                ip_addr = request.remote_addr
-
+            from models.refresh_token import RefreshToken
+            from datetime import datetime
+            
+            # Calcular fecha de expiración del refresh token
+            fecha_expiracion_refresh = datetime.now() + refresh_expires
+            
+            # Detectar dispositivo, navegador y SO del user agent
             ua = request.headers.get('User-Agent', '') or ''
             import re
-
+            
             if re.search(r'Mobile|Android|iPhone|iPad', ua, re.I):
                 dispositivo = 'Mobile'
             elif re.search(r'Tablet', ua, re.I):
@@ -600,8 +612,47 @@ def login():
                 sistema_operativo = 'Linux'
             else:
                 sistema_operativo = 'Unknown'
-
+            
+            # Obtener IP (respetar proxy headers)
+            xfwd = request.headers.get('X-Forwarded-For', '')
+            if xfwd:
+                ip_addr = xfwd.split(',')[0].strip()
+            else:
+                ip_addr = request.remote_addr
+            
+            # Guardar refresh token en BD
+            RefreshToken.create(
+                id_usuario=user["id_usuario"],
+                token=refresh_token,
+                fecha_expiracion=fecha_expiracion_refresh,
+                es_recordarme=recordarme,
+                dispositivo=dispositivo,
+                navegador=navegador,
+                sistema_operativo=sistema_operativo,
+                ip_address=ip_addr,
+                user_agent=ua[:500] if ua else None
+            )
+        except Exception as e:
+            secure_log.error("Error almacenando refresh token", data={"error": str(e)})
+            # No fallar el login si falla el almacenamiento del token
+            
+            # Valores por defecto si falla la detección anterior
+            ua = request.headers.get('User-Agent', '') or ''
+            dispositivo = 'Desktop'
+            navegador = 'Unknown'
+            sistema_operativo = 'Unknown'
+            
+            xfwd = request.headers.get('X-Forwarded-For', '')
+            if xfwd:
+                ip_addr = xfwd.split(',')[0].strip()
+            else:
+                ip_addr = request.remote_addr
+        
+        # Crear registro de sesión en la base de datos (reutilizar variables ya calculadas)
+        try:
+            from models.sesion import Sesion
             from datetime import datetime
+            
             sesion_result = Sesion.create(
                 user["id_usuario"],
                 'activa',

@@ -34,6 +34,15 @@ const recomendacionesService = {
       throw new Error(error.response?.data?.error || 'Error al obtener recomendaciones');
     }
   },
+
+  /**
+   * Alias de getAll para compatibilidad
+   * @param {number} limit - Límite de resultados
+   * @returns {Promise<Object>}
+   */
+  async getRecomendaciones(limit = 20) {
+    return this.getAll(limit);
+  },
 };
 
 export default recomendacionesService;

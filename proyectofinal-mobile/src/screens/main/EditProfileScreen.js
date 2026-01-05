@@ -26,7 +26,7 @@ import { getInitials } from '../../utils/helpers';
 
 const EditProfileScreen = ({ navigation }) => {
   const { colors } = useTheme();
-  const { user, updateUserData } = useAuth();
+  const { user, updateUser } = useAuth();
 
   const [formData, setFormData] = useState({
     nombre: user?.nombre || '',
@@ -90,21 +90,28 @@ const EditProfileScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-      // Actualizar datos de perfil
-      const response = await userService.updateProfile({
+      console.log('[EditProfile] Guardando perfil...');
+      
+      // Actualizar datos de perfil - pasar userId como primer argumento
+      const response = await userService.updateProfile(user?.id_usuario || user?.id, {
         nombre: formData.nombre.trim(),
         apellido: formData.apellido.trim(),
       });
 
+      console.log('[EditProfile] Respuesta:', JSON.stringify(response));
+
       // Subir foto si se seleccionó una nueva
       if (photo) {
-        await userService.uploadProfilePhoto(photo);
+        try {
+          await userService.uploadProfilePhoto(photo);
+        } catch (photoError) {
+          console.warn('[EditProfile] Error al subir foto:', photoError.message);
+        }
       }
 
       if (response?.success) {
         // Actualizar contexto de auth
-        updateUserData({
-          ...user,
+        await updateUser({
           nombre: formData.nombre.trim(),
           apellido: formData.apellido.trim(),
         });
@@ -113,10 +120,19 @@ const EditProfileScreen = ({ navigation }) => {
           { text: 'OK', onPress: () => navigation.goBack() },
         ]);
       } else {
-        Alert.alert('Error', response?.message || 'No se pudo actualizar el perfil');
+        // Asegurar que el mensaje siempre sea string
+        const errorMsg = response?.message 
+          ? String(response.message) 
+          : 'No se pudo actualizar el perfil';
+        Alert.alert('Error', errorMsg);
       }
     } catch (error) {
-      Alert.alert('Error', error.message || 'Error al actualizar el perfil');
+      console.error('[EditProfile] Error:', error);
+      // Asegurar que el mensaje siempre sea string
+      const errorMsg = error?.message 
+        ? String(error.message) 
+        : 'Error al actualizar el perfil';
+      Alert.alert('Error', errorMsg);
     } finally {
       setLoading(false);
     }

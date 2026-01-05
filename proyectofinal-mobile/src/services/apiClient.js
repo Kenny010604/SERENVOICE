@@ -2,6 +2,7 @@
 // Cliente HTTP para React Native
 
 import axios from 'axios';
+import { Platform } from 'react-native';
 import api from '../config/api';
 import secureStorage from '../utils/secureStorage';
 
@@ -10,6 +11,7 @@ const apiClient = axios.create({
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
 });
 
@@ -23,13 +25,19 @@ apiClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    // Si es FormData, no establecer Content-Type (axios lo hace automáticamente)
+    // Si es FormData, configurar correctamente
     if (config.data instanceof FormData) {
-      delete config.headers['Content-Type'];
+      // En React Native, axios necesita esto para FormData
+      config.headers['Content-Type'] = 'multipart/form-data';
+      // Agregar timeout más largo para uploads
+      config.timeout = config.timeout || 180000;
     }
 
     if (__DEV__) {
       console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`);
+      if (config.data instanceof FormData) {
+        console.log('[API] Sending FormData');
+      }
     }
 
     return config;

@@ -4,6 +4,7 @@
 import apiClient from './apiClient';
 import api from '../config/api';
 import secureStorage from '../utils/secureStorage';
+import { Platform } from 'react-native';
 
 const userService = {
   /**
@@ -20,16 +21,40 @@ const userService = {
   },
 
   /**
-   * Actualizar perfil del usuario
-   * @param {number} userId - ID del usuario
+   * Actualizar perfil del usuario autenticado
+   * El backend espera FormData, no JSON
+   * @param {number} userId - ID del usuario (se ignora, se usa token)
    * @param {Object} data - Datos a actualizar
    * @returns {Promise<Object>}
    */
   async updateProfile(userId, data) {
     try {
-      const response = await apiClient.put(api.endpoints.usuarios.update(userId), data);
+      console.log('[userService] Actualizando perfil con datos:', Object.keys(data));
       
-      if (response.data.success) {
+      // Crear FormData ya que el backend espera multipart/form-data
+      const formData = new FormData();
+      
+      // Agregar cada campo al FormData
+      Object.entries(data).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          // Convertir todo a string para evitar errores de tipo
+          formData.append(key, String(value));
+        }
+      });
+      
+      console.log('[userService] Enviando FormData a:', api.endpoints.usuarios.perfil);
+      
+      // Usar endpoint /perfil que usa el token JWT para identificar al usuario
+      const response = await apiClient.put(api.endpoints.usuarios.perfil, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        transformRequest: (data) => data, // Evitar transformación del FormData
+      });
+      
+      console.log('[userService] Respuesta recibida:', response.data?.success);
+      
+      if (response.data?.success) {
         // Actualizar usuario en storage
         const currentUser = await secureStorage.getUser();
         const updatedUser = { ...currentUser, ...data };
@@ -38,6 +63,7 @@ const userService = {
       
       return response.data;
     } catch (error) {
+      console.error('[userService] Error al actualizar perfil:', error.message);
       throw new Error(error.response?.data?.error || 'Error al actualizar perfil');
     }
   },

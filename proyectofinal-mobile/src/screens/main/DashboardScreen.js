@@ -35,15 +35,26 @@ const DashboardScreen = ({ navigation }) => {
 
   const loadDashboardData = async () => {
     try {
+      console.log('[Dashboard] Cargando datos...');
       const historyResponse = await analisisService.getHistory(5);
+      
+      console.log('[Dashboard] Respuesta:', historyResponse?.success, 'Análisis:', historyResponse?.data?.length);
+      
       if (historyResponse?.success && historyResponse.data?.length > 0) {
-        setLastAnalysis(historyResponse.data[0]);
+        const firstAnalysis = historyResponse.data[0];
+        console.log('[Dashboard] Primer análisis:', {
+          id: firstAnalysis.id_analisis,
+          emocion_dominante: firstAnalysis.emocion_dominante,
+          fecha: firstAnalysis.fecha_analisis,
+        });
+        
+        setLastAnalysis(firstAnalysis);
         
         // Calcular estadísticas básicas
         const totalAnalisis = historyResponse.data.length;
         const emotions = historyResponse.data
-          .filter(a => a.resultado?.emocion_principal)
-          .map(a => a.resultado.emocion_principal);
+          .filter(a => a.emocion_dominante)
+          .map(a => a.emocion_dominante);
         
         const emotionCounts = emotions.reduce((acc, emotion) => {
           acc[emotion] = (acc[emotion] || 0) + 1;
@@ -60,9 +71,11 @@ const DashboardScreen = ({ navigation }) => {
           diasConsecutivos: 1, // Simplificado
           emocionDominante: dominantEmotion,
         });
+      } else {
+        console.log('[Dashboard] No hay análisis disponibles');
       }
     } catch (error) {
-      console.log('Error loading dashboard:', error);
+      console.error('[Dashboard] Error loading dashboard:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -77,6 +90,24 @@ const DashboardScreen = ({ navigation }) => {
     setRefreshing(true);
     loadDashboardData();
   }, []);
+
+  // Normalizar confianza para mostrar como porcentaje.
+  // Acepta valores en formato 0..1 o 0..100 y también casos anómalos (p.ej. 5516)
+  const getDisplayedConfidence = (conf) => {
+    if (conf === null || conf === undefined) return null;
+    const n = Number(conf);
+    if (Number.isNaN(n)) return null;
+    // Si ya está en rango 0..1
+    if (n <= 1) return Math.round(n * 100);
+    // Si está en 0..100 (ej. 55.16) devolver entero
+    if (n > 1 && n <= 100) return Math.round(n);
+    // Si es un valor muy grande (p.ej. 5516) intentar dividir por 100
+    if (n > 100) {
+      if (n > 1000) return Math.round(n / 100);
+      return Math.round(n);
+    }
+    return null;
+  };
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -206,42 +237,46 @@ const DashboardScreen = ({ navigation }) => {
                   styles.emotionBadge,
                   {
                     backgroundColor:
-                      getEmotionColor(lastAnalysis.resultado?.emocion_principal) + '20',
+                      getEmotionColor(lastAnalysis.emocion_dominante) + '20',
                   },
                 ]}
               >
                 <Ionicons
                   name={
-                    lastAnalysis.resultado?.emocion_principal === 'Felicidad'
+                    lastAnalysis.emocion_dominante === 'Felicidad'
                       ? 'happy'
-                      : lastAnalysis.resultado?.emocion_principal === 'Tristeza'
+                      : lastAnalysis.emocion_dominante === 'Tristeza'
                       ? 'sad'
-                      : lastAnalysis.resultado?.emocion_principal === 'Enojo'
+                      : lastAnalysis.emocion_dominante === 'Enojo'
                       ? 'flame'
                       : 'pulse'
                   }
                   size={32}
-                  color={getEmotionColor(lastAnalysis.resultado?.emocion_principal)}
+                  color={getEmotionColor(lastAnalysis.emocion_dominante)}
                 />
               </View>
               <View style={styles.lastAnalysisInfo}>
                 <Text style={[styles.lastAnalysisEmotion, { color: colors.text }]}>
-                  {lastAnalysis.resultado?.emocion_principal || 'Sin resultado'}
+                  {lastAnalysis.emocion_dominante || 'Sin resultado'}
                 </Text>
                 <Text style={[styles.lastAnalysisDate, { color: colors.textSecondary }]}>
                   {formatDate(lastAnalysis.fecha_analisis, 'relative')}
                 </Text>
               </View>
-              {lastAnalysis.resultado?.confianza && (
-                <View style={styles.confidenceContainer}>
-                  <Text style={[styles.confidenceLabel, { color: colors.textMuted }]}>
-                    Confianza
-                  </Text>
-                  <Text style={[styles.confidenceValue, { color: colors.text }]}>
-                    {Math.round(lastAnalysis.resultado.confianza * 100)}%
-                  </Text>
-                </View>
-              )}
+              {(() => {
+                const confPercent = getDisplayedConfidence(lastAnalysis.confianza_modelo);
+                if (confPercent === null) return null;
+                return (
+                  <View style={styles.confidenceContainer}>
+                    <Text style={[styles.confidenceLabel, { color: colors.textMuted }]}>
+                      Confianza
+                    </Text>
+                    <Text style={[styles.confidenceValue, { color: colors.text }]}>
+                      {confPercent}%
+                    </Text>
+                  </View>
+                );
+              })()}
             </View>
           </TouchableOpacity>
         )}

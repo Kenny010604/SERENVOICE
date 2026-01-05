@@ -117,10 +117,14 @@ const secureStorage = {
   // Session ID
   async setSessionId(sessionId) {
     try {
+      // Asegurar que sessionId es un string
+      const sessionIdStr = sessionId !== null && sessionId !== undefined 
+        ? String(sessionId) 
+        : '';
       if (isWeb) {
-        await AsyncStorage.setItem(KEYS.SESSION_ID, sessionId);
+        await AsyncStorage.setItem(KEYS.SESSION_ID, sessionIdStr);
       } else {
-        await SecureStore.setItemAsync(KEYS.SESSION_ID, sessionId);
+        await SecureStore.setItemAsync(KEYS.SESSION_ID, sessionIdStr);
       }
     } catch (error) {
       console.error('Error saving session ID:', error);

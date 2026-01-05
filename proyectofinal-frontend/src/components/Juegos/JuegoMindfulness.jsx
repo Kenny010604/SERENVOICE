@@ -1,5 +1,6 @@
 // src/components/Juegos/JuegoMindfulness.jsx
 import React, { useState, useEffect, useMemo } from "react";
+import "../../styles/Juegos.css";
 
 const JuegoMindfulness = ({ juego, onFinish, onExit }) => {
   const [jardin, setJardin] = useState([]);
@@ -134,20 +135,14 @@ const JuegoMindfulness = ({ juego, onFinish, onExit }) => {
 
   if (!juegoIniciado) {
     return (
-      <div className="card" style={{ maxWidth: 700, margin: "20px auto", padding: 40 }}>
-        <div style={{ textAlign: "center", marginBottom: 30 }}>
-          <div style={{ fontSize: "4rem", marginBottom: 10 }}>🧘</div>
+      <div className="juego-container size-xl">
+        <div className="juego-header">
+          <span className="juego-emoji">🧘</span>
           <h1>{juego.nombre}</h1>
-          <p style={{ color: "#666", fontSize: "1.1rem" }}>{juego.descripcion}</p>
+          <p className="juego-descripcion">{juego.descripcion}</p>
         </div>
 
-        <div style={{ 
-          background: "linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)",
-          padding: 40,
-          borderRadius: 16,
-          marginBottom: 30,
-          color: "white"
-        }}>
+        <div className="juego-instrucciones juego-garden-theme">
           <h2 style={{ textAlign: "center", marginBottom: 20 }}>🌱 Cultiva la Calma Interior</h2>
           <ul style={{ 
             textAlign: "left", 
@@ -164,21 +159,14 @@ const JuegoMindfulness = ({ juego, onFinish, onExit }) => {
           </ul>
         </div>
 
-        <div style={{ textAlign: "center" }}>
+        <div className="juego-actions">
           <button
-            className="auth-button"
-            style={{ 
-              fontSize: "1.2rem", 
-              padding: "15px 50px",
-              background: "linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)",
-              marginBottom: 15
-            }}
+            className="juego-btn juego-btn-success juego-btn-lg"
             onClick={iniciarJuego}
           >
             🌱 Crear Mi Jardín
           </button>
-          <br />
-          <button className="auth-button" style={{ background: "#9e9e9e" }} onClick={onExit}>
+          <button className="juego-btn juego-btn-secondary" onClick={onExit}>
             ← Volver
           </button>
         </div>
@@ -187,32 +175,26 @@ const JuegoMindfulness = ({ juego, onFinish, onExit }) => {
   }
 
   return (
-    <div className="card" style={{ maxWidth: 1200, margin: "20px auto", padding: 30 }}>
+    <div className="juego-container size-xl">
       {/* Header con estadísticas */}
-      <div style={{ 
-        background: "linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)",
-        padding: 20,
-        borderRadius: 12,
-        marginBottom: 20,
-        color: "white"
-      }}>
+      <div className="juego-garden-header">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <h2 style={{ margin: 0 }}>Mi Jardín Zen</h2>
             <p style={{ margin: "5px 0 0 0" }}>Nivel {nivelJardin} • ⏱️ {formatearTiempo(segundos)}</p>
           </div>
-          <div style={{ display: "flex", gap: 20 }}>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "2rem" }}>💧</div>
-              <div style={{ fontWeight: "bold" }}>{agua}%</div>
+          <div className="juego-garden-stats">
+            <div className="juego-garden-stat">
+              <div className="stat-emoji">💧</div>
+              <div className="stat-value">{agua}%</div>
             </div>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "2rem" }}>☀️</div>
-              <div style={{ fontWeight: "bold" }}>{sol}%</div>
+            <div className="juego-garden-stat">
+              <div className="stat-emoji">☀️</div>
+              <div className="stat-value">{sol}%</div>
             </div>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "2rem" }}>🌱</div>
-              <div style={{ fontWeight: "bold" }}>{jardin.length}</div>
+            <div className="juego-garden-stat">
+              <div className="stat-emoji">🌱</div>
+              <div className="stat-value">{jardin.length}</div>
             </div>
           </div>
         </div>
@@ -220,112 +202,62 @@ const JuegoMindfulness = ({ juego, onFinish, onExit }) => {
 
       {/* Mensaje flotante */}
       {mensaje && (
-        <div style={{
-          position: "fixed",
-          top: 100,
-          left: "50%",
-          transform: "translateX(-50%)",
-          background: "rgba(0,0,0,0.8)",
-          color: "white",
-          padding: "15px 30px",
-          borderRadius: 30,
-          fontSize: "1.1rem",
-          zIndex: 1000,
-          animation: "fadeIn 0.3s"
-        }}>
+        <div className="juego-garden-message">
           {mensaje}
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 20 }}>
+      <div className="juego-garden-layout">
         {/* Área del jardín */}
         <div>
-          <div style={{
-            background: "linear-gradient(to bottom, #87CEEB 0%, #98D8C8 100%)",
-            borderRadius: 16,
-            height: 500,
-            position: "relative",
-            overflow: "hidden",
-            boxShadow: "inset 0 -20px 40px rgba(0,0,0,0.1)"
-          }}>
+          <div className="juego-garden-area">
             {/* Suelo */}
-            <div style={{
-              position: "absolute",
-              bottom: 0,
-              width: "100%",
-              height: "40%",
-              background: "linear-gradient(to bottom, #8B7355 0%, #654321 100%)",
-              borderRadius: "50% 50% 0 0"
-            }} />
+            <div className="juego-garden-ground" />
 
             {/* Césped */}
-            <div style={{
-              position: "absolute",
-              bottom: "30%",
-              width: "100%",
-              height: "15%",
-              background: "#7CB342",
-              opacity: 0.8
-            }} />
+            <div className="juego-garden-grass" />
 
             {/* Plantas plantadas */}
             {jardin.map((planta) => (
               <div
                 key={planta.id}
                 onClick={() => setPlantaSeleccionada(planta)}
+                className={`juego-garden-plant ${plantaSeleccionada?.id === planta.id ? 'selected' : ''}`}
                 style={{
-                  position: "absolute",
                   left: `${planta.posX}%`,
                   top: `${planta.posY}%`,
                   fontSize: `${2 + planta.tamaño * 2}rem`,
-                  cursor: "pointer",
-                  transition: "all 0.3s",
-                  transform: plantaSeleccionada?.id === planta.id ? "scale(1.2)" : "scale(1)",
-                  filter: plantaSeleccionada?.id === planta.id ? "drop-shadow(0 0 10px yellow)" : "none",
-                  animation: "sway 3s infinite ease-in-out"
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.15)"}
-                onMouseLeave={(e) => e.currentTarget.style.transform = plantaSeleccionada?.id === planta.id ? "scale(1.2)" : "scale(1)"}
               >
                 {planta.emoji}
               </div>
             ))}
 
             {/* Decoraciones fijas */}
-            <div style={{ position: "absolute", bottom: "35%", left: "10%", fontSize: "2rem" }}>☁️</div>
-            <div style={{ position: "absolute", bottom: "40%", right: "15%", fontSize: "2rem" }}>☁️</div>
-            <div style={{ position: "absolute", top: "10%", right: "10%", fontSize: "3rem" }}>☀️</div>
+            <div className="juego-garden-decor" style={{ bottom: "35%", left: "10%" }}>☁️</div>
+            <div className="juego-garden-decor" style={{ bottom: "40%", right: "15%" }}>☁️</div>
+            <div className="juego-garden-decor juego-garden-sun" style={{ top: "10%", right: "10%" }}>☀️</div>
           </div>
 
           {/* Panel de planta seleccionada */}
           {plantaSeleccionada && (
-            <div style={{
-              marginTop: 15,
-              padding: 15,
-              background: "#f5f5f5",
-              borderRadius: 12,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center"
-            }}>
-              <div>
-                <span style={{ fontSize: "2rem", marginRight: 10 }}>{plantaSeleccionada.emoji}</span>
+            <div className="juego-garden-selected-panel">
+              <div className="selected-plant-info">
+                <span className="plant-emoji">{plantaSeleccionada.emoji}</span>
                 <strong>{plantaSeleccionada.nombre}</strong>
-                <span style={{ marginLeft: 10, color: "#666" }}>
+                <span className="plant-size">
                   Tamaño: {plantaSeleccionada.tamaño.toFixed(1)}x
                 </span>
               </div>
-              <div style={{ display: "flex", gap: 10 }}>
+              <div className="selected-plant-actions">
                 <button
-                  className="auth-button"
-                  style={{ background: "#2196F3", padding: "8px 20px" }}
+                  className="juego-btn juego-btn-primary"
                   onClick={() => regarPlanta(plantaSeleccionada.id)}
                 >
                   💧 Regar
                 </button>
                 <button
-                  className="auth-button"
-                  style={{ background: "#f44336", padding: "8px 20px" }}
+                  className="juego-btn juego-btn-danger"
                   onClick={() => {
                     eliminarPlanta(plantaSeleccionada.id);
                     setPlantaSeleccionada(null);
@@ -339,15 +271,9 @@ const JuegoMindfulness = ({ juego, onFinish, onExit }) => {
         </div>
 
         {/* Panel lateral - Plantar */}
-        <div>
-          <h3 style={{ marginBottom: 15 }}>🌱 Plantas Disponibles</h3>
-          <div style={{
-            maxHeight: 400,
-            overflowY: "auto",
-            padding: 10,
-            background: "#f9f9f9",
-            borderRadius: 12
-          }}>
+        <div className="juego-garden-sidebar">
+          <h3 className="sidebar-title">🌱 Plantas Disponibles</h3>
+          <div className="juego-garden-plants-list">
             {plantas.map((planta) => {
               const puedeComprarse = agua >= planta.costo.agua && sol >= planta.costo.sol;
               
@@ -355,32 +281,13 @@ const JuegoMindfulness = ({ juego, onFinish, onExit }) => {
                 <div
                   key={planta.id}
                   onClick={() => puedeComprarse && plantarPlanta(planta)}
-                  style={{
-                    padding: 12,
-                    marginBottom: 10,
-                    background: puedeComprarse ? "white" : "#e0e0e0",
-                    borderRadius: 8,
-                    cursor: puedeComprarse ? "pointer" : "not-allowed",
-                    border: "2px solid " + (puedeComprarse ? "#4CAF50" : "#ccc"),
-                    transition: "all 0.2s",
-                    opacity: puedeComprarse ? 1 : 0.6
-                  }}
-                  onMouseEnter={(e) => {
-                    if (puedeComprarse) {
-                      e.currentTarget.style.transform = "translateX(5px)";
-                      e.currentTarget.style.borderColor = "#2196F3";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateX(0)";
-                    e.currentTarget.style.borderColor = puedeComprarse ? "#4CAF50" : "#ccc";
-                  }}
+                  className={`juego-garden-plant-card ${puedeComprarse ? 'available' : 'unavailable'}`}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{ fontSize: "2rem" }}>{planta.emoji}</span>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: "bold", fontSize: "0.9rem" }}>{planta.nombre}</div>
-                      <div style={{ fontSize: "0.75rem", color: "#666" }}>
+                  <div className="plant-card-content">
+                    <span className="plant-card-emoji">{planta.emoji}</span>
+                    <div className="plant-card-info">
+                      <div className="plant-card-name">{planta.nombre}</div>
+                      <div className="plant-card-cost">
                         💧 {planta.costo.agua} • ☀️ {planta.costo.sol}
                       </div>
                     </div>
@@ -391,17 +298,15 @@ const JuegoMindfulness = ({ juego, onFinish, onExit }) => {
           </div>
 
           {/* Botones de acción */}
-          <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 10 }}>
+          <div className="juego-garden-actions">
             <button
-              className="auth-button"
-              style={{ background: "#4CAF50", width: "100%" }}
+              className="juego-btn juego-btn-success"
               onClick={() => onFinish(calcularPuntuacion(), jardin.length > 5)}
             >
               ✅ Guardar Jardín ({calcularPuntuacion()} pts)
             </button>
             <button
-              className="auth-button"
-              style={{ background: "#9e9e9e", width: "100%" }}
+              className="juego-btn juego-btn-secondary"
               onClick={onExit}
             >
               ⏸️ Salir

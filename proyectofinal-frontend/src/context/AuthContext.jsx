@@ -11,29 +11,50 @@ const SESSION_TIMEOUT_MINUTES = 30;
 const SESSION_WARNING_MINUTES = 5;
 
 export const AuthProvider = ({ children }) => {
-  // Token en memoria segura, no en localStorage
-  const [token, setToken] = useState(() => secureStorage.getAccessToken());
-  const [roles, setRoles] = useState(() => {
-    try {
-      const r = localStorage.getItem("roles");
-      return r ? JSON.parse(r) : [];
-    } catch {
-      return [];
-    }
+  // Estado de carga inicial
+  const [loading, setLoading] = useState(true);
+  
+  // Inicializar desde secureStorage y authService
+  const [token, setToken] = useState(() => {
+    secureStorage.reloadFromStorage();
+    return secureStorage.getAccessToken();
   });
-  const [userRole, setUserRoleState] = useState(() => localStorage.getItem("userRole") || null);
-  const [user, setUser] = useState(() => {
-    try {
-      const u = localStorage.getItem("user");
-      return u ? JSON.parse(u) : null;
-    } catch {
-      return null;
-    }
+  const [user, setUser] = useState(() => authService.getUser());
+  const [roles, setRoles] = useState(() => {
+    const u = authService.getUser();
+    return u?.roles || [];
+  });
+  const [userRole, setUserRoleState] = useState(() => {
+    const u = authService.getUser();
+    return u?.role || null;
   });
   const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
   
   // Referencia para navegación (se configura desde componentes que tienen acceso al router)
   const navigateRef = useRef(null);
+  
+  // Cargar sesión al montar
+  useEffect(() => {
+    secureLogger.debug('AuthProvider montado - verificando sesión existente');
+    secureStorage.reloadFromStorage();
+    const storedToken = secureStorage.getAccessToken();
+    const storedUser = authService.getUser();
+    
+    if (storedToken && storedUser) {
+      secureLogger.info('Sesión existente restaurada', { 
+        userId: storedUser.id_usuario,
+        persistent: secureStorage.isPersistentMode()
+      });
+      setToken(storedToken);
+      setUser(storedUser);
+      setRoles(storedUser.roles || []);
+      setUserRoleState(storedUser.role || storedUser.roles?.[0] || null);
+    } else {
+      secureLogger.debug('No hay sesión existente');
+    }
+    
+    setLoading(false);
+  }, []);
 
   // Configurar navegación (llamar desde App.jsx)
   const setNavigate = useCallback((navFn) => {
@@ -51,29 +72,25 @@ export const AuthProvider = ({ children }) => {
   // Sincronizar token con secureStorage cuando cambia
   useEffect(() => {
     if (token) {
-      secureStorage.setAccessToken(token);
-      // También guardar en localStorage para compatibilidad durante migración
-      // TODO: Remover esta línea cuando la migración esté completa
-      localStorage.setItem("token", token);
+      // secureStorage ya maneja localStorage/sessionStorage según modo persistente
+      secureStorage.setAccessToken(token, null, secureStorage.isPersistentMode());
     } else {
       secureStorage.clearTokens();
-      localStorage.removeItem("token");
     }
   }, [token]);
 
+  // Sincronizar user, roles y userRole con el storage correcto
   useEffect(() => {
-    if (roles && roles.length) localStorage.setItem("roles", JSON.stringify(roles));
-    else localStorage.removeItem("roles");
-  }, [roles]);
+    if (user) {
+      authService.setUser(user); // Usa el storage correcto según modo
+    }
+  }, [user]);
 
   useEffect(() => {
-    if (userRole) localStorage.setItem("userRole", userRole);
-    else localStorage.removeItem("userRole");
-  }, [userRole]);
-
-  useEffect(() => {
-    if (user) localStorage.setItem("user", JSON.stringify(user));
-    else localStorage.removeItem("user");
+    if (user && user.roles) {
+      setRoles(user.roles);
+      setUserRoleState(user.role || user.roles[0]);
+    }
   }, [user]);
 
   // Función de logout centralizada
@@ -87,21 +104,15 @@ export const AuthProvider = ({ children }) => {
       secureLogger.warn("AuthProvider.logout: authService.logout failed");
     }
 
-    // Clear secure storage
+    // Clear secure storage (limpia localStorage y sessionStorage)
     secureStorage.clearTokens();
 
-    // Clear local state and storage
+    // Clear local state
     setToken(null);
     setRoles([]);
     setUser(null);
     setUserRoleState(null);
     setShowTimeoutWarning(false);
-    
-    localStorage.removeItem("token");
-    localStorage.removeItem("roles");
-    localStorage.removeItem("user");
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("session_id");
 
     // Navegar a login si es timeout
     if (reason === 'timeout' && navigateRef.current) {
@@ -138,11 +149,11 @@ export const AuthProvider = ({ children }) => {
     secureLogger.debug('Sesión extendida por actividad del usuario');
   }, [resetTimer]);
 
-  const login = useCallback(({ token: newToken, refreshToken, roles: newRoles = [], user: newUser = null }) => {
-    // Guardar token en memoria segura
-    secureStorage.setAccessToken(newToken);
+  const login = useCallback(({ token: newToken, refreshToken, roles: newRoles = [], user: newUser = null, recordarme = false }) => {
+    // Guardar token en memoria segura con modo persistente
+    secureStorage.setAccessToken(newToken, null, recordarme);
     if (refreshToken) {
-      secureStorage.setRefreshToken(refreshToken);
+      secureStorage.setRefreshToken(refreshToken, recordarme);
     }
     
     setToken(newToken);
@@ -150,10 +161,16 @@ export const AuthProvider = ({ children }) => {
     setUser(newUser);
     setShowTimeoutWarning(false);
     
+    // Guardar user en el storage correcto
+    if (newUser) {
+      const storage = recordarme ? localStorage : sessionStorage;
+      storage.setItem("user", JSON.stringify(newUser));
+    }
+    
     // Resetear timer de sesión
     resetTimer();
     
-    secureLogger.info('Login exitoso');
+    secureLogger.info('Login exitoso', { persistent: recordarme });
   }, [resetTimer]);
 
   const logout = useCallback(async () => {
@@ -174,12 +191,25 @@ export const AuthProvider = ({ children }) => {
     return secureStorage.isTokenExpiringSoon();
   }, []);
 
+  // Mostrar loading durante inicialización
+  if (loading) {
+    return <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100vh',
+      color: 'var(--color-text-main, #000)'
+    }}>Cargando sesión...</div>;
+  }
+
   return (
     <AuthContext.Provider value={{ 
       token, 
+      user,
       roles, 
       userRole, 
-      user, 
+      isAuthenticated: !!token && !!user,
+      loading,
       login, 
       logout, 
       setUserRole,

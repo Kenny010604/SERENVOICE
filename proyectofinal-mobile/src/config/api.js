@@ -43,6 +43,7 @@ const api = {
       list: '/usuarios',
       detail: (id) => `/usuarios/${id}`,
       me: '/usuarios/me',
+      perfil: '/usuarios/perfil',
       update: (id) => `/usuarios/${id}`,
     },
     audio: {

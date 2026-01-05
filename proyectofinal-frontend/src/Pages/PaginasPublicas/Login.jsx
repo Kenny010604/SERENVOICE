@@ -24,6 +24,7 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [recordarme, setRecordarme] = useState(false);
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [availableRoles, setAvailableRoles] = useState([]);
   const [error, setError] = useState("");
@@ -37,7 +38,7 @@ const Login = () => {
 
     try {
       // authService ya maneja la estructura correcta
-      const data = await authService.login(email, password);
+      const data = await authService.login(email, password, recordarme);
 
       // Extraer roles del backend (varias formas posibles). Fallbacks para respuestas inconsistentes.
       const resp = data || {};
@@ -320,6 +321,26 @@ const Login = () => {
                     {showPassword ? <FaEyeSlash /> : <FaEye />}
                   </button>
                 </div>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.5rem',
+                  cursor: 'pointer',
+                  fontSize: '0.95rem',
+                  color: 'var(--color-text-secondary)'
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={recordarme}
+                    onChange={(e) => setRecordarme(e.target.checked)}
+                    disabled={loading}
+                    style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                  />
+                  Recuérdame (mantener sesión activa por 30 días)
+                </label>
               </div>
 
               <button type="submit" className="auth-button" disabled={loading}>

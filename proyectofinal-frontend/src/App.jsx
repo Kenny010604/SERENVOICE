@@ -63,8 +63,10 @@ import PageWithTitle from "./utils/PageWithTitle.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import ProtectedRoute from "./utils/ProtectedRoute.jsx";
+import HomeRedirect from "./utils/HomeRedirect.jsx";
 import { AlertasProvider } from "./context/AlertasContext.jsx";
 import { GOOGLE_CLIENT_ID } from "./config/api.js";
+import SessionDebug from "./components/Debug/SessionDebug.jsx";
 
 
 function App() {
@@ -74,7 +76,11 @@ function App() {
 				<AuthProvider>
 					<AlertasProvider>
 						<Router>
+						<SessionDebug />
 						<Routes>
+							{/* Ruta raíz - Redirecciona según autenticación */}
+							<Route path="/" element={<PageWithTitle title="Inicio"><HomeRedirect /></PageWithTitle>} />
+							
 							{/* Páginas públicas */}
 							<Route path="/Inicio" element={<PageWithTitle title="Inicio"><Inicio /></PageWithTitle>} />
 							<Route path="/login" element={<PageWithTitle title="Iniciar Sesión"><Login /></PageWithTitle>} />

@@ -22,7 +22,12 @@ def get_client_identifier() -> str:
     """
     Obtiene identificador único del cliente para rate limiting.
     Usa IP + User-Agent hash para mejor identificación.
+    EXCLUYE peticiones OPTIONS (CORS preflight) del rate limiting.
     """
+    # Excluir peticiones OPTIONS del rate limiting
+    if request.method == 'OPTIONS':
+        return None  # Esto hace que el limiter no aplique rate limiting
+    
     ip = get_remote_address()
     user_agent = request.headers.get('User-Agent', '')
     
@@ -35,9 +40,10 @@ def get_client_identifier() -> str:
 # Instancia global del limiter (se inicializa en app.py)
 limiter = Limiter(
     key_func=get_client_identifier,
-    default_limits=["200 per day", "50 per hour"],
+    default_limits=["500 per day", "150 per hour"],  # Aumentado para polling frecuente
     storage_uri="memory://",
-    strategy="fixed-window"
+    strategy="fixed-window",
+    swallow_errors=True  # No romper la app si hay error en limiter
 )
 
 
