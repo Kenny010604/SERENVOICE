@@ -11,22 +11,35 @@ import {
   Dimensions,
 } from 'react-native';
 import { GradientBackground } from '../../components/common';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
-import { getEmotionColor, formatDate } from '../../utils/helpers';
+import { getEmotionColor, formatDate, getDisplayedConfidence } from '../../utils/helpers';
 
 const { width } = Dimensions.get('window');
 
+// Iconos que coinciden con el frontend web (react-icons/fa)
 const emotionIcons = {
-  Felicidad: 'happy',
-  Tristeza: 'sad',
-  Enojo: 'flame',
-  Miedo: 'alert',
-  Sorpresa: 'eye',
-  Disgusto: 'thumbs-down',
-  Neutral: 'remove-circle',
-  Ansiedad: 'pulse',
-  Estrés: 'warning',
+  Felicidad: { name: 'smile', library: 'fa5' },      // FaSmile
+  Tristeza: { name: 'sad-tear', library: 'fa5' },    // FaSadTear
+  Enojo: { name: 'angry', library: 'fa5' },          // FaAngry
+  Miedo: { name: 'frown-open', library: 'fa5' },     // FaFrownOpen
+  Sorpresa: { name: 'surprise', library: 'fa5' },    // FaSurprise
+  Neutral: { name: 'meh', library: 'fa5' },          // FaMeh
+  Ansiedad: { name: 'brain', library: 'fa5' },       // FaBrain
+  Estrés: { name: 'heartbeat', library: 'fa5' },     // FaHeartbeat
+  Disgusto: { name: 'meh-rolling-eyes', library: 'fa5' },
+};
+
+// Componente de icono de emoción
+const EmotionIcon = ({ emotion, size = 24, color }) => {
+  const iconData = emotionIcons[emotion] || { name: 'meh', library: 'fa5' };
+  return (
+    <FontAwesome5
+      name={iconData.name}
+      size={size}
+      color={color}
+    />
+  );
 };
 
 const AnalysisResultScreen = ({ route, navigation }) => {
@@ -60,38 +73,57 @@ const AnalysisResultScreen = ({ route, navigation }) => {
   }
 
   // Normalizar estructura de datos (el backend puede enviar 2 formatos diferentes)
-  const emotions = result.emotions || result.resultado?.emociones || result.emociones || [];
-  const mainEmotion = emotions.length > 0 
-    ? emotions[0].name || emotions[0].nombre || 'Neutral'
-    : result.resultado?.emocion_principal || result.emocion_principal || 'Neutral';
-  // El confidence viene como porcentaje del backend (89.3 = 89.3%), dividir por 100
-  const rawConfidence = result.confidence || result.resultado?.confianza || result.confianza || 0;
-  // Si rawConfidence > 1, es un porcentaje y debemos dividir por 100
-  const confidence = rawConfidence > 1 ? rawConfidence / 100 : rawConfidence;
-  
+  const emotionsArray = result.emotions || result.emociones || [];
+  const resultado = result.resultado || null;
+
+  // Determine displayed confidence using helper
+  const rawConfidence = result.confidence || result.resultado?.confianza || result.confianza;
+  const displayedConfidence = getDisplayedConfidence(rawConfidence);
+
+  // Build full list of 8 emotions. Prefer `resultado` (niveles por emoción). Otherwise, build from emotionsArray and fill missing.
+  const buildFromResultado = (r) => [
+    { nombre: 'Felicidad', valor: r.nivel_felicidad || 0 },
+    { nombre: 'Tristeza', valor: r.nivel_tristeza || 0 },
+    { nombre: 'Enojo', valor: r.nivel_enojo || 0 },
+    { nombre: 'Miedo', valor: r.nivel_miedo || 0 },
+    { nombre: 'Sorpresa', valor: r.nivel_sorpresa || 0 },
+    { nombre: 'Neutral', valor: r.nivel_neutral || 0 },
+    { nombre: 'Ansiedad', valor: r.nivel_ansiedad || 0 },
+    { nombre: 'Estrés', valor: r.nivel_estres || 0 },
+  ];
+
+  const buildFromEmotionsArray = (arr) => {
+    const map = {};
+    arr.forEach((e) => {
+      const name = e.name || e.nombre;
+      const value = e.value || e.valor || e.porcentaje || 0;
+      map[name] = Number(value) || 0;
+    });
+    const names = ['Felicidad','Tristeza','Enojo','Miedo','Sorpresa','Neutral','Ansiedad','Estrés'];
+    return names.map(n => ({ nombre: n, valor: map[n] ?? 0 }));
+  };
+
+  let allEmotions = [];
+  if (resultado) {
+    allEmotions = buildFromResultado(resultado);
+  } else if (emotionsArray && emotionsArray.length > 0) {
+    allEmotions = buildFromEmotionsArray(emotionsArray);
+  }
+
+  // Sort descending by value so dominant emotion appears first
+  allEmotions.sort((a, b) => (b.valor || 0) - (a.valor || 0));
+
+  const mainEmotion = resultado?.emocion_dominante || allEmotions[0]?.nombre || 'Neutral';
+
   console.log('[AnalysisResultScreen] Datos normalizados:', {
-    emotionsCount: emotions.length,
+    emotionsCount: allEmotions.length,
     mainEmotion,
     rawConfidence,
-    confidence,
+    displayedConfidence,
   });
-  
-  // Convertir emociones del backend al formato esperado por el componente
-  // NOTA: El backend SIEMPRE envía valores como porcentajes (89.3 = 89.3%, 0.2 = 0.2%)
-  // Debemos dividir por 100 para obtener el valor decimal (0-1) que usa el componente
-  const allEmotions = emotions.map(e => {
-    const rawValue = e.value || e.valor || e.porcentaje || 0;
-    // El backend siempre envía porcentajes, así que dividimos por 100
-    const valor = rawValue / 100;
-    return {
-      nombre: e.name || e.nombre,
-      valor: valor,
-      porcentaje: valor
-    };
-  });
-  
-  console.log('[AnalysisResultScreen] Emociones normalizadas:', 
-    allEmotions.map(e => ({ nombre: e.nombre, valor: e.valor, displayPercent: Math.round(e.valor * 100) + '%' }))
+
+  console.log('[AnalysisResultScreen] Emociones normalizadas:',
+    allEmotions.map(e => ({ nombre: e.nombre, valor: e.valor, displayPercent: (Number(e.valor) || 0).toFixed(1) + '%' }))
   );
   
   const recommendations = (result.recomendaciones || []).map(rec => ({
@@ -147,8 +179,8 @@ const AnalysisResultScreen = ({ route, navigation }) => {
               { backgroundColor: getEmotionColor(mainEmotion) + '20' },
             ]}
           >
-            <Ionicons
-              name={emotionIcons[mainEmotion] || 'pulse'}
+            <EmotionIcon
+              emotion={mainEmotion}
               size={60}
               color={getEmotionColor(mainEmotion)}
             />
@@ -169,7 +201,7 @@ const AnalysisResultScreen = ({ route, navigation }) => {
                 { color: getEmotionColor(mainEmotion) },
               ]}
             >
-              {(confidence * 100).toFixed(1)}%
+              {displayedConfidence ?? '—'}
             </Text>
           </View>
         </View>
@@ -183,8 +215,8 @@ const AnalysisResultScreen = ({ route, navigation }) => {
             {allEmotions.map((emotion, index) => (
               <View key={index} style={styles.emotionItem}>
                 <View style={styles.emotionLeft}>
-                  <Ionicons
-                    name={emotionIcons[emotion.nombre] || 'pulse'}
+                  <EmotionIcon
+                    emotion={emotion.nombre}
                     size={20}
                     color={getEmotionColor(emotion.nombre)}
                   />
@@ -195,18 +227,18 @@ const AnalysisResultScreen = ({ route, navigation }) => {
                 <View style={styles.emotionRight}>
                   <View style={[styles.barContainer, { backgroundColor: colors.border }]}>
                     <View
-                      style={[
-                        styles.barFill,
-                        {
-                          backgroundColor: getEmotionColor(emotion.nombre),
-                          width: `${(emotion.valor || emotion.porcentaje) * 100}%`,
-                        },
-                      ]}
-                    />
+                        style={[
+                          styles.barFill,
+                          {
+                            backgroundColor: getEmotionColor(emotion.nombre),
+                            width: `${(emotion.valor || emotion.porcentaje)}%`,
+                          },
+                        ]}
+                      />
                   </View>
-                  <Text style={[styles.emotionValue, { color: colors.textSecondary }]}>
-                    {(((emotion.valor || emotion.porcentaje) * 100).toFixed(1))}%
-                  </Text>
+                    <Text style={[styles.emotionValue, { color: colors.textSecondary }]}>
+                    {(Number(emotion.valor ?? emotion.porcentaje ?? 0)).toFixed(1)}%
+                    </Text>
                 </View>
               </View>
             ))}

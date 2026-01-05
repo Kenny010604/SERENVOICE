@@ -79,28 +79,21 @@ export const calculateAge = (birthDate) => {
   return age;
 };
 
-// Obtener color para emoción
-export const getEmotionColor = (emotion, isDark = false) => {
-  const lightColors = {
-    felicidad: '#4CAF50',
-    tristeza: '#2196F3',
-    enojo: '#f44336',
-    neutral: '#9e9e9e',
-    estres: '#ff9800',
-    ansiedad: '#9c27b0',
+// Obtener color para emoción (colores que coinciden con frontend web)
+export const getEmotionColor = (emotion) => {
+  const colors = {
+    felicidad: '#ffb703',
+    tristeza: '#4361ee',
+    enojo: '#e63946',
+    estrés: '#e76f51',
+    estres: '#e76f51',
+    ansiedad: '#9b5de5',
+    neutral: '#6c757d',
+    miedo: '#7e22ce',
+    sorpresa: '#2a9d8f',
   };
 
-  const darkColors = {
-    felicidad: '#66bb6a',
-    tristeza: '#42a5f5',
-    enojo: '#ef5350',
-    neutral: '#bdbdbd',
-    estres: '#ffa726',
-    ansiedad: '#ab47bc',
-  };
-
-  const colors = isDark ? darkColors : lightColors;
-  return colors[emotion?.toLowerCase()] || colors.neutral;
+  return colors[emotion?.toLowerCase()] || '#6c757d';
 };
 
 // Obtener emoji para emoción
@@ -119,6 +112,33 @@ export const getEmotionEmoji = (emotion) => {
   return emojis[emotion?.toLowerCase()] || '😐';
 };
 
+// Normalizar y formatear confianza del modelo
+// Acepta valores en 0..1 (decimal), 0..100 (porcentaje) o valores anómalos (p.ej. 5516)
+// Devuelve string con el símbolo '%' o null si inválido
+export const getDisplayedConfidence = (conf) => {
+  if (conf === null || conf === undefined) return null;
+  const n = Number(conf);
+  if (Number.isNaN(n)) return null;
+
+  let percent = null;
+
+  if (n <= 1) {
+    percent = n * 100;
+  } else if (n > 1 && n <= 100) {
+    percent = n;
+  } else if (n > 100) {
+    // heurística: si es muy grande (p.ej. >1000) probablemente esté en centésimas
+    if (n > 1000) percent = n / 100;
+    else percent = n;
+  }
+
+  if (percent === null || Number.isNaN(percent)) return null;
+
+  // Formatear con 1 decimal para mantener consistencia con Historial/Detalle
+  const formatted = (Math.round(percent * 10) / 10).toFixed(1);
+  return formatted + '%';
+};
+
 export default {
   formatDate,
   formatRelativeDate,
@@ -129,4 +149,5 @@ export default {
   calculateAge,
   getEmotionColor,
   getEmotionEmoji,
+  getDisplayedConfidence,
 };

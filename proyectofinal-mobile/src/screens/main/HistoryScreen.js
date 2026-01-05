@@ -12,21 +12,34 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { GradientBackground } from '../../components/common';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import analisisService from '../../services/analisisService';
 import { formatDate, getEmotionColor } from '../../utils/helpers';
 
+// Iconos que coinciden con el frontend web (react-icons/fa)
 const emotionIcons = {
-  Felicidad: 'happy',
-  Tristeza: 'sad',
-  Enojo: 'flame',
-  Miedo: 'alert',
-  Sorpresa: 'eye',
-  Disgusto: 'thumbs-down',
-  Neutral: 'remove-circle',
-  Ansiedad: 'pulse',
-  Estrés: 'warning',
+  Felicidad: { name: 'smile', library: 'fa5' },      // FaSmile
+  Tristeza: { name: 'sad-tear', library: 'fa5' },    // FaSadTear
+  Enojo: { name: 'angry', library: 'fa5' },          // FaAngry
+  Miedo: { name: 'frown-open', library: 'fa5' },     // FaFrownOpen
+  Sorpresa: { name: 'surprise', library: 'fa5' },    // FaSurprise
+  Neutral: { name: 'meh', library: 'fa5' },          // FaMeh
+  Ansiedad: { name: 'brain', library: 'fa5' },       // FaBrain
+  Estrés: { name: 'heartbeat', library: 'fa5' },     // FaHeartbeat
+  Disgusto: { name: 'meh-rolling-eyes', library: 'fa5' },
+};
+
+// Componente de icono de emoción
+const EmotionIcon = ({ emotion, size = 24, color }) => {
+  const iconData = emotionIcons[emotion] || { name: 'meh', library: 'fa5' };
+  return (
+    <FontAwesome5
+      name={iconData.name}
+      size={size}
+      color={color}
+    />
+  );
 };
 
 const HistoryScreen = ({ navigation }) => {
@@ -75,8 +88,8 @@ const HistoryScreen = ({ navigation }) => {
         <View
           style={[styles.emotionBadge, { backgroundColor: emotionColor + '20' }]}
         >
-          <Ionicons
-            name={emotionIcons[emotion] || 'pulse'}
+          <EmotionIcon
+            emotion={emotion}
             size={24}
             color={emotionColor}
           />

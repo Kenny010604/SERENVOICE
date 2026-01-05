@@ -11,21 +11,34 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { GradientBackground } from '../../components/common';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import analisisService from '../../services/analisisService';
 import { formatDate, getEmotionColor } from '../../utils/helpers';
 
+// Iconos que coinciden con el frontend web (react-icons/fa)
 const emotionIcons = {
-  Felicidad: 'happy',
-  Tristeza: 'sad',
-  Enojo: 'flame',
-  Miedo: 'alert',
-  Sorpresa: 'eye',
-  Disgusto: 'thumbs-down',
-  Neutral: 'remove-circle',
-  Ansiedad: 'pulse',
-  Estrés: 'warning',
+  Felicidad: { name: 'smile', library: 'fa5' },      // FaSmile
+  Tristeza: { name: 'sad-tear', library: 'fa5' },    // FaSadTear
+  Enojo: { name: 'angry', library: 'fa5' },          // FaAngry
+  Miedo: { name: 'frown-open', library: 'fa5' },     // FaFrownOpen
+  Sorpresa: { name: 'surprise', library: 'fa5' },    // FaSurprise
+  Neutral: { name: 'meh', library: 'fa5' },          // FaMeh
+  Ansiedad: { name: 'brain', library: 'fa5' },       // FaBrain
+  Estrés: { name: 'heartbeat', library: 'fa5' },     // FaHeartbeat
+  Disgusto: { name: 'meh-rolling-eyes', library: 'fa5' },
+};
+
+// Componente de icono de emoción
+const EmotionIcon = ({ emotion, size = 24, color }) => {
+  const iconData = emotionIcons[emotion] || { name: 'meh', library: 'fa5' };
+  return (
+    <FontAwesome5
+      name={iconData.name}
+      size={size}
+      color={color}
+    />
+  );
 };
 
 const AnalysisDetailScreen = ({ route, navigation }) => {
@@ -108,8 +121,10 @@ const AnalysisDetailScreen = ({ route, navigation }) => {
     { nombre: 'Enojo', valor: analysis.resultado.nivel_enojo || 0 },
     { nombre: 'Miedo', valor: analysis.resultado.nivel_miedo || 0 },
     { nombre: 'Sorpresa', valor: analysis.resultado.nivel_sorpresa || 0 },
-    { nombre: 'Neutral', valor: analysis.resultado.nivel_neutral || 0 }
-  ].filter(e => e.valor > 0).sort((a, b) => b.valor - a.valor) : [];
+    { nombre: 'Neutral', valor: analysis.resultado.nivel_neutral || 0 },
+    { nombre: 'Ansiedad', valor: analysis.resultado.nivel_ansiedad || 0 },
+    { nombre: 'Estrés', valor: analysis.resultado.nivel_estres || 0 }
+  ].sort((a, b) => b.valor - a.valor) : [];
   
   const recommendations = (analysis.recomendaciones || []).map(rec => ({
     titulo: rec.tipo_recomendacion || rec.tipo || 'Recomendación',
@@ -148,8 +163,8 @@ const AnalysisDetailScreen = ({ route, navigation }) => {
               { backgroundColor: getEmotionColor(mainEmotion) + '20' },
             ]}
           >
-            <Ionicons
-              name={emotionIcons[mainEmotion] || 'pulse'}
+            <EmotionIcon
+              emotion={mainEmotion}
               size={50}
               color={getEmotionColor(mainEmotion)}
             />
@@ -186,8 +201,8 @@ const AnalysisDetailScreen = ({ route, navigation }) => {
             {allEmotions.map((emotion, index) => (
               <View key={index} style={styles.emotionItem}>
                 <View style={styles.emotionLeft}>
-                  <Ionicons
-                    name={emotionIcons[emotion.nombre] || 'pulse'}
+                  <EmotionIcon
+                    emotion={emotion.nombre}
                     size={18}
                     color={getEmotionColor(emotion.nombre)}
                   />

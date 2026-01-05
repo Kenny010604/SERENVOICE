@@ -11,15 +11,40 @@ import {
   RefreshControl,
   Dimensions,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { GradientBackground, Card, Button } from '../../components/common';
 import analisisService from '../../services/analisisService';
-import { formatDate, getEmotionColor, getInitials } from '../../utils/helpers';
+import { formatDate, getEmotionColor, getInitials, getDisplayedConfidence } from '../../utils/helpers';
 import { shadows, borderRadius, spacing } from '../../config/theme';
 
 const { width } = Dimensions.get('window');
+
+// Iconos que coinciden con el frontend web (react-icons/fa)
+const emotionIcons = {
+  Felicidad: { name: 'smile', library: 'fa5' },      // FaSmile
+  Tristeza: { name: 'sad-tear', library: 'fa5' },    // FaSadTear
+  Enojo: { name: 'angry', library: 'fa5' },          // FaAngry
+  Miedo: { name: 'frown-open', library: 'fa5' },     // FaFrownOpen
+  Sorpresa: { name: 'surprise', library: 'fa5' },    // FaSurprise
+  Neutral: { name: 'meh', library: 'fa5' },          // FaMeh
+  Ansiedad: { name: 'brain', library: 'fa5' },       // FaBrain
+  Estrés: { name: 'heartbeat', library: 'fa5' },     // FaHeartbeat
+  Disgusto: { name: 'meh-rolling-eyes', library: 'fa5' },
+};
+
+// Componente de icono de emoción
+const EmotionIcon = ({ emotion, size = 24, color }) => {
+  const iconData = emotionIcons[emotion] || { name: 'meh', library: 'fa5' };
+  return (
+    <FontAwesome5
+      name={iconData.name}
+      size={size}
+      color={color}
+    />
+  );
+};
 
 const DashboardScreen = ({ navigation }) => {
   const { colors } = useTheme();
@@ -91,23 +116,7 @@ const DashboardScreen = ({ navigation }) => {
     loadDashboardData();
   }, []);
 
-  // Normalizar confianza para mostrar como porcentaje.
-  // Acepta valores en formato 0..1 o 0..100 y también casos anómalos (p.ej. 5516)
-  const getDisplayedConfidence = (conf) => {
-    if (conf === null || conf === undefined) return null;
-    const n = Number(conf);
-    if (Number.isNaN(n)) return null;
-    // Si ya está en rango 0..1
-    if (n <= 1) return Math.round(n * 100);
-    // Si está en 0..100 (ej. 55.16) devolver entero
-    if (n > 1 && n <= 100) return Math.round(n);
-    // Si es un valor muy grande (p.ej. 5516) intentar dividir por 100
-    if (n > 100) {
-      if (n > 1000) return Math.round(n / 100);
-      return Math.round(n);
-    }
-    return null;
-  };
+  // Use shared helper to format confidence (preserve decimals when present)
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -207,8 +216,12 @@ const DashboardScreen = ({ navigation }) => {
           </View>
 
           <View style={[styles.statCard, { backgroundColor: colors.panel }]}>
-            <View style={[styles.statIcon, { backgroundColor: colors.success + '20' }]}>
-              <Ionicons name="happy" size={24} color={colors.success} />
+            <View style={[styles.statIcon, { backgroundColor: (stats.emocionDominante ? getEmotionColor(stats.emocionDominante) : colors.success) + '20' }]}>
+              <EmotionIcon
+                emotion={stats.emocionDominante || 'Neutral'}
+                size={24}
+                color={stats.emocionDominante ? getEmotionColor(stats.emocionDominante) : colors.success}
+              />
             </View>
             <Text style={[styles.statValue, { color: colors.text }]} numberOfLines={1}>
               {stats.emocionDominante || '—'}
@@ -241,16 +254,8 @@ const DashboardScreen = ({ navigation }) => {
                   },
                 ]}
               >
-                <Ionicons
-                  name={
-                    lastAnalysis.emocion_dominante === 'Felicidad'
-                      ? 'happy'
-                      : lastAnalysis.emocion_dominante === 'Tristeza'
-                      ? 'sad'
-                      : lastAnalysis.emocion_dominante === 'Enojo'
-                      ? 'flame'
-                      : 'pulse'
-                  }
+                <EmotionIcon
+                  emotion={lastAnalysis.emocion_dominante}
                   size={32}
                   color={getEmotionColor(lastAnalysis.emocion_dominante)}
                 />
@@ -264,15 +269,15 @@ const DashboardScreen = ({ navigation }) => {
                 </Text>
               </View>
               {(() => {
-                const confPercent = getDisplayedConfidence(lastAnalysis.confianza_modelo);
-                if (confPercent === null) return null;
+                const confText = getDisplayedConfidence(lastAnalysis.confianza_modelo);
+                if (confText === null) return null;
                 return (
                   <View style={styles.confidenceContainer}>
                     <Text style={[styles.confidenceLabel, { color: colors.textMuted }]}>
                       Confianza
                     </Text>
                     <Text style={[styles.confidenceValue, { color: colors.text }]}>
-                      {confPercent}%
+                      {confText}
                     </Text>
                   </View>
                 );

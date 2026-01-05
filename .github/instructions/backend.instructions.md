@@ -666,7 +666,7 @@ class DatabaseConnection:
     @staticmethod
     def initialize_pool():
         DatabaseConnection.pool = pooling.MySQLConnectionPool(
-            pool_name="mindvoice_pool",
+            pool_name="serenvoice_pool",
             pool_size=10,
             host=os.getenv('DB_HOST'),
             # ...
