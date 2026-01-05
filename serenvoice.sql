@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 05-01-2026 a las 00:43:52
+-- Tiempo de generación: 05-01-2026 a las 05:19:37
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.0.30
 
@@ -20,6 +20,14 @@ SET time_zone = "+00:00";
 --
 -- Base de datos: `serenvoice`
 --
+
+DELIMITER $$
+--
+-- Procedimientos
+--
+CREATE DEFINER=`root`@`localhost` PROCEDURE `limpiar_tokens_expirados` ()   BEGIN UPDATE refresh_token SET activo = FALSE WHERE fecha_expiracion < NOW() AND activo = TRUE; DELETE FROM refresh_token WHERE fecha_expiracion < DATE_SUB(NOW(), INTERVAL 90 DAY); SELECT ROW_COUNT() as tokens_eliminados; END$$
+
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -847,7 +855,10 @@ INSERT INTO `analisis` (`id_analisis`, `id_audio`, `modelo_usado`, `fecha_analis
 (564, 568, 'modelo_v1.0', '2026-01-04', 'completado', NULL, 0, 1),
 (565, 569, 'modelo_v1.0', '2026-01-04', 'completado', NULL, 0, 1),
 (566, 570, 'modelo_v1.0', '2026-01-04', 'completado', NULL, 0, 1),
-(567, 571, 'modelo_v1.0', '2026-01-04', 'completado', NULL, 0, 1);
+(567, 571, 'modelo_v1.0', '2026-01-04', 'completado', NULL, 0, 1),
+(568, 572, 'modelo_v1.0', '2026-01-04', 'completado', NULL, 0, 1),
+(569, 573, 'modelo_v1.0', '2026-01-04', 'completado', NULL, 0, 1),
+(570, 574, 'modelo_v1.0', '2026-01-04', 'completado', NULL, 0, 1);
 
 -- --------------------------------------------------------
 
@@ -1443,7 +1454,10 @@ INSERT INTO `audio` (`id_audio`, `id_usuario`, `nombre_archivo`, `ruta_archivo`,
 (568, 79, '20260104_164624_603404_a0e616_grabacion.wav', '20260104_164624_603404_a0e616_grabacion.wav', 0, NULL, '2026-01-04 16:46:26', 1.14, 10.56, 71, 26.4, 0.1, 0.4, 1.9, 0.2, 1, 0, 1),
 (569, 79, '20260104_165047_198908_d02ea5_grabacion.wav', '20260104_165047_198908_d02ea5_grabacion.wav', 0, NULL, '2026-01-04 16:50:49', 53.58, 0.04, 7.9, 0.1, 0, 0.2, 89.3, 2.5, 1, 0, 1),
 (570, 79, '20260104_165620_074428_17ad67_grabacion.wav', '20260104_165620_074428_17ad67_grabacion.wav', 0, NULL, '2026-01-04 16:56:22', 7.14, 7.56, 65.5, 18.9, 0.1, 3.3, 11.9, 0.2, 1, 0, 1),
-(571, 77, '20260104_172318_682374_6a5846_grabacion.wav', '20260104_172318_682374_6a5846_grabacion.wav', 11, NULL, '2026-01-04 17:23:21', 57.84, 0.92, 0, 2.3, 0, 1.1, 96.4, 0.1, 1, 0, 1);
+(571, 77, '20260104_172318_682374_6a5846_grabacion.wav', '20260104_172318_682374_6a5846_grabacion.wav', 11, NULL, '2026-01-04 17:23:21', 57.84, 0.92, 0, 2.3, 0, 1.1, 96.4, 0.1, 1, 0, 1),
+(572, 77, '20260104_213219_911231_b24e9d_grabacion.wav', '20260104_213219_911231_b24e9d_grabacion.wav', 0, NULL, '2026-01-04 21:32:36', 2.28, 22.98, 0, 55.2, 38.3, 1.3, 3.8, 1.3, 1, 0, 1),
+(573, 77, '20260104_215527_273633_85b2ed_grabacion.wav', '20260104_215527_273633_85b2ed_grabacion.wav', 0, NULL, '2026-01-04 21:55:28', 33.08, 2.52, 0.1, 6.3, 2.2, 0, 8.7, 82.7, 1, 0, 1),
+(574, 77, '20260104_220512_431633_a67427_grabacion.wav', '20260104_220512_431633_a67427_grabacion.wav', 0, NULL, '2026-01-04 22:05:14', 11.16, 34.26, 0, 13.6, 57.1, 0.6, 0.9, 27.9, 1, 0, 1);
 
 -- --------------------------------------------------------
 
@@ -3391,7 +3405,19 @@ INSERT INTO `notificaciones` (`id_notificacion`, `id_usuario`, `tipo_notificacio
 (1719, 77, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Practica la técnica de respiración diafragmática durante 7 minutos', '?', '/recomendaciones/1678', 1678, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 17:23:21', 0, 0, 1),
 (1720, 77, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Realiza un paseo corto de 15 minutos en un entorno natural', '?', '/recomendaciones/1679', 1679, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 17:23:21', 0, 0, 1),
 (1721, 77, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Practica una visualización de relajación visualizando un lugar tranquilo durante 12 minutos', '?', '/recomendaciones/1680', 1680, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 17:23:21', 0, 0, 1),
-(1722, 77, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Haz una sesión de estiramientos dinámicos de 10 minutos', '?', '/recomendaciones/1681', 1681, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 17:23:21', 0, 0, 1);
+(1722, 77, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Haz una sesión de estiramientos dinámicos de 10 minutos', '?', '/recomendaciones/1681', 1681, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 17:23:21', 0, 0, 1),
+(1723, 77, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Toma un descanso de 20 minutos al aire libre y haz una caminata de 5 minutos sin destino específico', '?', '/recomendaciones/1682', 1682, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 21:32:36', 0, 0, 1),
+(1724, 77, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Medita enfocándote en la sensación de la respiración en el abdomen durante 10 minutos con un ritmo de 5-5-5', '?', '/recomendaciones/1683', 1683, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 21:32:36', 0, 0, 1),
+(1725, 77, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Practica la técnica de respiración alternada (1 minuto de inspiración a través de la nariz y 1 minuto de expiración a través de la boca)', '?', '/recomendaciones/1684', 1684, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 21:32:36', 0, 0, 1),
+(1726, 77, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Haz 20 minutos de estiramientos suaves, enfocándote en las áreas de tensión detectadas en el cuerpo', '?', '/recomendaciones/1685', 1685, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 21:32:36', 0, 0, 1),
+(1727, 77, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Practica una visualización guiada de 10 minutos en un entorno tranquilo, imagina un lugar seguro y relajante donde te sientas protegido', '?', '/recomendaciones/1686', 1686, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 21:55:28', 0, 0, 1),
+(1728, 77, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Haz una pausa de 20 minutos para caminar alrededor de la casa y notar los detalles de cada objeto o persona que te rodea', '?', '/recomendaciones/1687', 1687, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 21:55:28', 0, 0, 1),
+(1729, 77, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Haz 15 minutos de estiramientos suaves y lentos, enfócate en estirar las áreas tensas de tu cuerpo', '?', '/recomendaciones/1688', 1688, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 21:55:28', 0, 0, 1),
+(1730, 77, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Practica la respiración diafragmática, inhala profundamente por la nariz durante 4 segundos, retén durante 7 segundos y exhala lentamente por la boca durante 8 segundos', '?', '/recomendaciones/1689', 1689, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 21:55:28', 0, 0, 1),
+(1731, 77, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Haz una visualización creativa de un lugar seguro y tranquilo durante 15 minutos, concéntrate en los detalles del entorno y en cómo te hace sentir tranquilo', '?', '/recomendaciones/1690', 1690, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 22:05:14', 0, 0, 1),
+(1732, 77, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Toma un baño relajante de 10 minutos, agrega una taza de sal de Epsom y un poco de aceite esencial de lavanda para ayudarte a relajarte', '?', '/recomendaciones/1691', 1691, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 22:05:14', 0, 0, 1),
+(1733, 77, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Haz un paseo corto de 20 minutos al aire libre, busca un lugar con un paisaje natural y disfruta del ejercicio al aire libre', '?', '/recomendaciones/1692', 1692, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 22:05:14', 0, 0, 1),
+(1734, 77, 'recomendacion', 'Nueva recomendaciÃ³n personalizada', 'Practica la técnica de relajación muscular progresiva, comienza en los pies y sube hasta la cabeza, manteniendo cada músculo relajado durante 5 segundos antes de pasar a otro', '?', '/recomendaciones/1693', 1693, 'recomendacion', NULL, 0, NULL, 0, NULL, 'media', NULL, '2026-01-04 22:05:14', 0, 0, 1);
 
 -- --------------------------------------------------------
 
@@ -5172,7 +5198,19 @@ INSERT INTO `recomendaciones` (`id_recomendacion`, `id_resultado`, `tipo_recomen
 (1678, 567, 'respiracion', 'Practica la técnica de respiración diafragmática durante 7 minutos', 'media', '2026-01-04', 0, NULL, NULL, 1),
 (1679, 567, 'pausa_activa', 'Realiza un paseo corto de 15 minutos en un entorno natural', 'media', '2026-01-04', 0, NULL, NULL, 1),
 (1680, 567, 'meditacion', 'Practica una visualización de relajación visualizando un lugar tranquilo durante 12 minutos', 'media', '2026-01-04', 0, NULL, NULL, 1),
-(1681, 567, 'ejercicio', 'Haz una sesión de estiramientos dinámicos de 10 minutos', 'media', '2026-01-04', 0, NULL, NULL, 1);
+(1681, 567, 'ejercicio', 'Haz una sesión de estiramientos dinámicos de 10 minutos', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1682, 568, 'pausa_activa', 'Toma un descanso de 20 minutos al aire libre y haz una caminata de 5 minutos sin destino específico', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1683, 568, 'meditacion', 'Medita enfocándote en la sensación de la respiración en el abdomen durante 10 minutos con un ritmo de 5-5-5', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1684, 568, 'respiracion', 'Practica la técnica de respiración alternada (1 minuto de inspiración a través de la nariz y 1 minuto de expiración a través de la boca)', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1685, 568, 'ejercicio', 'Haz 20 minutos de estiramientos suaves, enfocándote en las áreas de tensión detectadas en el cuerpo', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1686, 569, 'meditacion', 'Practica una visualización guiada de 10 minutos en un entorno tranquilo, imagina un lugar seguro y relajante donde te sientas protegido', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1687, 569, 'pausa_activa', 'Haz una pausa de 20 minutos para caminar alrededor de la casa y notar los detalles de cada objeto o persona que te rodea', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1688, 569, 'ejercicio', 'Haz 15 minutos de estiramientos suaves y lentos, enfócate en estirar las áreas tensas de tu cuerpo', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1689, 569, 'respiracion', 'Practica la respiración diafragmática, inhala profundamente por la nariz durante 4 segundos, retén durante 7 segundos y exhala lentamente por la boca durante 8 segundos', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1690, 570, 'meditacion', 'Haz una visualización creativa de un lugar seguro y tranquilo durante 15 minutos, concéntrate en los detalles del entorno y en cómo te hace sentir tranquilo', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1691, 570, 'pausa_activa', 'Toma un baño relajante de 10 minutos, agrega una taza de sal de Epsom y un poco de aceite esencial de lavanda para ayudarte a relajarte', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1692, 570, 'ejercicio', 'Haz un paseo corto de 20 minutos al aire libre, busca un lugar con un paisaje natural y disfruta del ejercicio al aire libre', 'media', '2026-01-04', 0, NULL, NULL, 1),
+(1693, 570, 'respiracion', 'Practica la técnica de relajación muscular progresiva, comienza en los pies y sube hasta la cabeza, manteniendo cada músculo relajado durante 5 segundos antes de pasar a otro', 'media', '2026-01-04', 0, NULL, NULL, 1);
 
 --
 -- Disparadores `recomendaciones`
@@ -5197,6 +5235,84 @@ CREATE TRIGGER `trg_notificar_recomendacion` AFTER INSERT ON `recomendaciones` F
   JOIN analisis an ON ra.id_analisis = an.id_analisis
   JOIN audio au ON an.id_audio = au.id_audio
   WHERE ra.id_resultado = NEW.id_resultado;
+END
+$$
+DELIMITER ;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `refresh_token`
+--
+
+CREATE TABLE `refresh_token` (
+  `id_refresh_token` int(11) NOT NULL,
+  `id_usuario` int(11) NOT NULL,
+  `token_hash` varchar(255) NOT NULL,
+  `dispositivo` varchar(100) DEFAULT NULL,
+  `navegador` varchar(150) DEFAULT NULL,
+  `sistema_operativo` varchar(100) DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `user_agent` text DEFAULT NULL,
+  `fecha_creacion` datetime DEFAULT current_timestamp(),
+  `fecha_expiracion` datetime NOT NULL,
+  `es_recordarme` tinyint(1) DEFAULT 0,
+  `activo` tinyint(1) DEFAULT 1,
+  `revocado` tinyint(1) DEFAULT 0,
+  `fecha_revocacion` datetime DEFAULT NULL,
+  `ultimo_uso` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Almacena refresh tokens para autenticación persistente';
+
+--
+-- Volcado de datos para la tabla `refresh_token`
+--
+
+INSERT INTO `refresh_token` (`id_refresh_token`, `id_usuario`, `token_hash`, `dispositivo`, `navegador`, `sistema_operativo`, `ip_address`, `user_agent`, `fecha_creacion`, `fecha_expiracion`, `es_recordarme`, `activo`, `revocado`, `fecha_revocacion`, `ultimo_uso`) VALUES
+(1, 77, 'e8762da0b280d2d33a9029d3cc9c23d97af57b7b20fcfa41b6558f84f4684f15', 'Desktop', 'Edge', 'Windows', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0', '2026-01-04 19:24:41', '2026-02-03 19:24:41', 1, 1, 0, NULL, NULL),
+(2, 77, '231c399daa8ac32c1c4479c364ac51cadce7b140a195707cedbd677683a748fd', 'Desktop', 'Edge', 'Windows', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0', '2026-01-04 19:28:30', '2026-02-03 19:28:30', 1, 1, 0, NULL, NULL),
+(3, 77, '0ca4ad47da5b0eb1890ecb40116f2e5e458f679f765e2be3a02cac4d804e84a1', 'Desktop', 'Edge', 'Windows', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0', '2026-01-04 19:28:54', '2026-02-03 19:28:54', 1, 1, 0, NULL, NULL),
+(4, 77, 'b7c343896674e5f8e0fcd4e7e93682713c5479974dd681dc987555a3c8a5ea33', 'Desktop', 'Edge', 'Windows', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0', '2026-01-04 19:34:26', '2026-02-03 19:34:26', 1, 1, 0, NULL, NULL),
+(5, 77, 'baff89a498ec7434dfe23277218cf09714ad419822c6137303274ddf3eac0a65', 'Desktop', 'Edge', 'Windows', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0', '2026-01-04 19:39:29', '2026-02-03 19:39:29', 1, 1, 0, NULL, NULL),
+(6, 77, '34a6b3390b050822e2096812b288793dcd707b86974ac9796461f112cc469ccb', 'Desktop', 'Edge', 'Windows', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0', '2026-01-04 19:41:44', '2026-02-03 19:41:44', 1, 1, 0, NULL, NULL),
+(7, 77, '5bf1a677bcc0b2bbc233585c2297aac3ab216e46ff344e297a4396eae11e7c04', 'Desktop', 'Edge', 'Windows', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0', '2026-01-04 19:43:02', '2026-02-03 19:43:02', 1, 1, 0, NULL, NULL),
+(8, 77, 'a948bc43b894266f358586cf48ac8f77ace08e2c4a17a600ad63b7ad285bf55f', 'Desktop', 'Edge', 'Windows', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0', '2026-01-04 19:46:40', '2026-02-03 19:46:40', 1, 1, 0, NULL, NULL),
+(9, 77, '928babbb42dfe981f446807204d4abcff9336d15b861046c1792725b905820a1', 'Desktop', 'Edge', 'Windows', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0', '2026-01-04 19:58:01', '2026-02-03 19:58:01', 1, 1, 0, NULL, NULL),
+(10, 77, '758b1984a21a5ccac6939221c3e2fdec676582631da3dedfd5c5ca3092fe2d66', 'Desktop', 'Edge', 'Windows', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0', '2026-01-04 20:03:34', '2026-02-03 20:03:34', 1, 1, 0, NULL, NULL),
+(11, 77, '0b252c896bfd22f0a2f5b9b1a943ca75ba49c85dd091945b5de23bcf78159166', 'Desktop', 'Edge', 'Windows', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0', '2026-01-04 20:09:02', '2026-01-11 20:09:02', 0, 1, 0, NULL, NULL),
+(12, 77, '833bee21bcfa2e26bf4266ccabcc6590eaba34e42879716d84d075a77f29c411', 'Desktop', 'Edge', 'Windows', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0', '2026-01-04 20:09:05', '2026-01-11 20:09:05', 0, 1, 0, NULL, NULL),
+(13, 77, 'e83f2b7ca7c20c5516ca83e5ae52c0b12f2fb981fa33fc8c80120002068ba8fa', 'Desktop', 'Edge', 'Windows', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0', '2026-01-04 20:09:09', '2026-01-11 20:09:09', 0, 1, 0, NULL, NULL),
+(14, 77, '1406381645eaa45f04e9b5045fe7ae310e9dec7e39f111e9d9a88727d23b3e93', 'Desktop', 'Edge', 'Windows', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0', '2026-01-04 20:09:21', '2026-02-03 20:09:21', 1, 1, 0, NULL, NULL),
+(15, 77, '1ae70b04aec2f2c8296c2b52c946e0d2b53d5d7c896af83c98e6f09a7f4fd9c0', 'Desktop', 'Edge', 'Windows', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0', '2026-01-04 20:09:26', '2026-02-03 20:09:26', 1, 1, 0, NULL, NULL),
+(16, 77, '41e346ce8e9f9835173356658fe97f53b7687f023bbb0ed5cb772d1a56ece5ce', 'Desktop', 'Edge', 'Windows', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0', '2026-01-04 20:10:51', '2026-02-03 20:10:51', 1, 1, 0, NULL, NULL),
+(17, 77, '40eb0f63b1a4bde639e14ebfd16386c413e7dab294abf3be34c6046dbb6245c2', 'Desktop', 'Edge', 'Windows', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0', '2026-01-04 20:10:58', '2026-02-03 20:10:58', 1, 1, 0, NULL, NULL),
+(18, 77, '31138871971f60038f327871455f6cf7c25e5f64b3df22576ebfdb7821e7e7bc', 'Desktop', 'Edge', 'Windows', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0', '2026-01-04 20:11:01', '2026-02-03 20:11:01', 1, 1, 0, NULL, NULL),
+(19, 77, '7c4067182b3bd85ac985db3183d46c3b1d25436f16a68e86581afbec25f494f1', 'Desktop', 'Edge', 'Windows', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0', '2026-01-04 20:12:25', '2026-01-11 20:12:25', 0, 1, 0, NULL, NULL),
+(20, 77, 'b8ee83d1917331b7e887a3c68b6df3d1b2a8a98c6da89ab0dbcf52768ce34e7f', 'Desktop', 'Edge', 'Windows', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0', '2026-01-04 20:12:30', '2026-01-11 20:12:30', 0, 1, 0, NULL, NULL),
+(21, 77, '082dd316f8aea049629236471094dacdf6bc6dfe0568613751b6a5ab7c29e4b2', 'Desktop', 'Edge', 'Windows', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0', '2026-01-04 20:12:34', '2026-01-11 20:12:34', 0, 1, 0, NULL, NULL),
+(22, 77, '1cc16fd1c408f923639ae322b2a28d0239a049a94c6a916b017581227046ac34', 'Desktop', 'Edge', 'Windows', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0', '2026-01-04 20:16:26', '2026-01-11 20:16:26', 0, 1, 0, NULL, NULL),
+(23, 77, 'e0dcfd15fc5a14452c836fff9a73fa0a161040e8dba5065f591e5ef97316c0d8', 'Desktop', 'Edge', 'Windows', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0', '2026-01-04 20:16:29', '2026-02-03 20:16:29', 1, 1, 0, NULL, NULL),
+(24, 77, '92edef09cc275081768d2024edf617afaa25fdd308909ed109fabc717d89d854', 'Desktop', 'Edge', 'Windows', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0', '2026-01-04 20:16:35', '2026-02-03 20:16:35', 1, 1, 0, NULL, NULL),
+(25, 77, 'c6d6f41bc797b212b1b0ef2d28f582aa7d24d71e64d6e5da3f9b27a365366715', 'Desktop', 'okhttp/4.12.0', 'Unknown', '192.168.1.33', 'okhttp/4.12.0', '2026-01-04 20:47:54', '2026-01-11 20:47:54', 0, 1, 0, NULL, NULL),
+(26, 77, 'e89610143cf4d582e7907bc4f259c1b9271374beb3e88cf01adaed4e7f53c3ed', 'Desktop', 'okhttp/4.12.0', 'Unknown', '192.168.1.33', 'okhttp/4.12.0', '2026-01-04 21:15:33', '2026-01-11 21:15:33', 0, 1, 0, NULL, NULL),
+(27, 77, '7c1356410bfd5b3fdbeb1995e91db57bb06a98d2bfd0fa4b5cf05df6769d3ce4', 'Desktop', 'okhttp/4.12.0', 'Unknown', '192.168.1.33', 'okhttp/4.12.0', '2026-01-04 21:19:46', '2026-01-11 21:19:46', 0, 1, 0, NULL, NULL),
+(28, 77, '5f1aa4383dc31e8d5586a4c8dbe861917c3101ec76fc2f85d6dd7faea38b7711', 'Desktop', 'okhttp/4.12.0', 'Unknown', '192.168.1.33', 'okhttp/4.12.0', '2026-01-04 21:31:55', '2026-01-11 21:31:55', 0, 1, 0, NULL, NULL),
+(29, 77, '85079fc106a12694c1ad12e2ce9aceee6423592214f84d99ef1246b88424a6c6', 'Desktop', 'okhttp/4.12.0', 'Unknown', '192.168.1.33', 'okhttp/4.12.0', '2026-01-04 23:07:42', '2026-01-11 23:07:42', 0, 1, 0, NULL, NULL);
+
+--
+-- Disparadores `refresh_token`
+--
+DELIMITER $$
+CREATE TRIGGER `before_refresh_token_update` BEFORE UPDATE ON `refresh_token` FOR EACH ROW BEGIN
+    -- Actualizar último uso automáticamente
+    IF NEW.activo = TRUE AND OLD.activo = TRUE THEN
+        SET NEW.ultimo_uso = CURRENT_TIMESTAMP;
+    END IF;
+    
+    -- Si se revoca, establecer fecha de revocación
+    IF NEW.revocado = TRUE AND OLD.revocado = FALSE THEN
+        SET NEW.fecha_revocacion = CURRENT_TIMESTAMP;
+        SET NEW.activo = FALSE;
+    END IF;
 END
 $$
 DELIMITER ;
@@ -5814,7 +5930,10 @@ INSERT INTO `resultado_analisis` (`id_resultado`, `id_analisis`, `nivel_estres`,
 (564, 564, 1.14, 10.56, 'normal', 70.96, 'Felicidad', 71, 26.4, 0.1, 0.4, 1.9, 0.2, '2026-01-04 16:46:26', 1),
 (565, 565, 53.58, 0.04, 'moderado', 89.28, 'Enojo', 7.9, 0.1, 0, 0.2, 89.3, 2.5, '2026-01-04 16:50:49', 1),
 (566, 566, 7.14, 7.56, 'normal', 65.48, 'Felicidad', 65.5, 18.9, 0.1, 3.3, 11.9, 0.2, '2026-01-04 16:56:22', 1),
-(567, 567, 57.84, 0.92, 'moderado', 96.43, 'Enojo', 0, 2.3, 0, 1.1, 96.4, 0.1, '2026-01-04 17:23:21', 1);
+(567, 567, 57.84, 0.92, 'moderado', 96.43, 'Enojo', 0, 2.3, 0, 1.1, 96.4, 0.1, '2026-01-04 17:23:21', 1),
+(568, 568, 2.28, 22.98, 'normal', 55.16, 'Tristeza', 0, 55.2, 38.3, 1.3, 3.8, 1.3, '2026-01-04 21:32:36', 1),
+(569, 569, 33.08, 2.52, 'leve', 82.69, 'Sorpresa', 0.1, 6.3, 2.2, 0, 8.7, 82.7, '2026-01-04 21:55:28', 1),
+(570, 570, 11.16, 34.26, 'leve', 57.09, 'Miedo', 0, 13.6, 57.1, 0.6, 0.9, 27.9, '2026-01-04 22:05:14', 1);
 
 -- --------------------------------------------------------
 
@@ -5989,30 +6108,64 @@ INSERT INTO `sesion` (`id_sesion`, `id_usuario`, `fecha_inicio`, `fecha_fin`, `d
 (23, 77, '2025-12-29 08:23:35', '2025-12-29 08:33:12', '00:09:37', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2025-12-29 08:33:12', 'cerrada', 1),
 (24, 77, '2025-12-29 08:33:15', '2025-12-29 08:33:17', '00:00:02', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2025-12-29 08:33:17', 'cerrada', 1),
 (25, 76, '2025-12-29 08:33:23', '2025-12-29 08:34:50', '00:01:27', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2025-12-29 08:34:50', 'cerrada', 1),
-(26, 77, '2025-12-29 08:34:55', NULL, NULL, '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2025-12-29 08:34:55', 'activa', 1),
+(26, 77, '2025-12-29 08:34:55', '2026-01-04 20:16:22', '155:41:27', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
 (27, 76, '2025-12-29 08:52:23', NULL, NULL, '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2025-12-29 08:52:23', 'activa', 1),
 (28, 76, '2025-12-29 10:18:04', NULL, NULL, '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2025-12-29 10:18:04', 'activa', 1),
-(29, 77, '2026-01-03 16:56:11', NULL, NULL, '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-03 16:56:11', 'activa', 1),
-(30, 77, '2026-01-03 16:56:46', NULL, NULL, '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-03 16:56:46', 'activa', 1),
+(29, 77, '2026-01-03 16:56:11', '2026-01-04 20:16:22', '27:20:11', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(30, 77, '2026-01-03 16:56:46', '2026-01-04 20:16:22', '27:19:36', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
 (31, 77, '2026-01-03 16:59:31', '2026-01-03 17:01:10', '00:01:39', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-03 17:01:10', 'cerrada', 1),
-(32, 77, '2026-01-03 17:02:01', NULL, NULL, '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-03 17:02:01', 'activa', 1),
-(33, 77, '2026-01-03 17:06:27', NULL, NULL, '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-03 17:06:27', 'activa', 1),
-(34, 77, '2026-01-03 17:08:25', NULL, NULL, '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-03 17:08:25', 'activa', 1),
-(35, 77, '2026-01-03 17:18:03', NULL, NULL, '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-03 17:18:03', 'activa', 1),
-(36, 77, '2026-01-03 17:22:05', NULL, NULL, '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-03 17:22:05', 'activa', 1),
-(37, 77, '2026-01-03 17:23:11', NULL, NULL, '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-03 17:23:11', 'activa', 1),
-(38, 77, '2026-01-03 17:28:46', NULL, NULL, '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-03 17:28:46', 'activa', 1),
-(39, 77, '2026-01-03 17:52:45', NULL, NULL, '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-03 17:52:45', 'activa', 1),
-(40, 77, '2026-01-03 17:53:56', NULL, NULL, '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-03 17:53:56', 'activa', 1),
-(41, 77, '2026-01-03 17:59:26', NULL, NULL, '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-03 17:59:26', 'activa', 1),
-(42, 77, '2026-01-03 19:01:41', NULL, NULL, '127.0.0.1', 'Desktop', 'Chrome', 'Windows', '2026-01-03 19:01:41', 'activa', 1),
-(43, 77, '2026-01-04 13:59:38', NULL, NULL, '192.168.1.33', 'Desktop', 'Edge', 'Windows', '2026-01-04 13:59:38', 'activa', 1),
-(44, 77, '2026-01-04 14:11:44', NULL, NULL, '192.168.1.33', 'Mobile', 'Chrome', 'Android', '2026-01-04 14:11:44', 'activa', 1),
+(32, 77, '2026-01-03 17:02:01', '2026-01-04 20:16:22', '27:14:21', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(33, 77, '2026-01-03 17:06:27', '2026-01-04 20:16:22', '27:09:55', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(34, 77, '2026-01-03 17:08:25', '2026-01-04 20:16:22', '27:07:57', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(35, 77, '2026-01-03 17:18:03', '2026-01-04 20:16:22', '26:58:19', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(36, 77, '2026-01-03 17:22:05', '2026-01-04 20:16:22', '26:54:17', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(37, 77, '2026-01-03 17:23:11', '2026-01-04 20:16:22', '26:53:11', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(38, 77, '2026-01-03 17:28:46', '2026-01-04 20:16:22', '26:47:36', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(39, 77, '2026-01-03 17:52:45', '2026-01-04 20:16:22', '26:23:37', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(40, 77, '2026-01-03 17:53:56', '2026-01-04 20:16:22', '26:22:26', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(41, 77, '2026-01-03 17:59:26', '2026-01-04 20:16:22', '26:16:56', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(42, 77, '2026-01-03 19:01:41', '2026-01-04 20:16:22', '25:14:41', '127.0.0.1', 'Desktop', 'Chrome', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(43, 77, '2026-01-04 13:59:38', '2026-01-04 20:16:22', '06:16:44', '192.168.1.33', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(44, 77, '2026-01-04 14:11:44', '2026-01-04 20:16:22', '06:04:38', '192.168.1.33', 'Mobile', 'Chrome', 'Android', '2026-01-04 20:16:22', 'cerrada', 1),
 (45, 79, '2026-01-04 16:22:08', NULL, NULL, '192.168.1.33', 'Mobile', 'Edge', 'Linux', '2026-01-04 16:22:08', 'activa', 1),
 (46, 79, '2026-01-04 16:26:25', NULL, NULL, '192.168.1.33', 'Mobile', 'Edge', 'Linux', '2026-01-04 16:26:25', 'activa', 1),
-(47, 77, '2026-01-04 17:22:44', NULL, NULL, '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 17:22:44', 'activa', 1),
-(48, 77, '2026-01-04 18:00:32', NULL, NULL, '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 18:00:32', 'activa', 1),
-(49, 77, '2026-01-04 18:09:13', NULL, NULL, '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 18:09:13', 'activa', 1);
+(47, 77, '2026-01-04 17:22:44', '2026-01-04 20:16:22', '02:53:38', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(48, 77, '2026-01-04 18:00:32', '2026-01-04 20:16:22', '02:15:50', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(49, 77, '2026-01-04 18:09:13', '2026-01-04 18:46:01', '00:36:48', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 18:46:01', 'cerrada', 1),
+(50, 77, '2026-01-04 18:46:13', '2026-01-04 20:16:22', '01:30:09', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(51, 77, '2026-01-04 18:53:45', '2026-01-04 20:16:22', '01:22:37', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(52, 77, '2026-01-04 18:59:53', '2026-01-04 20:16:22', '01:16:29', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(53, 77, '2026-01-04 19:12:49', '2026-01-04 19:23:54', '00:11:05', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 19:23:54', 'cerrada', 1),
+(54, 77, '2026-01-04 19:24:02', '2026-01-04 20:16:22', '00:52:20', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(55, 77, '2026-01-04 19:24:41', '2026-01-04 20:16:22', '00:51:41', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(56, 77, '2026-01-04 19:28:30', '2026-01-04 20:16:22', '00:47:52', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(57, 77, '2026-01-04 19:28:54', '2026-01-04 20:16:22', '00:47:28', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(58, 77, '2026-01-04 19:34:26', '2026-01-04 20:16:22', '00:41:56', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(59, 77, '2026-01-04 19:39:29', '2026-01-04 20:16:22', '00:36:53', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(60, 77, '2026-01-04 19:41:44', '2026-01-04 20:16:22', '00:34:38', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(61, 77, '2026-01-04 19:43:02', '2026-01-04 20:16:22', '00:33:20', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(62, 77, '2026-01-04 19:46:40', '2026-01-04 20:16:22', '00:29:42', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(63, 77, '2026-01-04 19:58:02', '2026-01-04 20:16:22', '00:18:20', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(64, 77, '2026-01-04 20:03:34', '2026-01-04 20:09:00', '00:05:26', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:09:00', 'cerrada', 1),
+(65, 77, '2026-01-04 20:09:02', '2026-01-04 20:16:22', '00:07:20', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(66, 77, '2026-01-04 20:09:05', '2026-01-04 20:16:22', '00:07:17', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(67, 77, '2026-01-04 20:09:09', '2026-01-04 20:16:22', '00:07:13', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(68, 77, '2026-01-04 20:09:21', '2026-01-04 20:16:22', '00:07:01', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(69, 77, '2026-01-04 20:09:26', '2026-01-04 20:09:41', '00:00:15', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:09:41', 'cerrada', 1),
+(70, 77, '2026-01-04 20:10:51', '2026-01-04 20:16:22', '00:05:31', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(71, 77, '2026-01-04 20:10:58', '2026-01-04 20:16:22', '00:05:24', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(72, 77, '2026-01-04 20:11:01', '2026-01-04 20:12:16', '00:01:15', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:12:16', 'cerrada', 1),
+(73, 77, '2026-01-04 20:12:25', '2026-01-04 20:16:22', '00:03:57', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(74, 77, '2026-01-04 20:12:30', '2026-01-04 20:16:22', '00:03:52', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(75, 77, '2026-01-04 20:12:34', '2026-01-04 20:16:22', '00:03:48', '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:22', 'cerrada', 1),
+(76, 77, '2026-01-04 20:16:26', NULL, NULL, '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:26', 'activa', 1),
+(77, 77, '2026-01-04 20:16:29', NULL, NULL, '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:29', 'activa', 1),
+(78, 77, '2026-01-04 20:16:35', NULL, NULL, '127.0.0.1', 'Desktop', 'Edge', 'Windows', '2026-01-04 20:16:35', 'activa', 1),
+(79, 77, '2026-01-04 20:47:54', NULL, NULL, '192.168.1.33', 'Desktop', 'okhttp/4.12.0', 'Unknown', '2026-01-04 20:47:54', 'activa', 1),
+(80, 77, '2026-01-04 21:15:33', NULL, NULL, '192.168.1.33', 'Desktop', 'okhttp/4.12.0', 'Unknown', '2026-01-04 21:15:33', 'activa', 1),
+(81, 77, '2026-01-04 21:19:46', NULL, NULL, '192.168.1.33', 'Desktop', 'okhttp/4.12.0', 'Unknown', '2026-01-04 21:19:46', 'activa', 1),
+(82, 77, '2026-01-04 21:31:55', NULL, NULL, '192.168.1.33', 'Desktop', 'okhttp/4.12.0', 'Unknown', '2026-01-04 21:31:55', 'activa', 1),
+(83, 77, '2026-01-04 23:07:42', NULL, NULL, '192.168.1.33', 'Desktop', 'okhttp/4.12.0', 'Unknown', '2026-01-04 23:07:42', 'activa', 1);
 
 -- --------------------------------------------------------
 
@@ -6069,7 +6222,16 @@ INSERT INTO `sesiones_juego` (`id`, `id_usuario`, `id_juego`, `fecha_inicio`, `f
 (26, 77, 2, '2026-01-04 23:10:51', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
 (27, 77, 4, '2026-01-04 23:12:07', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
 (28, 77, 5, '2026-01-04 23:12:52', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
-(29, 77, 1, '2026-01-04 23:13:41', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL);
+(29, 77, 1, '2026-01-04 23:13:41', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
+(30, 77, 4, '2026-01-04 23:53:58', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
+(31, 77, 4, '2026-01-04 23:53:58', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
+(32, 77, 5, '2026-01-04 23:57:58', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
+(33, 77, 1, '2026-01-04 23:58:10', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
+(34, 77, 2, '2026-01-04 23:58:16', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
+(35, 77, 3, '2026-01-04 23:59:47', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
+(36, 77, 4, '2026-01-05 00:08:20', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
+(37, 77, 3, '2026-01-05 00:11:30', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL),
+(38, 77, 3, '2026-01-05 00:13:46', NULL, NULL, 0, 1, 0, 'estable', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -6182,7 +6344,7 @@ INSERT INTO `usuario` (`id_usuario`, `nombre`, `apellido`, `correo`, `contrasena
 (74, 'Jessie', 'Bustamante', 'jessie.bustamante@email.com', 'scrypt:32768:8:1$uWFQ3LRzQBmVKcgB$c5def6526dd8eeec921b11db115cb701036a360fbb35113105d59d95ff5c624dee914b7cdd0e2fcc12accdbecf33c614c0a6f8616697f7977e75ba308108c083', NULL, NULL, 'local', '2025-12-24', '1965-04-03', '2025-12-24 15:14:41', 59, 1, 'O', 1, 1, 1, NULL, NULL, NULL, NULL),
 (75, 'Robin', 'Lara', 'robin.lara@email.com', 'scrypt:32768:8:1$uWFQ3LRzQBmVKcgB$c5def6526dd8eeec921b11db115cb701036a360fbb35113105d59d95ff5c624dee914b7cdd0e2fcc12accdbecf33c614c0a6f8616697f7977e75ba308108c083', NULL, NULL, 'local', '2025-12-24', '2009-02-15', '2025-12-24 15:14:41', 15, 0, 'O', 1, 1, 1, NULL, NULL, NULL, NULL),
 (76, 'John', 'Montenegro', 'john-m130@hotmail.com', 'scrypt:32768:8:1$uWFQ3LRzQBmVKcgB$c5def6526dd8eeec921b11db115cb701036a360fbb35113105d59d95ff5c624dee914b7cdd0e2fcc12accdbecf33c614c0a6f8616697f7977e75ba308108c083', NULL, NULL, 'local', '2025-12-24', '2000-11-30', '2025-12-24 15:52:55', 25, 0, 'M', 1, 1, 1, NULL, NULL, NULL, NULL),
-(77, 'Sebas', 'Montenegro', 'john-m131@hotmail.com', 'scrypt:32768:8:1$uWFQ3LRzQBmVKcgB$c5def6526dd8eeec921b11db115cb701036a360fbb35113105d59d95ff5c624dee914b7cdd0e2fcc12accdbecf33c614c0a6f8616697f7977e75ba308108c083', NULL, NULL, 'local', '2025-12-24', '2000-11-30', '2025-12-28 21:57:22', 25, 0, 'M', 1, 1, 1, NULL, NULL, NULL, NULL),
+(77, 'juanito', 'lopez', 'john-m131@hotmail.com', 'scrypt:32768:8:1$uWFQ3LRzQBmVKcgB$c5def6526dd8eeec921b11db115cb701036a360fbb35113105d59d95ff5c624dee914b7cdd0e2fcc12accdbecf33c614c0a6f8616697f7977e75ba308108c083', NULL, NULL, 'local', '2025-12-24', '2000-11-30', '2026-01-04 21:37:52', 25, 0, 'M', 1, 1, 1, NULL, NULL, NULL, NULL),
 (78, 'John', 'Montenegro', 'sebas.calle3011@outlook.com', 'scrypt:32768:8:1$FVxTFfIQtshR4bZ1$bc38a0dc8556af08e81a903001cd220d3d2bed18d2cbd31d9af3198ef686e86085486388c81d2c0092bcfa73130228babca03ad2040c38be9ff6bf2c23761d87', NULL, NULL, 'local', '2026-01-04', '2000-11-29', NULL, 25, 0, 'masculino', 1, 1, 0, 'wAOxbnmDzKphrjGVQK78ZTbzZ4MyZRcrWwMpQfj_Knw', '2026-01-05 15:42:08', NULL, NULL),
 (79, 'John', 'Montenegro', 'sebas.games52@gmail.com', NULL, 'https://lh3.googleusercontent.com/a/ACg8ocI0OzSQ5ritXhq6_GhdbuTmO9Q50l994hUwiS7RpyV8PXa7Ai7b=s96-c', '114880483364399289663', 'google', '2026-01-04', NULL, NULL, NULL, 0, NULL, 1, 1, 0, NULL, NULL, NULL, NULL);
 
@@ -6545,6 +6707,18 @@ ALTER TABLE `recomendaciones`
   ADD KEY `id_resultado` (`id_resultado`);
 
 --
+-- Indices de la tabla `refresh_token`
+--
+ALTER TABLE `refresh_token`
+  ADD PRIMARY KEY (`id_refresh_token`),
+  ADD UNIQUE KEY `token_hash` (`token_hash`),
+  ADD KEY `idx_usuario` (`id_usuario`),
+  ADD KEY `idx_token_hash` (`token_hash`),
+  ADD KEY `idx_expiracion` (`fecha_expiracion`),
+  ADD KEY `idx_activo` (`activo`,`revocado`),
+  ADD KEY `idx_usuario_activo` (`id_usuario`,`activo`,`revocado`,`fecha_expiracion`);
+
+--
 -- Indices de la tabla `reporte`
 --
 ALTER TABLE `reporte`
@@ -6630,13 +6804,13 @@ ALTER TABLE `alerta_analisis`
 -- AUTO_INCREMENT de la tabla `analisis`
 --
 ALTER TABLE `analisis`
-  MODIFY `id_analisis` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=568;
+  MODIFY `id_analisis` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=571;
 
 --
 -- AUTO_INCREMENT de la tabla `audio`
 --
 ALTER TABLE `audio`
-  MODIFY `id_audio` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=572;
+  MODIFY `id_audio` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=575;
 
 --
 -- AUTO_INCREMENT de la tabla `grupos`
@@ -6666,7 +6840,7 @@ ALTER TABLE `juegos_terapeuticos`
 -- AUTO_INCREMENT de la tabla `notificaciones`
 --
 ALTER TABLE `notificaciones`
-  MODIFY `id_notificacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1723;
+  MODIFY `id_notificacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1735;
 
 --
 -- AUTO_INCREMENT de la tabla `participacion_actividad`
@@ -6690,7 +6864,13 @@ ALTER TABLE `preferencias_notificacion`
 -- AUTO_INCREMENT de la tabla `recomendaciones`
 --
 ALTER TABLE `recomendaciones`
-  MODIFY `id_recomendacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1682;
+  MODIFY `id_recomendacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1694;
+
+--
+-- AUTO_INCREMENT de la tabla `refresh_token`
+--
+ALTER TABLE `refresh_token`
+  MODIFY `id_refresh_token` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT de la tabla `reporte`
@@ -6708,7 +6888,7 @@ ALTER TABLE `reporte_resultado`
 -- AUTO_INCREMENT de la tabla `resultado_analisis`
 --
 ALTER TABLE `resultado_analisis`
-  MODIFY `id_resultado` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=568;
+  MODIFY `id_resultado` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=571;
 
 --
 -- AUTO_INCREMENT de la tabla `rol`
@@ -6726,13 +6906,13 @@ ALTER TABLE `rol_usuario`
 -- AUTO_INCREMENT de la tabla `sesion`
 --
 ALTER TABLE `sesion`
-  MODIFY `id_sesion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
+  MODIFY `id_sesion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=84;
 
 --
 -- AUTO_INCREMENT de la tabla `sesiones_juego`
 --
 ALTER TABLE `sesiones_juego`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- AUTO_INCREMENT de la tabla `usuario`
@@ -6812,6 +6992,12 @@ ALTER TABLE `preferencias_notificacion`
 --
 ALTER TABLE `recomendaciones`
   ADD CONSTRAINT `recomendaciones_ibfk_1` FOREIGN KEY (`id_resultado`) REFERENCES `resultado_analisis` (`id_resultado`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `refresh_token`
+--
+ALTER TABLE `refresh_token`
+  ADD CONSTRAINT `refresh_token_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `reporte`
