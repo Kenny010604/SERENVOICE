@@ -33,6 +33,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1a1a2e"
       },
+<<<<<<< HEAD
       "package": "com.serenvoice.app",
       "permissions": [
         "android.permission.RECORD_AUDIO",
@@ -43,6 +44,10 @@
         "android.permission.ACCESS_NETWORK_STATE"
       ],
       "usesCleartextTraffic": true
+=======
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+>>>>>>> 21f1db4 (Subir todos los cambios recientes)
     },
     "web": {
       "favicon": "./assets/favicon.png"

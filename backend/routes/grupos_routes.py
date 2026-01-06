@@ -439,8 +439,11 @@ def create_activity(id_grupo):
             current_user_id = identity.get('id_usuario') if isinstance(identity, dict) else identity
         data = request.get_json()
         
+        print(f"[DEBUG] create_activity - id_grupo: {id_grupo}, user: {current_user_id}, data: {data}")
+        
         # Verificar que sea miembro (facilitador o co-facilitador)
         miembro = GrupoMiembro.is_member(id_grupo, current_user_id)
+        print(f"[DEBUG] create_activity - miembro: {miembro}")
         if not miembro or miembro['rol_grupo'] not in ['facilitador', 'co_facilitador']:
             return jsonify({'error': 'No tienes permiso para crear actividades'}), 403
         
@@ -448,33 +451,55 @@ def create_activity(id_grupo):
         if not data.get('titulo'):
             return jsonify({'error': 'El título es requerido'}), 400
         
-        # Parsear fechas (el frontend envía YYYY-MM-DD)
+        # Parsear fechas - soportar múltiples formatos
         def parse_date_field(key):
             v = data.get(key)
-            if not v:
+            if not v or v == '' or v == 'undefined':
                 return None
             try:
-                # aceptar 'YYYY-MM-DD' y también ISO datetimes
-                return datetime.strptime(v, '%Y-%m-%d').date()
+                # Formato YYYY-MM-DD HH:MM
+                return datetime.strptime(v, '%Y-%m-%d %H:%M')
             except Exception:
-                try:
-                    return datetime.fromisoformat(v).date()
-                except Exception:
-                    return v
+                pass
+            try:
+                # Formato YYYY-MM-DD
+                return datetime.strptime(v, '%Y-%m-%d')
+            except Exception:
+                pass
+            try:
+                # Formato ISO
+                return datetime.fromisoformat(v.replace('Z', '+00:00'))
+            except Exception:
+                pass
+            # Si no se puede parsear, retornar None
+            print(f"[WARN] No se pudo parsear fecha '{v}'")
+            return None
 
-        fecha_inicio = parse_date_field('fecha_inicio')
-        fecha_fin = parse_date_field('fecha_fin')
+        # Aceptar fecha_programada o fecha_inicio como alias
+        fecha_programada = parse_date_field('fecha_programada') or parse_date_field('fecha_inicio')
+        
+        # Parsear duración
+        duracion_estimada = data.get('duracion_estimada')
+        if duracion_estimada == '' or duracion_estimada == 'undefined':
+            duracion_estimada = None
+        elif duracion_estimada is not None:
+            try:
+                duracion_estimada = int(duracion_estimada)
+            except (ValueError, TypeError):
+                duracion_estimada = None
 
         # Crear actividad
+        print(f"[DEBUG] create_activity - Creando con: id_grupo={id_grupo}, id_creador={current_user_id}, titulo={data['titulo']}, tipo={data.get('tipo_actividad', 'tarea')}, fecha={fecha_programada}, duracion={duracion_estimada}")
         id_actividad = ActividadGrupo.create(
             id_grupo=id_grupo,
             id_creador=current_user_id,
             titulo=data['titulo'],
             descripcion=data.get('descripcion'),
             tipo_actividad=data.get('tipo_actividad', 'tarea'),
-            fecha_inicio=fecha_inicio,
-            fecha_fin=fecha_fin
+            fecha_programada=fecha_programada,
+            duracion_estimada=duracion_estimada
         )
+        print(f"[DEBUG] create_activity - Resultado: {id_actividad}")
         
         return jsonify({
             'message': 'Actividad creada exitosamente',
@@ -482,6 +507,9 @@ def create_activity(id_grupo):
         }), 201
         
     except Exception as e:
+        import traceback
+        tb = traceback.format_exc()
+        print(f"[ERROR] create_activity: {str(e)}\n{tb}")
         return jsonify({'error': str(e)}), 500
 
 

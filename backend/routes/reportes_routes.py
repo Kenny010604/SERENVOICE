@@ -313,3 +313,222 @@ def get_report(id_reporte):
         data=reporte_data,
         status=200
     )
+
+
+@bp.route('/mi-reporte-completo', methods=['GET'])
+@jwt_required()
+def get_mi_reporte_completo():
+    """
+    Obtener reporte completo del usuario actual con todas las estadísticas.
+    Incluye: emociones, tendencias, actividad, juegos, grupos, etc.
+    """
+    from services.resultados_service import ResultadosService
+    
+    user_id = get_jwt_identity()
+    
+    try:
+        conn = DatabaseConnection.get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # 1. Datos básicos del usuario
+        cursor.execute("""
+            SELECT nombre, apellido, correo, fecha_registro, foto_perfil
+            FROM usuario WHERE id_usuario = %s
+        """, (user_id,))
+        usuario = cursor.fetchone()
+        
+        # Convertir fecha_registro a string si existe
+        if usuario and usuario.get('fecha_registro'):
+            usuario['fecha_registro'] = str(usuario['fecha_registro'])
+        
+        # 2. Total de análisis realizados
+        cursor.execute("""
+            SELECT COUNT(*) as total 
+            FROM analisis a
+            JOIN audio au ON a.id_audio = au.id_audio
+            WHERE au.id_usuario = %s
+        """, (user_id,))
+        total_analisis = cursor.fetchone()['total']
+        
+        # 3. Estadísticas de resultados (estrés, ansiedad)
+        estadisticas = ResultadosService.get_estadisticas_usuario(user_id) or {
+            'total': 0,
+            'promedio_estres': 0,
+            'promedio_ansiedad': 0,
+            'max_estres': 0,
+            'max_ansiedad': 0,
+            'distribucion_clasificacion': {}
+        }
+        
+        # 4. Distribución de emociones detectadas
+        cursor.execute("""
+            SELECT ra.emocion_dominante as emocion_principal, COUNT(*) as cantidad
+            FROM resultado_analisis ra
+            JOIN analisis a ON ra.id_analisis = a.id_analisis
+            JOIN audio au ON a.id_audio = au.id_audio
+            WHERE au.id_usuario = %s AND ra.emocion_dominante IS NOT NULL AND ra.emocion_dominante != ''
+            GROUP BY ra.emocion_dominante
+            ORDER BY cantidad DESC
+        """, (user_id,))
+        emociones = cursor.fetchall()
+        
+        # 5. Tendencia por día (últimos 30 días)
+        cursor.execute("""
+            SELECT 
+                DATE(a.fecha_analisis) as fecha,
+                AVG(ra.nivel_estres) as estres,
+                AVG(ra.nivel_ansiedad) as ansiedad,
+                COUNT(*) as cantidad
+            FROM resultado_analisis ra
+            JOIN analisis a ON ra.id_analisis = a.id_analisis
+            JOIN audio au ON a.id_audio = au.id_audio
+            WHERE au.id_usuario = %s
+            AND a.fecha_analisis >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+            GROUP BY DATE(a.fecha_analisis)
+            ORDER BY fecha ASC
+        """, (user_id,))
+        tendencia_diaria = cursor.fetchall()
+        
+        # 6. Tendencia mensual (últimos 6 meses)
+        tendencia_mensual = ResultadosService.get_tendencia_mensual(user_id, 6) or []
+        
+        # 7. Últimos análisis
+        ultimos_analisis = ResultadosService.get_ultimos_resultados(user_id, 10) or []
+        
+        # 8. Actividad por hora del día
+        cursor.execute("""
+            SELECT 
+                HOUR(a.fecha_analisis) as hora,
+                COUNT(*) as cantidad
+            FROM analisis a
+            JOIN audio au ON a.id_audio = au.id_audio
+            WHERE au.id_usuario = %s
+            GROUP BY HOUR(a.fecha_analisis)
+            ORDER BY hora
+        """, (user_id,))
+        actividad_horaria = cursor.fetchall()
+        
+        # 9. Actividad por día de la semana
+        cursor.execute("""
+            SELECT 
+                DAYOFWEEK(a.fecha_analisis) as dia,
+                COUNT(*) as cantidad
+            FROM analisis a
+            JOIN audio au ON a.id_audio = au.id_audio
+            WHERE au.id_usuario = %s
+            GROUP BY DAYOFWEEK(a.fecha_analisis)
+            ORDER BY dia
+        """, (user_id,))
+        actividad_semanal = cursor.fetchall()
+        
+        # 10. Juegos realizados
+        cursor.execute("""
+            SELECT COUNT(*) as total, 
+                   SUM(CASE WHEN completado = 1 THEN 1 ELSE 0 END) as completados,
+                   AVG(puntuacion) as promedio_puntuacion
+            FROM sesiones_juego 
+            WHERE id_usuario = %s
+        """, (user_id,))
+        juegos_stats = cursor.fetchone() or {'total': 0, 'completados': 0, 'promedio_puntuacion': 0}
+        
+        # 11. Grupos a los que pertenece
+        cursor.execute("""
+            SELECT COUNT(*) as total
+            FROM grupo_miembros
+            WHERE id_usuario = %s AND activo = 1
+        """, (user_id,))
+        grupos_count = cursor.fetchone()['total']
+        
+        # 12. Recomendaciones recibidas y aplicadas
+        cursor.execute("""
+            SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN r.aplica = 1 THEN 1 ELSE 0 END) as aplicadas
+            FROM recomendaciones r
+            JOIN resultado_analisis ra ON r.id_resultado = ra.id_resultado
+            JOIN analisis a ON ra.id_analisis = a.id_analisis
+            JOIN audio au ON a.id_audio = au.id_audio
+            WHERE au.id_usuario = %s
+        """, (user_id,))
+        recomendaciones = cursor.fetchone() or {'total': 0, 'aplicadas': 0}
+        
+        # 13. Alertas generadas
+        cursor.execute("""
+            SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN aa.tipo_alerta = 'critica' THEN 1 ELSE 0 END) as criticas
+            FROM alerta_analisis aa
+            JOIN resultado_analisis ra ON aa.id_resultado = ra.id_resultado
+            JOIN analisis a ON ra.id_analisis = a.id_analisis
+            JOIN audio au ON a.id_audio = au.id_audio
+            WHERE au.id_usuario = %s
+        """, (user_id,))
+        alertas = cursor.fetchone() or {'total': 0, 'criticas': 0}
+        
+        cursor.close()
+        DatabaseConnection.return_connection(conn)
+        
+        # Convertir datos para JSON
+        for item in tendencia_diaria:
+            if item.get('fecha'):
+                item['fecha'] = item['fecha'].strftime('%Y-%m-%d')
+            if item.get('estres'):
+                item['estres'] = float(item['estres'])
+            if item.get('ansiedad'):
+                item['ansiedad'] = float(item['ansiedad'])
+        
+        for item in ultimos_analisis:
+            if item.get('fecha_analisis'):
+                item['fecha_analisis'] = str(item['fecha_analisis'])
+            for key in ['nivel_estres', 'nivel_ansiedad', 'confianza']:
+                if item.get(key):
+                    item[key] = float(item[key])
+        
+        reporte = {
+            'usuario': usuario,
+            'resumen': {
+                'total_analisis': total_analisis,
+                'promedio_estres': estadisticas.get('promedio_estres', 0),
+                'promedio_ansiedad': estadisticas.get('promedio_ansiedad', 0),
+                'max_estres': estadisticas.get('max_estres', 0),
+                'max_ansiedad': estadisticas.get('max_ansiedad', 0),
+                'min_estres': estadisticas.get('min_estres', 0),
+                'min_ansiedad': estadisticas.get('min_ansiedad', 0),
+            },
+            'emociones': emociones,
+            'clasificaciones': estadisticas.get('distribucion_clasificacion', {}),
+            'tendencia_diaria': tendencia_diaria,
+            'tendencia_mensual': tendencia_mensual,
+            'ultimos_analisis': ultimos_analisis,
+            'actividad_horaria': actividad_horaria,
+            'actividad_semanal': actividad_semanal,
+            'juegos': {
+                'total': int(juegos_stats.get('total') or 0),
+                'completados': int(juegos_stats.get('completados') or 0),
+                'promedio_puntuacion': float(juegos_stats.get('promedio_puntuacion') or 0),
+            },
+            'grupos': grupos_count,
+            'recomendaciones': {
+                'total': int(recomendaciones.get('total') or 0),
+                'aplicadas': int(recomendaciones.get('aplicadas') or 0),
+            },
+            'alertas': {
+                'total': int(alertas.get('total') or 0),
+                'criticas': int(alertas.get('criticas') or 0),
+            },
+        }
+        
+        return Helpers.format_response(
+            success=True,
+            data=reporte,
+            status=200
+        )
+        
+    except Exception as e:
+        print(f"[ERROR] mi-reporte-completo: {str(e)}")
+        traceback.print_exc()
+        return Helpers.format_response(
+            success=False,
+            message=f'Error al generar reporte: {str(e)}',
+            status=500
+        )

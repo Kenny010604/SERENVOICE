@@ -67,10 +67,17 @@ import HomeRedirect from "./utils/HomeRedirect.jsx";
 import { AlertasProvider } from "./context/AlertasContext.jsx";
 import { GOOGLE_CLIENT_ID } from "./config/api.js";
 
+// Wrapper condicional para GoogleOAuthProvider
+const GoogleOAuthWrapper = ({ children }) => {
+	if (GOOGLE_CLIENT_ID) {
+		return <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>{children}</GoogleOAuthProvider>;
+	}
+	return <>{children}</>;
+};
 
 function App() {
 	return (
-		<GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>	
+		<GoogleOAuthWrapper>
 			<ThemeProvider>
 				<AuthProvider>
 					<AlertasProvider>
@@ -556,7 +563,7 @@ function App() {
 				</AlertasProvider>
 			</AuthProvider>
 		</ThemeProvider>
-		</GoogleOAuthProvider>
+		</GoogleOAuthWrapper>
 	);
 }
 

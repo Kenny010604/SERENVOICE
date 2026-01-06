@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import "../../global.css";
 import PageCard from "../../components/Shared/PageCard";
 import Spinner from "../../components/Publico/Spinner";
@@ -15,12 +16,15 @@ import {
   FaExclamationTriangle,
   FaThumbsUp,
   FaThumbsDown,
-  FaCalendarAlt
+  FaCalendarAlt,
+  FaSync,
+  FaMicrophone
 } from "react-icons/fa";
 import apiClient from '../../services/apiClient';
 import api from '../../config/api';
 
 const Recomendaciones = () => {
+  const navigate = useNavigate();
   const [recs, setRecs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,10 +47,14 @@ const Recomendaciones = () => {
     setLoading(true);
     setError(null);
     try {
+      console.log('[Recomendaciones] Cargando recomendaciones del usuario...');
       const response = await apiClient.get(api.endpoints.recomendaciones.list);
+      console.log('[Recomendaciones] Respuesta:', response.data);
       const data = response.data;
       if (data?.success) {
-        setRecs(data.data?.recomendaciones || []);
+        const recomendaciones = data.data?.recomendaciones || [];
+        console.log('[Recomendaciones] Total recomendaciones:', recomendaciones.length);
+        setRecs(recomendaciones);
       } else {
         throw new Error(data?.message || 'Error al cargar recomendaciones');
       }
