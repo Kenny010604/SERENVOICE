@@ -1,73 +1,49 @@
 {
   "expo": {
-    "name": "SerenVoice",
-    "slug": "serenvoice",
+    "name": "proyectofinal-mobile",
+    "slug": "proyectofinal-mobile",
     "version": "1.0.0",
-    "scheme": "com.serenvoice.app",
-    "platforms": [
-      "android",
-      "ios",
-      "web"
-    ],
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/images/icon.png",
+    "scheme": "proyectofinalmobile",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#1a1a2e"
-    },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.serenvoice.app",
-      "infoPlist": {
-        "NSMicrophoneUsageDescription": "SerenVoice necesita acceso al micrófono para analizar tu voz y detectar emociones.",
-        "NSPhotoLibraryUsageDescription": "SerenVoice necesita acceso a la galería para tu foto de perfil."
-      }
+      "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1a1a2e"
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-<<<<<<< HEAD
-      "package": "com.serenvoice.app",
-      "permissions": [
-        "android.permission.RECORD_AUDIO",
-        "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.MODIFY_AUDIO_SETTINGS",
-        "android.permission.INTERNET",
-        "android.permission.ACCESS_NETWORK_STATE"
-      ],
-      "usesCleartextTraffic": true
-=======
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
->>>>>>> 21f1db4 (Subir todos los cambios recientes)
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      "expo-router",
       [
-        "expo-av",
+        "expo-splash-screen",
         {
-          "microphonePermission": "SerenVoice necesita acceso al micrófono para analizar tu voz."
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff",
+          "dark": {
+            "backgroundColor": "#000000"
+          }
         }
       ],
-      "expo-font"
+      "expo-web-browser"
     ],
-    "extra": {
-      "eas": {
-        "projectId": "d1b748af-989e-4c35-a322-305de6845ed0"
-      },
-      "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "11587771642-015ng6us09ecc6d38lgsc4qhq8d4bjub.apps.googleusercontent.com",
-      "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "11587771642-02imk19ovqt0dk1lobhbdvjlo3pc2mfv.apps.googleusercontent.com",
-      "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "11587771642-02imk19ovqt0dk1lobhbdvjlo3pc2mfv.apps.googleusercontent.com"
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
     }
   }
 }
