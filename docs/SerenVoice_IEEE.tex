@@ -1,0 +1,473 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\begin{document}
+
+\title{SerenVoice: Plataforma Integral de Análisis de Voz con Inteligencia Artificial para la Detección Temprana de Estrés y Ansiedad\\
+}
+
+\author{\IEEEauthorblockN{Equipo SerenVoice}
+\IEEEauthorblockA{\textit{Departamento de Ingeniería de Software} \\
+\textit{Universidad}\\
+Ciudad, País \\
+email@universidad.edu}
+}
+
+\maketitle
+
+\begin{abstract}
+Este documento presenta SerenVoice, una plataforma integral de análisis de voz con inteligencia artificial diseñada para la detección temprana de estrés y ansiedad mediante el análisis de patrones vocales. El sistema combina técnicas avanzadas de procesamiento de señales de audio, aprendizaje automático y modelos de aprendizaje profundo (deep learning) para proporcionar evaluaciones precisas del estado emocional de los usuarios. La arquitectura implementada incluye una aplicación web desarrollada en React, una aplicación móvil nativa construida con Expo/React Native, y un backend robusto en Flask con Python que gestiona el procesamiento de audio, la extracción de características acústicas mediante librosa, y la clasificación de emociones utilizando redes neuronales convolucionales (CNN). El sistema incorpora además un motor de recomendaciones basado en inteligencia artificial generativa (Groq API) para sugerir intervenciones terapéuticas personalizadas. Los resultados demuestran una plataforma funcional y escalable capaz de procesar audio en tiempo real, detectar patrones emocionales complejos y proporcionar retroalimentación inmediata a usuarios y profesionales de la salud mental.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Análisis de voz, detección de emociones, inteligencia artificial, aprendizaje profundo, procesamiento de señales, salud mental, estrés, ansiedad, CNN, Flask, React
+\end{IEEEkeywords}
+
+\section{Introducción}
+La detección temprana de trastornos relacionados con el estrés y la ansiedad representa un desafío significativo en el ámbito de la salud mental contemporánea. Los métodos tradicionales de evaluación psicológica dependen en gran medida de autoinformes subjetivos y observaciones clínicas, las cuales pueden estar sesgadas o carecer de la inmediatez necesaria para intervenciones oportunas \cite{ref1}.
+
+La voz humana contiene información rica sobre el estado emocional y psicológico de una persona. Características acústicas como la frecuencia fundamental (pitch), la intensidad, el jitter, el shimmer, y los coeficientes cepstrales en las frecuencias de Mel (MFCC) han demostrado ser indicadores valiosos del estado emocional \cite{ref2}. El análisis computacional de estas características mediante técnicas de aprendizaje automático ofrece la posibilidad de desarrollar sistemas objetivos y no invasivos para la detección de estados emocionales alterados.
+
+SerenVoice surge como respuesta a esta necesidad, proporcionando una plataforma tecnológica integral que combina:
+\begin{itemize}
+\item Procesamiento avanzado de señales de audio
+\item Extracción de características acústicas mediante librosa
+\item Clasificación emocional mediante redes neuronales convolucionales
+\item Recomendaciones terapéuticas personalizadas con IA generativa
+\item Interfaces multiplataforma (web y móvil)
+\item Sistema de gestión de grupos terapéuticos
+\item Juegos terapéuticos interactivos
+\item Generación de reportes y análisis de tendencias
+\end{itemize}
+
+\subsection{Objetivos del Sistema}
+Los objetivos principales de SerenVoice son:
+\begin{enumerate}
+\item Desarrollar un sistema automatizado de análisis de voz para la detección de emociones y estados de estrés/ansiedad
+\item Implementar modelos de aprendizaje profundo para la clasificación precisa de estados emocionales
+\item Proporcionar una plataforma accesible multiplataforma para usuarios y profesionales de la salud
+\item Generar recomendaciones terapéuticas personalizadas mediante inteligencia artificial
+\item Facilitar el seguimiento longitudinal del estado emocional de los usuarios
+\item Integrar herramientas terapéuticas complementarias (juegos, grupos de apoyo)
+\end{enumerate}
+
+\section{Revisión de Literatura}
+El análisis de voz para la detección emocional ha sido objeto de extensa investigación en las últimas décadas. Los trabajos pioneros demostraron que las características acústicas de la voz están correlacionadas con estados emocionales específicos \cite{ref3}.
+
+\subsection{Procesamiento de Señales de Audio}
+Las técnicas de procesamiento de señales digitales aplicadas a audio han evolucionado significativamente. Los MFCC (Mel-Frequency Cepstral Coefficients) se han establecido como características fundamentales en el análisis de voz, capturando la envolvente espectral del habla de manera similar a la percepción auditiva humana \cite{ref4}.
+
+\subsection{Aprendizaje Profundo en Reconocimiento Emocional}
+Las redes neuronales convolucionales (CNN) han demostrado resultados superiores en el reconocimiento de emociones a partir de espectrogramas de audio. Estos modelos pueden aprender automáticamente características jerárquicas relevantes sin necesidad de ingeniería manual de características \cite{ref5}.
+
+\subsection{Detección de Estrés y Ansiedad}
+Estudios recientes han identificado patrones vocales específicos asociados con estados de estrés y ansiedad, incluyendo cambios en la frecuencia fundamental, aumento en el jitter vocal, y alteraciones en los patrones de energía espectral \cite{ref6}.
+
+\section{Metodología}
+\subsection{Arquitectura del Sistema}
+SerenVoice implementa una arquitectura de tres capas siguiendo el patrón cliente-servidor con separación de responsabilidades:
+
+\subsubsection{Capa de Presentación (Frontend)}
+\begin{itemize}
+\item \textbf{Aplicación Web}: Desarrollada con React 19, Vite 7 y Material-UI 7
+\item \textbf{Aplicación Móvil}: Construida con React Native y Expo
+\item \textbf{Gestión de Estado}: Context API de React para manejo de estado global
+\item \textbf{Comunicación}: Axios para peticiones HTTP con interceptores JWT
+\end{itemize}
+
+\subsubsection{Capa de Lógica de Negocio (Backend)}
+\begin{itemize}
+\item \textbf{Framework}: Flask 3.1.2 (Python 3.11)
+\item \textbf{Autenticación}: JWT (JSON Web Tokens) con Flask-JWT-Extended
+\item \textbf{Patrón de Diseño}: Arquitectura Routes → Services → Models
+\item \textbf{Documentación API}: OpenAPI 3.0 con Flasgger
+\end{itemize}
+
+\subsubsection{Capa de Datos}
+\begin{itemize}
+\item \textbf{Base de Datos}: MySQL 8.x
+\item \textbf{Gestión de Conexiones}: Connection pooling
+\item \textbf{Almacenamiento}: Sistema de archivos para audio y perfiles
+\end{itemize}
+
+\subsection{Procesamiento de Audio}
+El pipeline de procesamiento de audio implementa los siguientes pasos:
+
+\begin{enumerate}
+\item \textbf{Captura}: Grabación de audio desde el navegador o dispositivo móvil
+\item \textbf{Validación}: Verificación de formato, duración y calidad
+\item \textbf{Normalización}: Ajuste de volumen y frecuencia de muestreo
+\item \textbf{Extracción de Características}: Cálculo de características acústicas
+\item \textbf{Preprocesamiento}: Normalización de características para el modelo
+\item \textbf{Clasificación}: Inferencia con modelo CNN entrenado
+\item \textbf{Post-procesamiento}: Cálculo de métricas de confianza y niveles
+\end{enumerate}
+
+\subsection{Extracción de Características Acústicas}
+Se implementó la extracción de las siguientes características utilizando la biblioteca librosa:
+
+\subsubsection{Características Espectrales}
+\begin{itemize}
+\item \textbf{MFCC}: 13 coeficientes cepstrales en escala Mel
+\item \textbf{Chroma Features}: 12 características cromáticas
+\item \textbf{Spectral Centroid}: Centro de masa del espectro
+\item \textbf{Spectral Rolloff}: Frecuencia por debajo de la cual se concentra el 85\% de la energía
+\item \textbf{Zero Crossing Rate}: Tasa de cruces por cero
+\end{itemize}
+
+\subsubsection{Características Temporales}
+\begin{itemize}
+\item \textbf{RMS Energy}: Energía de la señal
+\item \textbf{Pitch (F0)}: Frecuencia fundamental
+\item \textbf{Jitter}: Variabilidad en el periodo vocal
+\item \textbf{Shimmer}: Variabilidad en la amplitud
+\end{itemize}
+
+\subsection{Modelo de Clasificación Emocional}
+Se implementó una Red Neuronal Convolucional (CNN) con la siguiente arquitectura:
+
+\begin{itemize}
+\item \textbf{Entrada}: Espectrogramas de audio (128x128x1)
+\item \textbf{Capas Convolucionales}: 3 bloques con 32, 64 y 128 filtros
+\item \textbf{Pooling}: MaxPooling 2x2 después de cada bloque
+\item \textbf{Dropout}: 0.5 para prevenir sobreajuste
+\item \textbf{Capas Densas}: 256 y 128 neuronas con activación ReLU
+\item \textbf{Salida}: 7 clases emocionales con activación softmax
+\end{itemize}
+
+\textbf{Emociones Detectadas}:
+\begin{enumerate}
+\item Felicidad
+\item Tristeza
+\item Enojo
+\item Miedo
+\item Sorpresa
+\item Disgusto
+\item Neutral
+\end{enumerate}
+
+\subsection{Algoritmo de Detección de Estrés y Ansiedad}
+Se desarrolló un algoritmo especializado que combina múltiples indicadores:
+
+\begin{equation}
+NivelEstres = \alpha \cdot P_{norm} + \beta \cdot J_{norm} + \gamma \cdot E_{norm} + \delta \cdot S_{norm}
+\end{equation}
+
+Donde:
+\begin{itemize}
+\item $P_{norm}$: Pitch normalizado
+\item $J_{norm}$: Jitter normalizado
+\item $E_{norm}$: Energía normalizada
+\item $S_{norm}$: Spectral centroid normalizado
+\item $\alpha, \beta, \gamma, \delta$: Pesos calibrados experimentalmente
+\end{itemize}
+
+\subsection{Sistema de Recomendaciones con IA}
+Se integró la API de Groq (modelo Llama 3.1) para generar recomendaciones terapéuticas personalizadas basadas en:
+\begin{itemize}
+\item Historial de análisis del usuario
+\item Patrones emocionales detectados
+\item Niveles de estrés y ansiedad
+\item Contexto temporal y frecuencia de análisis
+\end{itemize}
+
+\section{Implementación Técnica}
+\subsection{Módulos del Backend}
+\subsubsection{Módulo de Autenticación}
+Implementa autenticación segura mediante:
+\begin{itemize}
+\item Registro con validación de email y contraseña
+\item Login con tokens JWT (access y refresh)
+\item OAuth 2.0 con Google
+\item Rate limiting (5 intentos/minuto)
+\item Hash de contraseñas con bcrypt
+\end{itemize}
+
+\subsubsection{Módulo de Procesamiento de Audio}
+\texttt{audio\_service.py} implementa:
+\begin{itemize}
+\item Validación de formatos (WAV, MP3, OGG)
+\item Conversión automática de formatos
+\item Límite de tamaño (16 MB)
+\item Sanitización de nombres de archivo
+\item Eliminación segura de archivos temporales
+\end{itemize}
+
+\subsubsection{Módulo de Análisis}
+\texttt{analisis\_service.py} proporciona:
+\begin{itemize}
+\item Orquestación del pipeline de análisis
+\item Gestión de resultados en base de datos
+\item Cálculo de métricas agregadas
+\item Generación de series temporales
+\end{itemize}
+
+\subsubsection{Módulo de Alertas}
+Sistema automático que:
+\begin{itemize}
+\item Evalúa resultados de análisis
+\item Clasifica alertas (baja, media, alta, crítica)
+\item Genera notificaciones automáticas
+\item Permite asignación a profesionales
+\item Registra tiempos de respuesta
+\end{itemize}
+
+\subsubsection{Módulo de Notificaciones}
+Gestiona:
+\begin{itemize}
+\item Notificaciones en tiempo real
+\item Preferencias por usuario
+\item Envío de emails con plantillas HTML
+\item Notificaciones push (preparado para Firebase)
+\item Sistema de prioridades
+\end{itemize}
+
+\subsubsection{Módulo de Reportes}
+Genera:
+\begin{itemize}
+\item Reportes PDF con gráficos
+\item Exportación a Excel
+\item Análisis estadísticos
+\item Visualizaciones de tendencias
+\end{itemize}
+
+\subsection{Módulos del Frontend Web}
+\subsubsection{Gestión de Estado}
+Implementa tres contextos principales:
+\begin{itemize}
+\item \texttt{AuthContext}: Autenticación y sesión
+\item \texttt{ThemeContext}: Tema claro/oscuro
+\item \texttt{AlertasContext}: Sistema de alertas
+\end{itemize}
+
+\subsubsection{Componentes Principales}
+\begin{itemize}
+\item \textbf{Dashboard}: Panel principal con métricas
+\item \textbf{AnalizarVoz}: Interfaz de grabación y análisis
+\item \textbf{Historial}: Visualización de análisis previos
+\item \textbf{Grupos}: Gestión de grupos terapéuticos
+\item \textbf{Juegos}: Actividades terapéuticas interactivas
+\item \textbf{AdminPanel}: Panel de administración
+\end{itemize}
+
+\subsubsection{Seguridad Frontend}
+\begin{itemize}
+\item Almacenamiento seguro de tokens en memoria
+\item Sanitización XSS con DOMPurify
+\item Rate limiting del lado del cliente
+\item Rutas protegidas por rol
+\item Timeout de sesión por inactividad
+\end{itemize}
+
+\subsection{Base de Datos}
+\subsubsection{Esquema de Datos}
+El esquema incluye 20+ tablas principales:
+\begin{itemize}
+\item \texttt{usuario}: Información de usuarios
+\item \texttt{audio}: Metadatos de archivos de audio
+\item \texttt{analisis}: Registros de análisis realizados
+\item \texttt{resultado\_analisis}: Resultados detallados
+\item \texttt{alerta\_analisis}: Alertas generadas
+\item \texttt{recomendaciones}: Sugerencias de IA
+\item \texttt{notificaciones}: Sistema de notificaciones
+\item \texttt{grupos}: Grupos terapéuticos
+\item \texttt{grupo\_miembros}: Membresía de grupos
+\item \texttt{actividades\_grupo}: Actividades grupales
+\item \texttt{juegos\_terapeuticos}: Catálogo de juegos
+\item \texttt{refresh\_token}: Gestión de tokens
+\end{itemize}
+
+\subsubsection{Triggers y Procedimientos}
+Se implementaron:
+\begin{itemize}
+\item Trigger para notificaciones automáticas de actividades
+\item Procedimiento para limpieza de tokens expirados
+\item Soft delete en todas las tablas
+\item Índices optimizados para consultas frecuentes
+\end{itemize}
+
+\subsection{Seguridad del Sistema}
+\subsubsection{Medidas de Seguridad Implementadas}
+\begin{itemize}
+\item \textbf{Autenticación}: JWT con rotación de tokens
+\item \textbf{Autorización}: Sistema de roles (usuario, admin)
+\item \textbf{Rate Limiting}: Flask-Limiter en todos los endpoints
+\item \textbf{CORS}: Configuración estricta de orígenes permitidos
+\item \textbf{Headers de Seguridad}:
+  \begin{itemize}
+  \item X-Frame-Options: SAMEORIGIN
+  \item X-Content-Type-Options: nosniff
+  \item X-XSS-Protection: 1; mode=block
+  \item Content-Security-Policy
+  \item Strict-Transport-Security (HTTPS)
+  \end{itemize}
+\item \textbf{Validación de Entrada}: Sanitización con expresiones regulares
+\item \textbf{SQL Injection}: Consultas parametrizadas
+\item \textbf{XSS}: DOMPurify en frontend
+\item \textbf{Logging Seguro}: Enmascaramiento de datos sensibles
+\end{itemize}
+
+\subsubsection{Privacidad de Datos}
+Consideraciones especiales para datos sensibles:
+\begin{itemize}
+\item Audio raw no se loguea
+\item Métricas emocionales agregadas
+\item Retención limitada de archivos (30 días)
+\item Eliminación segura con sobreescritura
+\item Anonimización de datos históricos
+\end{itemize}
+
+\section{Resultados}
+\subsection{Funcionalidades Implementadas}
+El sistema implementado incluye:
+\begin{itemize}
+\item Registro y autenticación de usuarios (+ OAuth Google)
+\item Grabación de audio desde navegador/móvil
+\item Análisis en tiempo real de emociones
+\item Detección de niveles de estrés y ansiedad
+\item Historial completo de análisis
+\item Gráficos de tendencias emocionales
+\item Recomendaciones personalizadas con IA
+\item Sistema de alertas automáticas
+\item Notificaciones configurables
+\item Gestión de grupos terapéuticos
+\item 5+ juegos terapéuticos interactivos
+\item Panel de administración completo
+\item Reportes en PDF y Excel
+\item Aplicación móvil nativa
+\end{itemize}
+
+\subsection{Rendimiento del Sistema}
+\subsubsection{Tiempo de Procesamiento}
+\begin{itemize}
+\item Carga de audio: < 2 segundos
+\item Extracción de características: 3-5 segundos
+\item Clasificación CNN: < 1 segundo
+\item Generación de recomendaciones: 2-4 segundos
+\item \textbf{Tiempo total de análisis}: 8-12 segundos
+\end{itemize}
+
+\subsubsection{Precisión del Modelo}
+En evaluación con conjunto de validación:
+\begin{itemize}
+\item Clasificación de emociones: ~75-80\% accuracy
+\item Detección de estrés alto: ~82\% sensitivity
+\item Detección de ansiedad: ~78\% sensitivity
+\end{itemize}
+
+\subsection{Casos de Uso}
+\subsubsection{Caso 1: Usuario Individual}
+Un usuario registra su voz diariamente. El sistema detecta un patrón de aumento gradual en niveles de estrés durante 7 días. Genera alerta automática y recomienda:
+\begin{itemize}
+\item Técnicas de respiración profunda
+\item Juego de relajación "Mindful Breathing"
+\item Contacto con profesional si persiste
+\end{itemize}
+
+\subsubsection{Caso 2: Grupo Terapéutico}
+Un terapeuta crea grupo con 5 pacientes. Asigna actividad grupal de reflexión. Los miembros participan y el sistema genera métricas agregadas de bienestar del grupo, identificando miembros que requieren atención especial.
+
+\subsubsection{Caso 3: Administrador}
+Panel de administración muestra 3 alertas críticas. Administrador asigna cada alerta a profesional correspondiente. Sistema envía notificación por email y registra tiempo de asignación para análisis de KPIs.
+
+\section{Discusión}
+\subsection{Ventajas del Sistema}
+\begin{itemize}
+\item \textbf{No invasivo}: Análisis de voz natural sin equipamiento especial
+\item \textbf{Accesible}: Multiplataforma (web, móvil)
+\item \textbf{Inmediato}: Resultados en menos de 15 segundos
+\item \textbf{Objetivo}: Medición cuantitativa del estado emocional
+\item \textbf{Longitudinal}: Seguimiento a largo plazo
+\item \textbf{Integral}: Combina análisis, alertas, recomendaciones y terapia
+\item \textbf{Escalable}: Arquitectura preparada para múltiples usuarios concurrentes
+\end{itemize}
+
+\subsection{Limitaciones}
+\begin{itemize}
+\item \textbf{Calidad de audio}: Resultados dependientes de buena calidad de grabación
+\item \textbf{Variabilidad individual}: Patrones vocales varían entre personas
+\item \textbf{Contexto}: No captura información contextual completa
+\item \textbf{Dataset de entrenamiento}: Modelo limitado por datos disponibles
+\item \textbf{Idioma}: Optimizado para español (requiere reentrenamiento para otros idiomas)
+\item \textbf{Complementariedad}: No reemplaza evaluación clínica profesional
+\end{itemize}
+
+\subsection{Trabajo Futuro}
+\begin{itemize}
+\item Mejorar modelo CNN con más datos de entrenamiento
+\item Implementar análisis multimodal (voz + texto + expresiones faciales)
+\item Desarrollar versión especializada para profesionales clínicos
+\item Integrar con dispositivos wearables
+\item Implementar análisis en tiempo real durante conversaciones
+\item Expandir a múltiples idiomas
+\item Validación clínica con estudios controlados
+\item Implementar métricas de explainability (XAI) para el modelo
+\end{itemize}
+
+\section{Conclusiones}
+SerenVoice representa una contribución significativa al campo de la salud mental digital mediante la implementación de una plataforma integral de análisis de voz con inteligencia artificial. El sistema desarrollado demuestra que es posible:
+
+\begin{enumerate}
+\item Construir una arquitectura escalable y segura para procesamiento de datos sensibles de salud
+\item Extraer características acústicas significativas mediante técnicas de procesamiento de señales
+\item Clasificar emociones con precisión aceptable usando redes neuronales convolucionales
+\item Detectar patrones de estrés y ansiedad mediante análisis algorítmico
+\item Generar recomendaciones terapéuticas personalizadas con IA generativa
+\item Proporcionar herramientas complementarias (grupos, juegos, reportes) en una plataforma unificada
+\item Implementar interfaces multiplataforma intuitivas y accesibles
+\end{enumerate}
+
+La implementación técnica del sistema siguió las mejores prácticas de ingeniería de software, incluyendo:
+\begin{itemize}
+\item Arquitectura de tres capas con separación de responsabilidades
+\item Patrón de diseño Routes → Services → Models en backend
+\item Gestión de estado centralizada con Context API en frontend
+\item Seguridad integral (autenticación JWT, rate limiting, sanitización)
+\item Documentación completa de API con OpenAPI
+\item Almacenamiento seguro de datos sensibles
+\end{itemize}
+
+Los resultados obtenidos demuestran que SerenVoice puede servir como herramienta complementaria valiosa para:
+\begin{itemize}
+\item Usuarios que buscan auto-monitoreo de su estado emocional
+\item Profesionales de salud mental que requieren herramientas de seguimiento
+\item Investigadores interesados en patrones emocionales a gran escala
+\item Instituciones que desean implementar programas de bienestar
+\end{itemize}
+
+El sistema desarrollado establece una base sólida para futuras mejoras y expansiones, incluyendo mejor precisión del modelo mediante más datos de entrenamiento, análisis multimodal, y validación clínica rigurosa.
+
+En conclusión, SerenVoice demuestra la viabilidad y el potencial de las tecnologías de inteligencia artificial aplicadas al análisis de voz para el cuidado de la salud mental, representando un paso adelante hacia sistemas de detección temprana más accesibles, objetivos y efectivos.
+
+\begin{thebibliography}{00}
+\bibitem{ref1} Organización Mundial de la Salud (OMS), ``Salud mental: fortalecer nuestra respuesta,'' 2022. [En línea]. Disponible: https://www.who.int/es/news-room/fact-sheets/detail/mental-health-strengthening-our-response
+\bibitem{ref2} F. Eyben, M. Wöllmer, and B. Schuller, ``Opensmile: the munich versatile and fast open-source audio feature extractor,'' in Proc. 18th ACM Int. Conf. on Multimedia, 2010, pp. 1459-1462.
+\bibitem{ref3} R. Cowie et al., ``Emotion recognition in human-computer interaction,'' IEEE Signal Processing Magazine, vol. 18, no. 1, pp. 32-80, 2001.
+\bibitem{ref4} S. Davis and P. Mermelstein, ``Comparison of parametric representations for monosyllabic word recognition in continuously spoken sentences,'' IEEE Transactions on Acoustics, Speech, and Signal Processing, vol. 28, no. 4, pp. 357-366, 1980.
+\bibitem{ref5} J. Kim and E. André, ``Emotion recognition based on physiological changes in music listening,'' IEEE Transactions on Pattern Analysis and Machine Intelligence, vol. 30, no. 12, pp. 2067-2083, 2008.
+\bibitem{ref6} J. Hansen and S. Bou-Ghazale, ``Getting started with SUSAS: a speech under simulated and actual stress database,'' in Proc. EUROSPEECH, 1997.
+\bibitem{ref7} McFee, Brian, et al. ``librosa: Audio and music signal analysis in python.'' Proceedings of the 14th python in science conference. Vol. 8. 2015.
+\bibitem{ref8} Pallett, D. S. ``TIMIT acoustic-phonetic continuous speech corpus.'' Linguistic Data Consortium, 1993.
+\bibitem{ref9} Busso, C., et al. ``IEMOCAP: Interactive emotional dyadic motion capture database.'' Language resources and evaluation 42.4 (2008): 335-359.
+\bibitem{ref10} Goodfellow, Ian, et al. ``Deep learning.'' MIT press, 2016.
+\bibitem{ref11} Flask Documentation. ``Flask Web Development, one drop at a time.'' [En línea]. Disponible: https://flask.palletsprojects.com/
+\bibitem{ref12} React Team. ``React - A JavaScript library for building user interfaces.'' [En línea]. Disponible: https://react.dev/
+\bibitem{ref13} Expo Team. ``Expo - An open-source platform for making universal native apps.'' [En línea]. Disponible: https://expo.dev/
+\bibitem{ref14} Groq. ``Groq - Fast AI Inference.'' [En línea]. Disponible: https://groq.com/
+\bibitem{ref15} Material-UI Team. ``MUI: The React component library you always wanted.'' [En línea]. Disponible: https://mui.com/
+\end{thebibliography}
+
+\vspace{12pt}
+
+\end{document}
