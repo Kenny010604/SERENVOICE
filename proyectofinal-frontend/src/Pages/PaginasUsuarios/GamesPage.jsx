@@ -22,48 +22,43 @@ const GamesPage = () => {
   };
 
   return (
-    <div className="games-page-content page-content">
-        <div className="content-max">
-          <div className="games-grid">
-            {/* Single-column: header, estado, stats, controls and recommended games */}
-            <div>
-              <div className="card mb-6">
-                <h1 className="page-title">🎮 Juegos Terapéuticos</h1>
-                <p className="muted-paragraph">Mejora tu bienestar emocional jugando</p>
+    <div className="page-content">
+      {/* Estadísticas y estado */}
+      <div className="card card-xl mb-6">
+        <h1 className="page-title">🎮 Juegos Terapéuticos</h1>
+        <p className="muted-paragraph">Mejora tu bienestar emocional jugando</p>
 
-                <div className="mb-4">
-                  <p className="muted-label">Estado emocional detectado:</p>
-                  <div className="estado-box">{estadoEmocional}</div>
-                </div>
-
-                <div className="mb-4">
-                  <GameStats />
-                </div>
-
-                <div className="controls-row">
-                  <button
-                    onClick={() => setShowHistory(false)}
-                    className="auth-button"
-                  >
-                    Jugar
-                  </button>
-
-                  <button
-                    onClick={() => setShowHistory(true)}
-                    className="auth-button"
-                  >
-                    Historial
-                  </button>
-                </div>
-              </div>
-
-              {/* Recommended games card below stats */}
-              <div className="card mt-4">
-                <GameIntegration estadoEmocionalUsuario={estadoEmocional} onGameComplete={handleGameComplete} />
-              </div>
-            </div>
-          </div>
+        <div className="mb-4">
+          <p className="muted-label">Estado emocional detectado:</p>
+          <div className="estado-box">{estadoEmocional}</div>
         </div>
+
+        <div className="mb-4">
+          <GameStats />
+        </div>
+
+        <div className="controls-row">
+          <button
+            onClick={() => setShowHistory(false)}
+            className="auth-button"
+          >
+            Jugar
+          </button>
+
+          <button
+            onClick={() => setShowHistory(true)}
+            className="auth-button"
+          >
+            Historial
+          </button>
+        </div>
+      </div>
+
+      {/* Juegos recomendados */}
+      <div className="card card-xl mt-4">
+        <GameIntegration estadoEmocionalUsuario={estadoEmocional} onGameComplete={handleGameComplete} />
+      </div>
+
       <Toaster position="top-right" />
     </div>
   );

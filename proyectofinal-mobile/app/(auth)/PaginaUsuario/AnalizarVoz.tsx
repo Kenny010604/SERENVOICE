@@ -1,112 +1,100 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
+  TouchableOpacity,
+  Alert,
   ActivityIndicator,
   ScrollView,
-  Alert,
-  Dimensions,
 } from "react-native";
 import { Audio } from "expo-av";
-import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAudio } from "../../../hooks/useAudio";
 import { useAuth } from "../../../hooks/useAuth";
-const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-
-const { width } = Dimensions.get("window");
-
-// 📝 Frases largas para lectura (como en web)
+// 🎭 FRASES GENERALES SUGERIDAS PARA PRACTICAR
 const FRASES_SUGERIDAS = [
-  "Me siento tranquilo hoy, aunque a veces me preocupo por el futuro y las decisiones que debo tomar.",
-  "Ayer tuve un día complicado en el trabajo, pero logré resolver los problemas con calma y paciencia.",
-  "A veces me siento abrumado con tantas responsabilidades, pero intento mantenerme positivo.",
-  "Estoy trabajando en mejorar mi bienestar emocional y mental cada día que pasa.",
-  "Me gusta pasar tiempo con mi familia y amigos, eso me hace sentir muy feliz y en paz.",
-  "Hoy desperté sintiéndome un poco cansado, pero con la motivación de hacer las cosas bien.",
-  "Creo que expresar mis emociones me ayuda a sentirme mejor y a conectar con los demás.",
-  "A veces la ansiedad me visita, pero he aprendido técnicas para manejarla mejor.",
-  "Estoy agradecido por las pequeñas cosas de la vida que me hacen sonreír cada día.",
-  "El estrés del trabajo puede ser difícil, pero encontrar momentos de calma es importante.",
+  "Hoy es un día especial para mí",
+  "Me gusta pasar tiempo con mi familia",
+  "El clima está muy agradable hoy",
+  "Tengo muchas cosas que hacer esta semana",
+  "Me encanta escuchar música en mis tiempos libres",
+  "Ayer tuve una conversación muy interesante",
+  "Estoy pensando en mis planes para el fin de semana",
+  "La comida que preparé hoy quedó deliciosa",
+  "Necesito organizar mejor mi tiempo",
+  "Me gustaría aprender algo nuevo este año",
+  "El trabajo ha estado bastante ocupado últimamente",
+  "Disfruto caminar por el parque por las tardes",
+  "Tengo que terminar varios pendientes esta semana",
+  "Me siento agradecido por las cosas buenas que tengo",
+  "Quiero mejorar en muchos aspectos de mi vida",
 ];
 
 export default function AnalizarVoz() {
-  const { user } = useAuth();
+  const recordingRef = useRef<Audio.Recording | null>(null);
   const { analizar, loading: analyzing, resultado, error: audioError } = useAudio();
+  const { user } = useAuth();
 
-  // Estados
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
+  const [recording, setRecording] = useState(false);
   const [audioUri, setAudioUri] = useState<string | null>(null);
-  const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [audioDuration, setAudioDuration] = useState(0);
-  const [fraseActual, setFraseActual] = useState(FRASES_SUGERIDAS[0]);
-  const [recTime, setRecTime] = useState(0);
-  
-  // Timer ref
-    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  
+  const [success, setSuccess] = useState(false);
+  const [mostrarFrases, setMostrarFrases] = useState(false);
+  const [fraseActual, setFraseActual] = useState("");
 
+  // 🎲 Obtener frase aleatoria
+  const obtenerFraseAleatoria = () => {
+    const indice = Math.floor(Math.random() * FRASES_SUGERIDAS.length);
+    setFraseActual(FRASES_SUGERIDAS[indice]);
+  };
+
+  // 🚀 Cargar frase aleatoria al montar el componente
   useEffect(() => {
     obtenerFraseAleatoria();
   }, []);
 
-  // Actualizar resultado cuando cambie
-  useEffect(() => {
-    if (resultado) {
-      setAnalysisResult(resultado);
+  // 🎤 Permisos de micrófono
+  const requestPermissions = async () => {
+    const { status } = await Audio.requestPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permiso requerido", "Debes permitir el acceso al micrófono");
+      return false;
     }
-  }, [resultado]);
-
-  // Limpiar timer al desmontar
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, []);
-
-  const obtenerFraseAleatoria = () => {
-    const randomIndex = Math.floor(Math.random() * FRASES_SUGERIDAS.length);
-    setFraseActual(FRASES_SUGERIDAS[randomIndex]);
+    return true;
   };
 
-  // 🎙️ Iniciar grabación
+  // ▶️ Iniciar grabación
   const startRecording = async () => {
-    try {
-      const { status } = await Audio.requestPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert("Permiso denegado", "Se requiere acceso al micrófono");
-        return;
-      }
+    const ok = await requestPermissions();
+    if (!ok) return;
 
+    try {
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
       });
 
-      const { recording: newRecording } = await Audio.Recording.createAsync(
+      const recording = new Audio.Recording();
+      await recording.prepareToRecordAsync(
         Audio.RecordingOptionsPresets.HIGH_QUALITY
       );
-      setRecording(newRecording);
-      setIsRecording(true);
+      
+      const startTime = Date.now();
+      await recording.startAsync();
+
+      recordingRef.current = recording;
+      setRecording(true);
+      setSuccess(false);
       setAudioUri(null);
-      setAnalysisResult(null);
-      setRecTime(0);
+      
+      (recording as any)._startTime = startTime;
 
-      // Iniciar timer
-      timerRef.current = setInterval(() => {
-        setRecTime((prev) => prev + 1);
-      }, 1000);
-
-      console.log("🎙️ Grabación iniciada");
+      console.log("🎤 Grabación iniciada");
     } catch (error) {
-      console.error("Error al iniciar grabación:", error);
+      console.error("❌ Error al iniciar grabación:", error);
       Alert.alert("Error", "No se pudo iniciar la grabación");
     }
   };
@@ -114,183 +102,195 @@ export default function AnalizarVoz() {
   // ⏹️ Detener grabación
   const stopRecording = async () => {
     try {
+      const recording = recordingRef.current;
       if (!recording) return;
-
-      // Detener timer
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-
-      const status = await recording.getStatusAsync();
-      const duration = status.durationMillis ? status.durationMillis / 1000 : 0;
-      setAudioDuration(duration);
 
       await recording.stopAndUnloadAsync();
       const uri = recording.getURI();
-      setAudioUri(uri);
-      setRecording(null);
-      setIsRecording(false);
 
-      console.log("⏹️ Grabación detenida:", uri);
+      const startTime = (recording as any)._startTime || Date.now();
+      const duration = (Date.now() - startTime) / 1000;
+
+      setAudioUri(uri ?? null);
+      setAudioDuration(duration);
+      recordingRef.current = null;
+      setRecording(false);
+
+      console.log(`✅ Grabación detenida - URI: ${uri}, Duración: ${duration}s`);
     } catch (error) {
-      console.error("Error al detener grabación:", error);
-      setIsRecording(false);
+      console.error("❌ Error al detener grabación:", error);
+      Alert.alert("Error", "No se pudo detener la grabación");
     }
   };
 
-  // 🔍 Analizar audio
+  // 📡 Enviar audio al backend
   const analyzeAudio = async () => {
     if (!audioUri) {
-      Alert.alert("Error", "No hay audio para analizar");
+      Alert.alert("Aviso", "No hay audio grabado");
       return;
     }
 
     try {
-      console.log("🔍 Analizando audio:", audioUri);
+      setSuccess(false);
+
       const token = await AsyncStorage.getItem("token");
       const userId = user?.id_usuario || null;
-      await analizar(audioUri, audioDuration, userId, token);
+
+      console.log("🔍 Analizando audio...");
+      console.log("📊 User ID:", userId);
+      console.log("🔑 Token:", token ? "Presente ✅" : "Ausente ❌");
+      console.log("⏱️ Duración:", audioDuration);
+      console.log("📁 URI:", audioUri);
+
+      const result = await analizar(
+        audioUri,
+        audioDuration,
+        userId,
+        token
+      );
+
+      if (result.success && result.data) {
+        console.log("✅ Análisis completado:", result.data);
+        setSuccess(true);
+        
+        // Construir mensaje con todas las emociones
+        const emotions = result.data.emotions;
+        let emotionsText = "";
+        Object.keys(emotions).forEach((key) => {
+          const value = emotions[key];
+          emotionsText += `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value.toFixed(1)}%\n`;
+        });
+
+        Alert.alert(
+          "✅ Análisis Completado",
+          `${emotionsText}\n` +
+          `Estrés: ${result.data.nivel_estres}%\n` +
+          `Ansiedad: ${result.data.nivel_ansiedad}%\n` +
+          `Confianza: ${(result.data.confidence * 100).toFixed(1)}%`,
+          [
+            { text: "Ver detalles", onPress: () => console.log(result.data) },
+            { text: "OK" }
+          ]
+        );
+      } else {
+        throw new Error(audioError || "Error en el análisis");
+      }
     } catch (error: any) {
       console.error("❌ Error en análisis:", error);
       Alert.alert("Error", error.message || "No se pudo analizar el audio");
     }
   };
 
-  // 🔥 Calcular indicadores de estrés y ansiedad
-  const calcularIndicadores = () => {
-    if (!analysisResult?.emotions) return null;
-
-    let nivelEstres = 0;
-    let nivelAnsiedad = 0;
-
-    Object.entries(analysisResult.emotions).forEach(([name, value]: [string, any]) => {
-      const lowerName = name.toLowerCase();
-      if (["enojo", "miedo", "asustado", "estres", "estrés"].includes(lowerName)) {
-        nivelEstres += value;
-      }
-      if (["miedo", "asustado", "ansiedad"].includes(lowerName)) {
-        nivelAnsiedad += value;
-      }
-    });
-
-    const calcNivel = (valor: number) => {
-      if (valor >= 70) return { text: "ALTO", color: "#e53935" };
-      if (valor >= 40) return { text: "MEDIO", color: "#ff9800" };
-      return { text: "BAJO", color: "#4caf50" };
-    };
-
-    return {
-      estres: { porcentaje: Math.min(100, nivelEstres), nivel: calcNivel(nivelEstres) },
-      ansiedad: { porcentaje: Math.min(100, nivelAnsiedad), nivel: calcNivel(nivelAnsiedad) },
-    };
-  };
-
-  // 🎨 Obtener icono y color según emoción
+  // 🎨 Obtener emoji y color según emoción
   const getEmotionStyle = (emotion: string) => {
-    const emotionStyles: Record<string, { icon: string; color: string; iconType: "ionicons" | "fa5" }> = {
-      felicidad: { icon: "happy", color: "#ffb703", iconType: "ionicons" },
-      tristeza: { icon: "sad", color: "#4361ee", iconType: "ionicons" },
-      enojo: { icon: "angry", color: "#e63946", iconType: "fa5" },
-      miedo: { icon: "ghost", color: "#7e22ce", iconType: "fa5" },
-      sorpresa: { icon: "surprise", color: "#2a9d8f", iconType: "fa5" },
-      neutral: { icon: "meh", color: "#6c757d", iconType: "fa5" },
-      "estrés": { icon: "tired", color: "#e76f51", iconType: "fa5" },
-      estres: { icon: "tired", color: "#e76f51", iconType: "fa5" },
-      ansiedad: { icon: "flushed", color: "#9b5de5", iconType: "fa5" },
+    const styles: any = {
+      felicidad: { emoji: "😊", color: "#4caf50" },
+      tristeza: { emoji: "😢", color: "#2196f3" },
+      enojo: { emoji: "😠", color: "#f44336" },
+      miedo: { emoji: "😨", color: "#9c27b0" },
+      sorpresa: { emoji: "😲", color: "#ff9800" },
+      neutral: { emoji: "😐", color: "#757575" },
+      "estrés": { emoji: "😰", color: "#e91e63" },
+      estres: { emoji: "😰", color: "#e91e63" },
+      ansiedad: { emoji: "😟", color: "#673ab7" },
     };
-    return emotionStyles[emotion.toLowerCase()] || { icon: "help-circle", color: "#607d8b", iconType: "ionicons" };
+    return styles[emotion.toLowerCase()] || { emoji: "🎭", color: "#607d8b" };
   };
 
   // 📊 Ordenar emociones por valor
   const getSortedEmotions = () => {
-    if (!analysisResult?.emotions) return [];
-    return Object.entries(analysisResult.emotions)
-      .map(([name, value]) => ({ name, value: value as number }))
+    if (!resultado?.emotions) return [];
+    
+    return Object.entries(resultado.emotions)
+      .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
   };
 
-  const indicadores = calcularIndicadores();
-
-  // 🎭 Renderizar icono de emoción
-  const renderEmotionIcon = (emotionStyle: { icon: string; color: string; iconType: string }) => {
-    if (emotionStyle.iconType === "fa5") {
-      return <FontAwesome5 name={emotionStyle.icon} size={28} color={emotionStyle.color} />;
-    }
-    return <Ionicons name={emotionStyle.icon as any} size={28} color={emotionStyle.color} />;
-  };
-
   return (
-    <ScrollView style={styles.scrollView} contentContainerStyle={styles.container}>
-      {/* Header con gradiente */}
-      <LinearGradient
-        colors={["#1a3a52", "#0f2537"]}
-        style={styles.header}
-      >
-        <Text style={styles.title}>🎙️ Análisis Emocional por Voz</Text>
-        <Text style={styles.subtitle}>
-          Graba al menos 5 segundos de tu voz hablando naturalmente. La IA analizará tus emociones.
-        </Text>
-      </LinearGradient>
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.title}>🎙️ Análisis Emocional por Voz</Text>
 
-      {/* Tarjeta de frase sugerida */}
-      <View style={styles.card}>
-        <View style={styles.phraseHeader}>
-          <Ionicons name="chatbubble-ellipses" size={20} color="#4dd4ac" />
-          <Text style={styles.phraseLabel}>Lee en voz alta:</Text>
+      {user && (
+        <View style={styles.userInfo}>
+          <Text style={styles.userInfoText}>
+            👤 {user.nombre} {user.apellido}
+          </Text>
         </View>
-        <Text style={styles.phraseText}>"{fraseActual}"</Text>
-        <TouchableOpacity style={styles.changeButton} onPress={obtenerFraseAleatoria}>
-          <Ionicons name="shuffle" size={16} color="#4dd4ac" />
-          <Text style={styles.changeButtonText}>Cambiar frase</Text>
+      )}
+
+      {/* 💡 SECCIÓN DE FRASES SUGERIDAS */}
+      <View style={styles.suggestionsCard}>
+        <TouchableOpacity
+          style={styles.suggestionsHeader}
+          onPress={() => setMostrarFrases(!mostrarFrases)}
+        >
+          <Text style={styles.suggestionsTitle}>
+            💬 Frases Sugeridas para Practicar
+          </Text>
+          <Ionicons
+            name={mostrarFrases ? "chevron-up" : "chevron-down"}
+            size={20}
+            color="#4dd4ac"
+          />
         </TouchableOpacity>
+
+        {mostrarFrases && (
+          <View style={styles.suggestionsContent}>
+            <Text style={styles.suggestionsSubtitle}>
+              Lee en voz alta cualquiera de estas frases para obtener mejores resultados:
+            </Text>
+
+            {fraseActual ? (
+              <View style={styles.fraseDestacada}>
+                <Text style={styles.fraseDestacadaText}>
+                  "{fraseActual}"
+                </Text>
+                <TouchableOpacity
+                  style={styles.cambiarFraseButton}
+                  onPress={obtenerFraseAleatoria}
+                >
+                  <Ionicons name="shuffle" size={16} color="#4dd4ac" />
+                  <Text style={styles.cambiarFraseText}>Cambiar frase</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={styles.obtenerFraseButton}
+                onPress={obtenerFraseAleatoria}
+              >
+                <Ionicons name="dice" size={20} color="#fff" />
+                <Text style={styles.obtenerFraseText}>Obtener frase aleatoria</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
       </View>
 
-      {/* Controles de grabación */}
-      <View style={styles.card}>
-        <View style={styles.controlsRow}>
-          {!isRecording ? (
-            <TouchableOpacity style={styles.recordButton} onPress={startRecording}>
-              <Ionicons name="mic" size={24} color="#fff" />
-              <Text style={styles.buttonText}>Empezar a grabar</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity style={styles.stopButton} onPress={stopRecording}>
-              <Ionicons name="stop" size={24} color="#fff" />
-              <Text style={styles.buttonText}>Detener</Text>
-            </TouchableOpacity>
-          )}
+      {!recording ? (
+        <TouchableOpacity style={styles.button} onPress={startRecording}>
+          <Ionicons name="mic-outline" size={22} color="#fff" />
+          <Text style={styles.buttonText}>Iniciar Grabación</Text>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity
+          style={[styles.button, styles.stopButton]}
+          onPress={stopRecording}
+        >
+          <Ionicons name="stop-outline" size={22} color="#fff" />
+          <Text style={styles.buttonText}>Detener Grabación</Text>
+        </TouchableOpacity>
+      )}
 
-          {/* Timer */}
-          <View style={[styles.timerBox, isRecording && styles.timerBoxRecording]}>
-            <Text style={[styles.timerText, isRecording && styles.timerTextRecording]}>
-              {Math.floor(recTime / 60)}:{String(recTime % 60).padStart(2, "0")}
+      {audioUri && !recording && (
+        <>
+          <View style={styles.infoBox}>
+            <Text style={styles.infoText}>
+              ✅ Audio grabado ({audioDuration.toFixed(1)}s)
             </Text>
           </View>
-        </View>
 
-        {/* Indicador de grabación activa */}
-        {isRecording && (
-          <View style={styles.recordingIndicator}>
-            <View style={styles.recordingDot} />
-            <Text style={styles.recordingText}>Grabando...</Text>
-          </View>
-        )}
-
-        {/* Audio grabado */}
-        {audioUri && !isRecording && (
-          <View style={styles.audioInfo}>
-            <Ionicons name="checkmark-circle" size={20} color="#4caf50" />
-            <Text style={styles.audioInfoText}>
-              Audio grabado ({audioDuration.toFixed(1)}s)
-            </Text>
-          </View>
-        )}
-
-        {/* Botón analizar */}
-        {audioUri && !isRecording && (
           <TouchableOpacity
-            style={[styles.analyzeButton, analyzing && styles.buttonDisabled]}
+            style={[styles.button, styles.analyzeButton]}
             onPress={analyzeAudio}
             disabled={analyzing}
           >
@@ -298,441 +298,395 @@ export default function AnalizarVoz() {
               <ActivityIndicator color="#fff" />
             ) : (
               <>
-                <Ionicons name="analytics" size={22} color="#fff" />
-                <Text style={styles.buttonText}>Analizar</Text>
+                <Ionicons name="analytics-outline" size={22} color="#fff" />
+                <Text style={styles.buttonText}>Analizar Voz</Text>
               </>
             )}
           </TouchableOpacity>
-        )}
+        </>
+      )}
 
-        {analyzing && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#4dd4ac" />
-            <Text style={styles.loadingText}>Analizando emociones con IA...</Text>
-          </View>
-        )}
-      </View>
+      {analyzing && (
+        <View style={styles.loadingBox}>
+          <ActivityIndicator size="large" color="#4dd4ac" />
+          <Text style={styles.loadingText}>Analizando audio...</Text>
+        </View>
+      )}
 
-      {/* Resultados del análisis */}
-      {analysisResult && analysisResult.emotions && (
-        <View style={styles.card}>
-          <View style={styles.resultsHeader}>
-            <Ionicons name="bar-chart" size={22} color="#4dd4ac" />
-            <Text style={styles.resultsTitle}>Resultados del Análisis</Text>
-          </View>
+      {success && resultado && (
+        <View style={styles.successBox}>
+          <Ionicons
+            name="checkmark-circle-outline"
+            size={32}
+            color="#2e7d32"
+          />
+          <Text style={styles.successText}>
+            ✅ Análisis completado exitosamente
+          </Text>
 
-          {/* Grid de emociones */}
-          <View style={styles.emotionsGrid}>
-            {getSortedEmotions().slice(0, 6).map((emotion, idx) => {
-              const emotionStyle = getEmotionStyle(emotion.name);
+          {/* 🎭 TODAS LAS EMOCIONES DETECTADAS */}
+          <View style={styles.emotionsBox}>
+            <Text style={styles.emotionsTitle}>🎭 Emociones Detectadas</Text>
+            {getSortedEmotions().map(({ name, value }, idx) => {
+              const style = getEmotionStyle(name);
               return (
-                <View key={idx} style={[styles.emotionCard, { borderColor: emotionStyle.color }]}>
-                  {renderEmotionIcon(emotionStyle)}
-                  <Text style={[styles.emotionLabel, { color: emotionStyle.color }]}>
-                    {emotion.name.charAt(0).toUpperCase() + emotion.name.slice(1)}
-                  </Text>
-                  <Text style={styles.emotionValue}>{emotion.value.toFixed(1)}%</Text>
-                  <View style={styles.progressBarBg}>
+                <View key={idx} style={styles.emotionItem}>
+                  <View style={styles.emotionHeader}>
+                    <Text style={styles.emotionEmoji}>{style.emoji}</Text>
+                    <Text style={styles.emotionName}>
+                      {name.charAt(0).toUpperCase() + name.slice(1)}
+                    </Text>
+                    <Text style={[styles.emotionValue, { color: style.color }]}>
+                      {value.toFixed(1)}%
+                    </Text>
+                  </View>
+                  <View style={styles.emotionBarContainer}>
                     <View
                       style={[
-                        styles.progressBarFill,
-                        { width: `${Math.min(100, emotion.value)}%`, backgroundColor: emotionStyle.color }
+                        styles.emotionBar,
+                        { 
+                          width: `${value}%`,
+                          backgroundColor: style.color
+                        }
                       ]}
                     />
                   </View>
                 </View>
               );
             })}
-
-            {/* Tarjeta de Estrés */}
-            {indicadores && (
-              <View style={[styles.emotionCard, { borderColor: "#e76f51" }]}>
-                <FontAwesome5 name="tired" size={28} color="#e76f51" />
-                <Text style={[styles.emotionLabel, { color: "#e76f51" }]}>Estrés</Text>
-                <Text style={styles.emotionValue}>
-                  {Math.round(indicadores.estres.porcentaje)}%
-                </Text>
-                <View style={styles.progressBarBg}>
-                  <View
-                    style={[
-                      styles.progressBarFill,
-                      { width: `${indicadores.estres.porcentaje}%`, backgroundColor: "#e76f51" }
-                    ]}
-                  />
-                </View>
-                <View style={[styles.levelBadge, { backgroundColor: indicadores.estres.nivel.color }]}>
-                  <Text style={styles.levelText}>{indicadores.estres.nivel.text}</Text>
-                </View>
-              </View>
-            )}
-
-            {/* Tarjeta de Ansiedad */}
-            {indicadores && (
-              <View style={[styles.emotionCard, { borderColor: "#9b5de5" }]}>
-                <FontAwesome5 name="flushed" size={28} color="#9b5de5" />
-                <Text style={[styles.emotionLabel, { color: "#9b5de5" }]}>Ansiedad</Text>
-                <Text style={styles.emotionValue}>
-                  {Math.round(indicadores.ansiedad.porcentaje)}%
-                </Text>
-                <View style={styles.progressBarBg}>
-                  <View
-                    style={[
-                      styles.progressBarFill,
-                      { width: `${indicadores.ansiedad.porcentaje}%`, backgroundColor: "#9b5de5" }
-                    ]}
-                  />
-                </View>
-                <View style={[styles.levelBadge, { backgroundColor: indicadores.ansiedad.nivel.color }]}>
-                  <Text style={styles.levelText}>{indicadores.ansiedad.nivel.text}</Text>
-                </View>
-              </View>
-            )}
-          </View>
-        </View>
-      )}
-
-      {/* Métricas adicionales */}
-      {analysisResult && (
-        <View style={styles.card}>
-          <View style={styles.resultsHeader}>
-            <Ionicons name="stats-chart" size={22} color="#4dd4ac" />
-            <Text style={styles.resultsTitle}>Métricas de Bienestar</Text>
           </View>
 
-          <View style={styles.metricsList}>
+          {/* 📊 MÉTRICAS PRINCIPALES */}
+          <View style={styles.resultsBox}>
+            <Text style={styles.resultsTitle}>📊 Métricas de Bienestar</Text>
+            
             <View style={styles.metricRow}>
-              <Text style={styles.metricLabel}>😰 Nivel de Estrés</Text>
+              <Text style={styles.resultLabel}>😰 Nivel de Estrés:</Text>
               <Text style={[
-                styles.metricValue,
-                { color: analysisResult.nivel_estres > 60 ? "#e53935" : "#4caf50" }
+                styles.resultValue,
+                { color: resultado.nivel_estres > 60 ? "#e53935" : "#4caf50" }
               ]}>
-                {analysisResult.nivel_estres}%
+                {resultado.nivel_estres}%
               </Text>
             </View>
 
             <View style={styles.metricRow}>
-              <Text style={styles.metricLabel}>😟 Nivel de Ansiedad</Text>
+              <Text style={styles.resultLabel}>😟 Nivel de Ansiedad:</Text>
               <Text style={[
-                styles.metricValue,
-                { color: analysisResult.nivel_ansiedad > 60 ? "#e53935" : "#4caf50" }
+                styles.resultValue,
+                { color: resultado.nivel_ansiedad > 60 ? "#e53935" : "#4caf50" }
               ]}>
-                {analysisResult.nivel_ansiedad}%
+                {resultado.nivel_ansiedad}%
               </Text>
             </View>
 
             <View style={styles.metricRow}>
-              <Text style={styles.metricLabel}>🎯 Confianza del Modelo</Text>
-              <Text style={styles.metricValue}>
-                {(analysisResult.confidence * 100).toFixed(1)}%
+              <Text style={styles.resultLabel}>🎯 Confianza del Modelo:</Text>
+              <Text style={styles.resultValue}>
+                {(resultado.confidence * 100).toFixed(1)}%
               </Text>
             </View>
 
             <View style={styles.metricRow}>
-              <Text style={styles.metricLabel}>⏱️ Duración del Audio</Text>
-              <Text style={styles.metricValue}>{audioDuration.toFixed(1)}s</Text>
+              <Text style={styles.resultLabel}>⏱️ Duración del Audio:</Text>
+              <Text style={styles.resultValue}>
+                {audioDuration.toFixed(1)}s
+              </Text>
             </View>
           </View>
-        </View>
-      )}
 
-      {/* Recomendaciones */}
-      {analysisResult?.recomendaciones && analysisResult.recomendaciones.length > 0 && (
-        <View style={styles.card}>
-          <View style={styles.resultsHeader}>
-            <Ionicons name="bulb" size={22} color="#ffc107" />
-            <Text style={styles.resultsTitle}>Recomendaciones Personalizadas</Text>
-          </View>
-
-          {analysisResult.recomendaciones.map((rec: any, idx: number) => (
-            <View key={idx} style={styles.recCard}>
-              <View style={styles.recHeader}>
-                <Text style={styles.recType}>
-                  {rec.tipo_recomendacion?.toUpperCase() || "GENERAL"}
-                </Text>
-              </View>
-              <Text style={styles.recContent}>{rec.contenido}</Text>
+          {/* 💡 RECOMENDACIONES */}
+          {resultado.recomendaciones && resultado.recomendaciones.length > 0 && (
+            <View style={styles.recsBox}>
+              <Text style={styles.recsTitle}>💡 Recomendaciones Personalizadas</Text>
+              {resultado.recomendaciones.map((rec: any, idx: number) => (
+                <View key={idx} style={styles.recItem}>
+                  <Text style={styles.recType}>
+                    {rec.tipo_recomendacion.toUpperCase()}
+                  </Text>
+                  <Text style={styles.recContent}>{rec.contenido}</Text>
+                </View>
+              ))}
             </View>
-          ))}
+          )}
         </View>
       )}
-
-      <View style={{ height: 40 }} />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollView: {
-    flex: 1,
+  container: {
+    flexGrow: 1,
+    padding: 20,
+    paddingTop: 50,
     backgroundColor: "#0f2537",
   },
-  container: {
-    paddingBottom: 20,
-  },
-  header: {
-    padding: 24,
-    paddingTop: 50,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-  },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "700",
     color: "#fff",
     textAlign: "center",
-    marginBottom: 8,
+    marginBottom: 20,
   },
-  subtitle: {
-    fontSize: 14,
-    color: "#b8c5d0",
-    textAlign: "center",
-    lineHeight: 20,
-  },
-  card: {
+  userInfo: {
     backgroundColor: "#1a3a52",
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  phraseHeader: {
-    flexDirection: "row",
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 20,
     alignItems: "center",
-    marginBottom: 8,
   },
-  phraseLabel: {
+  userInfoText: {
+    color: "#4dd4ac",
     fontSize: 14,
     fontWeight: "600",
-    color: "#4dd4ac",
-    marginLeft: 8,
   },
-  phraseText: {
+  
+  // 💡 ESTILOS PARA FRASES SUGERIDAS
+  suggestionsCard: {
+    backgroundColor: "#1a3a52",
+    borderRadius: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#2d4a5e",
+  },
+  suggestionsHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 15,
+  },
+  suggestionsTitle: {
+    color: "#4dd4ac",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  suggestionsContent: {
+    padding: 15,
+    paddingTop: 0,
+  },
+  suggestionsSubtitle: {
+    color: "#b8c5d0",
+    fontSize: 13,
+    marginBottom: 15,
+    lineHeight: 18,
+  },
+  fraseDestacada: {
+    backgroundColor: "#2d4a5e",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 15,
+    borderLeftWidth: 3,
+    borderLeftColor: "#4dd4ac",
+  },
+  fraseDestacadaText: {
+    color: "#fff",
     fontSize: 15,
     fontStyle: "italic",
-    color: "#fff",
+    marginBottom: 10,
     lineHeight: 22,
-    marginBottom: 12,
   },
-  changeButton: {
+  cambiarFraseButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 5,
     paddingVertical: 8,
   },
-  changeButtonText: {
+  cambiarFraseText: {
     color: "#4dd4ac",
     fontSize: 13,
     fontWeight: "600",
-    marginLeft: 6,
   },
-  controlsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  recordButton: {
-    flex: 1,
+  obtenerFraseButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#4dd4ac",
-    paddingVertical: 14,
-    borderRadius: 12,
     gap: 8,
+    backgroundColor: "#4dd4ac",
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 15,
+  },
+  obtenerFraseText: {
+    color: "#0f2537",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+
+  button: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    backgroundColor: "#4caf50",
+    padding: 16,
+    borderRadius: 14,
+    marginBottom: 15,
   },
   stopButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#ff6b6b",
-    paddingVertical: 14,
-    borderRadius: 12,
-    gap: 8,
+    backgroundColor: "#e53935",
+  },
+  analyzeButton: {
+    backgroundColor: "#4a90e2",
   },
   buttonText: {
     color: "#fff",
     fontWeight: "600",
-    fontSize: 15,
+    fontSize: 16,
   },
-  timerBox: {
-    minWidth: 80,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    backgroundColor: "#2d4a5e",
-    borderRadius: 12,
+  infoBox: {
+    backgroundColor: "#1a3a52",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 15,
     alignItems: "center",
   },
-  timerBoxRecording: {
-    backgroundColor: "#ffebee",
-  },
-  timerText: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#fff",
-  },
-  timerTextRecording: {
-    color: "#d32f2f",
-  },
-  recordingIndicator: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 12,
-  },
-  recordingDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: "#ff6b6b",
-    marginRight: 8,
-  },
-  recordingText: {
-    color: "#ff6b6b",
+  infoText: {
+    color: "#4dd4ac",
+    fontSize: 14,
     fontWeight: "600",
   },
-  audioInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 12,
-    paddingVertical: 10,
-    backgroundColor: "#2d4a5e",
-    borderRadius: 8,
-  },
-  audioInfoText: {
-    color: "#4caf50",
-    fontWeight: "600",
-    marginLeft: 8,
-  },
-  analyzeButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#4a90e2",
-    paddingVertical: 14,
-    borderRadius: 12,
-    marginTop: 12,
-    gap: 8,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  loadingContainer: {
-    alignItems: "center",
-    marginTop: 16,
+  loadingBox: {
+    backgroundColor: "#1a3a52",
     padding: 20,
+    borderRadius: 14,
+    marginTop: 15,
+    alignItems: "center",
   },
   loadingText: {
+    marginTop: 10,
     color: "#b8c5d0",
-    marginTop: 12,
     fontSize: 14,
   },
-  resultsHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
+  successBox: {
+    backgroundColor: "#e8f5e9",
+    padding: 18,
+    borderRadius: 14,
+    marginTop: 25,
   },
-  resultsTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#fff",
-    marginLeft: 8,
-  },
-  emotionsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  emotionCard: {
-    width: (width - 64) / 2 - 6,
-    backgroundColor: "#0f2537",
-    borderRadius: 12,
-    padding: 12,
-    alignItems: "center",
-    borderWidth: 3,
-  },
-  emotionLabel: {
-    fontSize: 13,
+  successText: {
+    marginTop: 10,
+    color: "#2e7d32",
     fontWeight: "600",
-    marginTop: 6,
+    textAlign: "center",
+    fontSize: 16,
+    marginBottom: 15,
+  },
+  
+  // 🎭 ESTILOS PARA EMOCIONES
+  emotionsBox: {
+    marginTop: 15,
+    width: "100%",
+    padding: 15,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    marginBottom: 15,
+  },
+  emotionsTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#333",
+    marginBottom: 15,
     textAlign: "center",
   },
-  emotionValue: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#fff",
-    marginTop: 4,
+  emotionItem: {
+    marginBottom: 12,
   },
-  progressBarBg: {
-    width: "100%",
-    height: 6,
-    backgroundColor: "#2d4a5e",
-    borderRadius: 3,
-    marginTop: 8,
+  emotionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 5,
+  },
+  emotionEmoji: {
+    fontSize: 20,
+    marginRight: 8,
+  },
+  emotionName: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+  },
+  emotionValue: {
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  emotionBarContainer: {
+    height: 8,
+    backgroundColor: "#e0e0e0",
+    borderRadius: 4,
     overflow: "hidden",
   },
-  progressBarFill: {
+  emotionBar: {
     height: "100%",
-    borderRadius: 3,
+    borderRadius: 4,
   },
-  levelBadge: {
-    marginTop: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+
+  // 📊 ESTILOS PARA MÉTRICAS
+  resultsBox: {
+    width: "100%",
+    padding: 15,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    marginBottom: 15,
   },
-  levelText: {
-    fontSize: 10,
+  resultsTitle: {
+    fontSize: 16,
     fontWeight: "700",
-    color: "#fff",
-  },
-  metricsList: {
-    gap: 12,
+    color: "#333",
+    marginBottom: 15,
+    textAlign: "center",
   },
   metricRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 12,
+    marginBottom: 12,
+    paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#2d4a5e",
+    borderBottomColor: "#f0f0f0",
   },
-  metricLabel: {
+  resultLabel: {
     fontSize: 14,
-    color: "#b8c5d0",
+    color: "#666",
   },
-  metricValue: {
+  resultValue: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#4caf50",
+    color: "#2e7d32",
   },
-  recCard: {
-    backgroundColor: "#0f2537",
-    borderRadius: 12,
-    padding: 14,
+
+  // 💡 ESTILOS PARA RECOMENDACIONES
+  recsBox: {
+    width: "100%",
+    padding: 15,
+    backgroundColor: "#fff3cd",
+    borderRadius: 10,
+  },
+  recsTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#856404",
     marginBottom: 10,
-    borderLeftWidth: 4,
-    borderLeftColor: "#ffc107",
+    textAlign: "center",
   },
-  recHeader: {
-    marginBottom: 6,
+  recItem: {
+    marginBottom: 10,
+    padding: 10,
+    backgroundColor: "#fff",
+    borderRadius: 8,
   },
   recType: {
     fontSize: 11,
-    fontWeight: "700",
-    color: "#ffc107",
+    fontWeight: "600",
+    color: "#666",
+    marginBottom: 4,
     letterSpacing: 0.5,
   },
   recContent: {
     fontSize: 14,
-    color: "#fff",
+    color: "#333",
     lineHeight: 20,
   },
 });

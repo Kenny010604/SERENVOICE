@@ -17,7 +17,7 @@ const TherapeuticGames = ({
       {juegosRecomendados.length === 0 ? (
         <div className="card" style={{ padding: 16 }}>No hay juegos recomendados por ahora.</div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 16 }}>
           {juegosRecomendados.map((j) => (
             <div key={j.id || j.id_juego} className="card" style={{ padding: 16, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <div>

@@ -3,10 +3,12 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from services.notificaciones_service import NotificacionesService
 from utils.helpers import Helpers
+from utils.security_middleware import limiter
 
 bp = Blueprint('notificaciones', __name__, url_prefix='/api/notificaciones')
 
 @bp.route('/', methods=['GET'])
+@limiter.limit("30 per minute")  # Límite razonable para consulta de lista
 @jwt_required()
 def get_notifications():
     """Obtener notificaciones del usuario actual"""
@@ -35,6 +37,7 @@ def get_notifications():
         )
 
 @bp.route('/count', methods=['GET'])
+@limiter.limit("60 per minute")  # Permitir polling frecuente (cada segundo)
 @jwt_required()
 def get_unread_count():
     """Obtener contador de notificaciones no leídas"""

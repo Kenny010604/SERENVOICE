@@ -22,7 +22,12 @@ def get_client_identifier() -> str:
     """
     Obtiene identificador único del cliente para rate limiting.
     Usa IP + User-Agent hash para mejor identificación.
+    EXCLUYE peticiones OPTIONS (CORS preflight) del rate limiting.
     """
+    # Excluir peticiones OPTIONS del rate limiting
+    if request.method == 'OPTIONS':
+        return None  # Esto hace que el limiter no aplique rate limiting
+    
     ip = get_remote_address()
     user_agent = request.headers.get('User-Agent', '')
     
@@ -35,9 +40,10 @@ def get_client_identifier() -> str:
 # Instancia global del limiter (se inicializa en app.py)
 limiter = Limiter(
     key_func=get_client_identifier,
-    default_limits=["200 per day", "50 per hour"],
+    default_limits=["500 per day", "150 per hour"],  # Aumentado para polling frecuente
     storage_uri="memory://",
-    strategy="fixed-window"
+    strategy="fixed-window",
+    swallow_errors=True  # No romper la app si hay error en limiter
 )
 
 
@@ -114,6 +120,13 @@ def get_allowed_origins() -> list:
         "http://127.0.0.1:5173",
         "http://127.0.0.1:5174",
         "http://127.0.0.1:3000",
+        # Expo web (React Native)
+        "http://localhost:8081",
+        "http://localhost:8082",
+        "http://127.0.0.1:8081",
+        "http://127.0.0.1:8082",
+        "http://localhost:19006",
+        "http://127.0.0.1:19006",
     ]
     
     # Orígenes de producción desde variable de entorno

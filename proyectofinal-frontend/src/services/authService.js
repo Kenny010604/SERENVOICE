@@ -9,7 +9,7 @@ import { sanitizeEmail, sanitizeName } from '../utils/sanitize';
 const authService = {
   publicMode: false, // activar para pruebas públicas
 
-  async login(email, password) {
+  async login(email, password, recordarme = false) {
     if (this.publicMode) {
       secureLogger.debug("[authService] Modo público activado: login ignorado");
       return { token: null, user: null };
@@ -24,7 +24,8 @@ const authService = {
     try {
       const response = await apiClient.post(api.endpoints.auth.login, { 
         correo: sanitizedEmail, 
-        contrasena: password // No sanitizar contraseñas
+        contrasena: password, // No sanitizar contraseñas
+        recordarme: recordarme // Enviar parámetro de recordar sesión
       });
       
       if (!response.data.success) throw new Error(response.data.error || "Credenciales incorrectas");
@@ -39,18 +40,18 @@ const authService = {
         roles: user.roles || ["usuario"]
       };
 
-      // Guardar token en almacenamiento seguro (memoria)
-      secureStorage.setAccessToken(token);
+      // Guardar tokens en secureStorage con persistencia según recordarme
+      secureStorage.setAccessToken(token, null, recordarme);
       if (refresh_token) {
-        secureStorage.setRefreshToken(refresh_token);
+        secureStorage.setRefreshToken(refresh_token, recordarme);
       }
       
-      // También en localStorage para compatibilidad durante migración
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(userWithRole));
-      if (session_id) localStorage.setItem("session_id", session_id);
+      // Guardar user y session_id con el mismo criterio
+      const storage = recordarme ? localStorage : sessionStorage;
+      storage.setItem("user", JSON.stringify(userWithRole));
+      if (session_id) storage.setItem("session_id", session_id);
       
-      secureLogger.info('Login exitoso');
+      secureLogger.info('Login exitoso', { persistent: recordarme });
       return { token, refresh_token, user: userWithRole };
     } catch (error) {
       secureLogger.warn('Login fallido');
@@ -133,13 +134,15 @@ const authService = {
         }
       }
     } finally {
-      // Limpiar almacenamiento seguro
+      // Limpiar almacenamiento seguro (borra localStorage y sessionStorage)
       secureStorage.clearTokens();
       
-      // Limpiar localStorage
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      localStorage.removeItem("session_id");
+      // Limpiar rate limiter del login
+      try {
+        sessionStorage.removeItem('login_attempts');
+      } catch (e) {
+        // Ignorar errores de limpieza
+      }
       
       secureLogger.info('Logout completado');
     }
@@ -147,13 +150,13 @@ const authService = {
 
   getToken() {
     if (this.publicMode) return null;
-    // Preferir token de memoria segura
-    return secureStorage.getAccessToken() || localStorage.getItem("token");
+    return secureStorage.getAccessToken();
   },
 
   getUser() {
     if (this.publicMode) return null;
-    const user = localStorage.getItem("user");
+    // Intentar sessionStorage primero, luego localStorage
+    let user = sessionStorage.getItem("user") || localStorage.getItem("user");
     return user ? JSON.parse(user) : null;
   },
 
@@ -163,8 +166,7 @@ const authService = {
 
   isAuthenticated() {
     if (this.publicMode) return false;
-    // Verificar tanto memoria segura como localStorage
-    return secureStorage.hasValidToken() || !!localStorage.getItem("token");
+    return secureStorage.hasValidToken();
   },
 
   setUser(updatedUser) {
@@ -174,7 +176,9 @@ const authService = {
       role: updatedUser.role || (updatedUser.roles?.[0] || "usuario"),
       roles: updatedUser.roles || ["usuario"]
     };
-    localStorage.setItem("user", JSON.stringify(userWithRole));
+    // Guardar en el storage que corresponda según el modo persistente
+    const storage = secureStorage.isPersistentMode() ? localStorage : sessionStorage;
+    storage.setItem("user", JSON.stringify(userWithRole));
   },
 
   // Método para autenticación con Google

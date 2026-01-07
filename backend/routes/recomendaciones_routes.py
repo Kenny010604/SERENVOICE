@@ -19,7 +19,17 @@ def get_recomendaciones_usuario():
     user_id = get_jwt_identity()
     
     try:
-        print(f"[DEBUG] Buscando recomendaciones para user_id: {user_id}")
+        # Convertir user_id a entero (viene como string del JWT)
+        try:
+            user_id_int = int(user_id)
+        except (ValueError, TypeError):
+            return Helpers.format_response(
+                success=False,
+                message='ID de usuario inválido',
+                status=400
+            )
+        
+        print(f"[DEBUG] Buscando recomendaciones para user_id: {user_id_int}")
         
         # Query que filtra por usuario y trae información relevante
         query = """
@@ -37,7 +47,10 @@ def get_recomendaciones_usuario():
                 ra.clasificacion,
                 ra.nivel_estres,
                 ra.nivel_ansiedad,
-                a.fecha_analisis
+                ra.emocion_dominante,
+                a.id_analisis,
+                a.fecha_analisis,
+                au.nombre_archivo
             FROM recomendaciones r
             JOIN resultado_analisis ra ON r.id_resultado = ra.id_resultado
             JOIN analisis a ON ra.id_analisis = a.id_analisis
@@ -47,7 +60,7 @@ def get_recomendaciones_usuario():
             LIMIT 50
         """
         
-        result = DatabaseConnection.execute_query(query, (user_id,), fetch=True)
+        result = DatabaseConnection.execute_query(query, (user_id_int,), fetch=True)
         print(f"[DEBUG] Resultado de query: {len(result) if result else 0} recomendaciones")
         
         return Helpers.format_response(
@@ -223,8 +236,22 @@ def marcar_aplicada(id_recomendacion):
     """Marcar una recomendación como aplicada"""
     user_id = get_jwt_identity()
     
+    # Convertir user_id a entero (viene como string del JWT)
+    try:
+        user_id_int = int(user_id)
+    except (ValueError, TypeError):
+        return Helpers.format_response(
+            success=False,
+            message='ID de usuario inválido',
+            status=400
+        )
+    
+    print(f"[DEBUG aplicar] user_id del JWT: {user_id} (tipo: {type(user_id)})")
+    print(f"[DEBUG aplicar] user_id_int: {user_id_int}")
+    
     try:
         recomendacion = Recomendacion.get_by_id(id_recomendacion)
+        print(f"[DEBUG aplicar] recomendacion: {recomendacion}")
         
         if not recomendacion:
             return Helpers.format_response(
@@ -235,10 +262,15 @@ def marcar_aplicada(id_recomendacion):
         
         # Verificar permisos
         resultado = ResultadoAnalisis.get_by_id(recomendacion['id_resultado'])
+        print(f"[DEBUG aplicar] resultado: {resultado}")
         analisis = Analisis.get_by_id(resultado['id_analisis'])
+        print(f"[DEBUG aplicar] analisis: {analisis}")
         audio = Audio.get_by_id(analisis['id_audio'])
+        print(f"[DEBUG aplicar] audio: {audio}")
+        print(f"[DEBUG aplicar] audio['id_usuario']: {audio['id_usuario']} (tipo: {type(audio['id_usuario'])})")
+        print(f"[DEBUG aplicar] Comparación: {audio['id_usuario']} != {user_id_int} = {audio['id_usuario'] != user_id_int}")
         
-        if audio['id_usuario'] != user_id:
+        if audio['id_usuario'] != user_id_int:
             return Helpers.format_response(
                 success=False,
                 message='No tienes permisos',
@@ -271,6 +303,16 @@ def marcar_util(id_recomendacion):
     """Marcar una recomendación como útil"""
     user_id = get_jwt_identity()
     
+    # Convertir user_id a entero (viene como string del JWT)
+    try:
+        user_id_int = int(user_id)
+    except (ValueError, TypeError):
+        return Helpers.format_response(
+            success=False,
+            message='ID de usuario inválido',
+            status=400
+        )
+    
     try:
         data = request.get_json() or {}
         util = data.get('util', True)
@@ -289,7 +331,7 @@ def marcar_util(id_recomendacion):
         analisis = Analisis.get_by_id(resultado['id_analisis'])
         audio = Audio.get_by_id(analisis['id_audio'])
         
-        if audio['id_usuario'] != user_id:
+        if audio['id_usuario'] != user_id_int:
             return Helpers.format_response(
                 success=False,
                 message='No tienes permisos',

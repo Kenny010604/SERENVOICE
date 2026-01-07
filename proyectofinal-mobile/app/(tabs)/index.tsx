@@ -226,7 +226,9 @@ export default function HomeScreen() {
 
       {/* Footer */}
       <View style={styles.footer}>
-        <Text style={styles.footerText}>© 2025 SerenVoice — Todos los derechos reservados.</Text>
+        <Text style={styles.footerText}>
+          © 2025 SerenVoice — Todos los derechos reservados.
+        </Text>
       </View>
     </ScrollView>
   );

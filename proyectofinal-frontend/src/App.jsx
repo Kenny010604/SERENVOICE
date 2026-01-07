@@ -63,18 +63,29 @@ import PageWithTitle from "./utils/PageWithTitle.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import ProtectedRoute from "./utils/ProtectedRoute.jsx";
+import HomeRedirect from "./utils/HomeRedirect.jsx";
 import { AlertasProvider } from "./context/AlertasContext.jsx";
 import { GOOGLE_CLIENT_ID } from "./config/api.js";
 
+// Wrapper condicional para GoogleOAuthProvider
+const GoogleOAuthWrapper = ({ children }) => {
+	if (GOOGLE_CLIENT_ID) {
+		return <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>{children}</GoogleOAuthProvider>;
+	}
+	return <>{children}</>;
+};
 
 function App() {
 	return (
-		<GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>	
+		<GoogleOAuthWrapper>
 			<ThemeProvider>
 				<AuthProvider>
 					<AlertasProvider>
 						<Router>
 						<Routes>
+							{/* Ruta raíz - Redirecciona según autenticación */}
+							<Route path="/" element={<PageWithTitle title="Inicio"><HomeRedirect /></PageWithTitle>} />
+							
 							{/* Páginas públicas */}
 							<Route path="/Inicio" element={<PageWithTitle title="Inicio"><Inicio /></PageWithTitle>} />
 							<Route path="/login" element={<PageWithTitle title="Iniciar Sesión"><Login /></PageWithTitle>} />
@@ -552,7 +563,7 @@ function App() {
 				</AlertasProvider>
 			</AuthProvider>
 		</ThemeProvider>
-		</GoogleOAuthProvider>
+		</GoogleOAuthWrapper>
 	);
 }
 

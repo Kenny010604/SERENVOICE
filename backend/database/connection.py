@@ -23,7 +23,7 @@ class DatabaseConnection:
     def initialize_pool():
         try:
             DatabaseConnection.pool = pooling.MySQLConnectionPool(
-                pool_name="mindvoice_pool",
+                pool_name="serenvoice_pool",
                 pool_size=10,
                 host=os.getenv('DB_HOST', 'localhost'),
                 user=os.getenv('DB_USER', 'root'),

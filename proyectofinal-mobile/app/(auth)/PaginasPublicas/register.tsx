@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import * as ImagePicker from 'expo-image-picker';
-import { Image } from 'react-native';
 import {
   View,
   Text,
@@ -20,6 +18,7 @@ import { useAuth } from '../../../hooks/useAuth';
 export default function Register() {
   const { register } = useAuth();
   const [loading, setLoading] = useState(false);
+
   const [nombre, setNombre] = useState('');
   const [apellido, setApellido] = useState('');
   const [email, setEmail] = useState('');
@@ -30,95 +29,68 @@ export default function Register() {
   const [edad, setEdad] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [profileImage, setProfileImage] = useState<any>(null);
-  const [profileImageUri, setProfileImageUri] = useState<string | null>(null);
+
+// ...existing code...
 
   const handleRegister = async () => {
-        // Log para depuración: mostrar el objeto de la imagen seleccionada
-        if (profileImage) {
-          console.log('🟢 profileImage:', profileImage);
-          if (profileImage.uri && profileImage.uri.startsWith('blob:')) {
-            console.warn('⚠️ Estás usando la app en modo web. El registro de imagen solo funciona en emulador o dispositivo físico.');
-          } else if (profileImage.uri && profileImage.uri.startsWith('file:')) {
-            console.log('✅ La uri de la imagen es local y válida para backend:', profileImage.uri);
-          } else {
-            console.warn('❓ La uri de la imagen no es reconocida:', profileImage.uri);
-          }
-        }
     if (!nombre.trim()) {
       Alert.alert('Error', 'El nombre es requerido');
       return;
     }
+
     if (!apellido.trim()) {
       Alert.alert('Error', 'El apellido es requerido');
       return;
     }
+
     if (!email.trim() || !email.includes('@')) {
       Alert.alert('Error', 'Correo inválido');
       return;
     }
+
     if (!password || password.length < 6) {
       Alert.alert('Error', 'La contraseña debe tener al menos 6 caracteres');
       return;
     }
+
     if (password !== confirmPassword) {
       Alert.alert('Error', 'Las contraseñas no coinciden');
       return;
     }
 
     setLoading(true);
+
     try {
-      let response;
-      if (profileImage && profileImageUri) {
-        const formData = new FormData();
-        formData.append('nombre', nombre.trim());
-        formData.append('apellido', apellido.trim());
-        formData.append('correo', email.trim().toLowerCase());
-        formData.append('contrasena', password);
-        if (genero)
-          formData.append('genero',
-            genero === 'masculino' ? 'M' : genero === 'femenino' ? 'F' : genero === 'otro' ? 'O' : '');
-        formData.append('fecha_nacimiento', convertirFecha(fechaNacimiento) || '');
-        if (edad) formData.append('edad', edad);
-        formData.append('auth_provider', 'local');
+      const registerData = {
+        nombre: nombre.trim(),
+        apellido: apellido.trim(),
+        correo: email.trim().toLowerCase(),
+        contrasena: password,
+        genero:
+          genero === 'masculino'
+            ? 'M'
+            : genero === 'femenino'
+            ? 'F'
+            : genero === 'otro'
+            ? 'O'
+            : undefined,
+        fecha_nacimiento: convertirFecha(fechaNacimiento),
+        edad: edad ? parseInt(edad) : undefined,
+        foto_perfil: undefined,
+        auth_provider: 'local',
+      };
 
-        // Asegurar campos correctos para la imagen
-        const imageName = profileImage.fileName || profileImage.uri?.split('/').pop() || 'profile.jpg';
-        const imageType = profileImage.mimeType || profileImage.type || 'image/jpeg';
-        formData.append('foto_perfil', {
-          uri: profileImage.uri,
-          name: imageName,
-          type: imageType,
-        } as unknown as Blob);
+      await register(registerData);
 
-        // Debug: mostrar el objeto imagen
-        console.log('🖼️ Imagen enviada:', { uri: profileImage.uri, name: imageName, type: imageType });
-        response = await register(formData, true);
-      } else {
-        const registerData = {
-          nombre: nombre.trim(),
-          apellido: apellido.trim(),
-          correo: email.trim().toLowerCase(),
-          contrasena: password,
-          genero:
-            genero === 'masculino'
-              ? 'M'
-              : genero === 'femenino'
-              ? 'F'
-              : genero === 'otro'
-              ? 'O'
-              : undefined,
-          fecha_nacimiento: convertirFecha(fechaNacimiento),
-          edad: edad ? parseInt(edad) : undefined,
-          foto_perfil: undefined,
-          auth_provider: 'local',
-        };
-        response = await register(registerData);
-      }
       Alert.alert(
         '✅ Registro exitoso',
         'Cuenta creada correctamente.',
-        [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
+        [
+          {
+            text: 'OK',
+            onPress: () => router.replace('/(tabs)'),
+          },
+        ]
       );
     } catch (error: any) {
       Alert.alert('Error', error?.message || 'No se pudo completar el registro');
@@ -127,23 +99,7 @@ export default function Register() {
     }
   };
 
-  const handlePickImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (permissionResult.granted === false) {
-      Alert.alert('Permiso requerido', 'Se necesita permiso para acceder a tus fotos');
-      return;
-    }
-    const pickerResult = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.7,
-    });
-    if (!pickerResult.canceled && pickerResult.assets && pickerResult.assets.length > 0) {
-      setProfileImage(pickerResult.assets[0]);
-      setProfileImageUri(pickerResult.assets[0].uri);
-    }
-  };
+// ...existing code...
 
   const handleGoogleRegister = () => {
     Alert.alert('Próximamente', 'El registro con Google estará disponible pronto');
@@ -151,9 +107,11 @@ export default function Register() {
 
   const handleFechaChange = (text: string) => {
     let cleaned = text.replace(/[^0-9]/g, '');
+    
     if (cleaned.length > 8) {
       cleaned = cleaned.substring(0, 8);
     }
+
     let formatted = cleaned;
     if (cleaned.length >= 3) {
       formatted = `${cleaned.substring(0, 2)}/${cleaned.substring(2)}`;
@@ -161,13 +119,17 @@ export default function Register() {
     if (cleaned.length >= 5) {
       formatted = `${cleaned.substring(0, 2)}/${cleaned.substring(2, 4)}/${cleaned.substring(4)}`;
     }
+
     setFechaNacimiento(formatted);
+
     if (cleaned.length === 8) {
       const dia = parseInt(cleaned.substring(0, 2));
       const mes = parseInt(cleaned.substring(2, 4));
       const anio = parseInt(cleaned.substring(4, 8));
+      
       const hoy = new Date();
       const nacimiento = new Date(anio, mes - 1, dia);
+      
       if (nacimiento <= hoy) {
         let edadCalculada = hoy.getFullYear() - nacimiento.getFullYear();
         const m = hoy.getMonth() - nacimiento.getMonth();
@@ -188,7 +150,10 @@ export default function Register() {
   };
 
   return (
-    <LinearGradient colors={['#0a4f5c', '#0d6876', '#108291']} style={styles.gradient}>
+    <LinearGradient
+      colors={['#0a4f5c', '#0d6876', '#108291']}
+      style={styles.gradient}
+    >
       <SafeAreaView style={styles.container}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.card}>
@@ -204,6 +169,7 @@ export default function Register() {
                 <Ionicons name="person-outline" size={18} color="#22d3ee" style={styles.sectionIcon} />
                 <Text style={styles.sectionTitle}>Datos personales</Text>
               </View>
+
               <View style={styles.inputGroup}>
                 <Ionicons name="person-outline" size={18} color="#9CA3AF" style={styles.inputIcon} />
                 <TextInput
@@ -215,6 +181,7 @@ export default function Register() {
                   editable={!loading}
                 />
               </View>
+
               <View style={styles.inputGroup}>
                 <Ionicons name="person-outline" size={18} color="#9CA3AF" style={styles.inputIcon} />
                 <TextInput
@@ -233,15 +200,13 @@ export default function Register() {
                 <Ionicons name="image-outline" size={18} color="#22d3ee" style={styles.sectionIcon} />
                 <Text style={styles.sectionTitle}>Foto de perfil (opcional)</Text>
               </View>
-              <TouchableOpacity style={styles.photoButton} onPress={handlePickImage}>
+
+              <TouchableOpacity style={styles.photoButton}>
                 <Text style={styles.photoButtonText}>Seleccionar foto</Text>
               </TouchableOpacity>
-              {profileImageUri ? (
-                <View style={styles.imagePreviewContainer}>
-                  <Image source={{ uri: profileImageUri }} style={styles.imagePreview} />
-                </View>
-              ) : null}
-              <Text style={styles.photoNote}>Formato: JPG, PNG, GIF o WebP (max 5MB)</Text>
+              <Text style={styles.photoNote}>
+                Formato: JPG, PNG, GIF o WebP (máx. 5MB)
+              </Text>
             </View>
 
             <View style={styles.section}>
@@ -249,6 +214,7 @@ export default function Register() {
                 <Ionicons name="mail-outline" size={18} color="#22d3ee" style={styles.sectionIcon} />
                 <Text style={styles.sectionTitle}>Datos de contacto</Text>
               </View>
+
               <View style={styles.inputGroup}>
                 <Ionicons name="mail-outline" size={18} color="#9CA3AF" style={styles.inputIcon} />
                 <TextInput
@@ -269,6 +235,7 @@ export default function Register() {
                 <Ionicons name="lock-closed-outline" size={18} color="#22d3ee" style={styles.sectionIcon} />
                 <Text style={styles.sectionTitle}>Seguridad</Text>
               </View>
+
               <View style={styles.inputGroup}>
                 <Ionicons name="lock-closed-outline" size={18} color="#9CA3AF" style={styles.inputIcon} />
                 <TextInput
@@ -280,10 +247,18 @@ export default function Register() {
                   secureTextEntry={!showPassword}
                   editable={!loading}
                 />
-                <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)}>
-                  <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={18} color="#9CA3AF" />
+                <TouchableOpacity
+                  style={styles.eyeIcon}
+                  onPress={() => setShowPassword(!showPassword)}
+                >
+                  <Ionicons 
+                    name={showPassword ? "eye-outline" : "eye-off-outline"} 
+                    size={18} 
+                    color="#9CA3AF" 
+                  />
                 </TouchableOpacity>
               </View>
+
               <View style={styles.inputGroup}>
                 <Ionicons name="lock-closed-outline" size={18} color="#9CA3AF" style={styles.inputIcon} />
                 <TextInput
@@ -295,8 +270,15 @@ export default function Register() {
                   secureTextEntry={!showConfirmPassword}
                   editable={!loading}
                 />
-                <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                  <Ionicons name={showConfirmPassword ? "eye-outline" : "eye-off-outline"} size={18} color="#9CA3AF" />
+                <TouchableOpacity
+                  style={styles.eyeIcon}
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  <Ionicons 
+                    name={showConfirmPassword ? "eye-outline" : "eye-off-outline"} 
+                    size={18} 
+                    color="#9CA3AF" 
+                  />
                 </TouchableOpacity>
               </View>
             </View>
@@ -306,36 +288,70 @@ export default function Register() {
                 <Ionicons name="information-circle-outline" size={18} color="#22d3ee" style={styles.sectionIcon} />
                 <Text style={styles.sectionTitle}>Información adicional</Text>
               </View>
+
               <View style={styles.subLabelContainer}>
                 <Ionicons name="male-female-outline" size={14} color="#94a3b8" style={styles.subLabelIcon} />
                 <Text style={styles.subLabel}>Género</Text>
               </View>
               <View style={styles.genderRow}>
                 <TouchableOpacity
-                  style={[styles.genderButton, genero === 'masculino' && styles.genderButtonActive]}
+                  style={[
+                    styles.genderButton,
+                    genero === 'masculino' && styles.genderButtonActive,
+                  ]}
                   onPress={() => setGenero('masculino')}
                   disabled={loading}
                 >
                   <Ionicons name="male" size={18} color={genero === 'masculino' ? '#0a4f5c' : '#fff'} style={styles.genderIcon} />
-                  <Text style={[styles.genderButtonText, genero === 'masculino' && styles.genderButtonTextActive]}>Masculino</Text>
+                  <Text
+                    style={[
+                      styles.genderButtonText,
+                      genero === 'masculino' && styles.genderButtonTextActive,
+                    ]}
+                  >
+                    Masculino
+                  </Text>
                 </TouchableOpacity>
+
                 <TouchableOpacity
-                  style={[styles.genderButton, genero === 'femenino' && styles.genderButtonActive]}
+                  style={[
+                    styles.genderButton,
+                    genero === 'femenino' && styles.genderButtonActive,
+                  ]}
                   onPress={() => setGenero('femenino')}
                   disabled={loading}
                 >
                   <Ionicons name="female" size={18} color={genero === 'femenino' ? '#0a4f5c' : '#fff'} style={styles.genderIcon} />
-                  <Text style={[styles.genderButtonText, genero === 'femenino' && styles.genderButtonTextActive]}>Femenino</Text>
+                  <Text
+                    style={[
+                      styles.genderButtonText,
+                      genero === 'femenino' && styles.genderButtonTextActive,
+                    ]}
+                  >
+                    Femenino
+                  </Text>
                 </TouchableOpacity>
+
                 <TouchableOpacity
-                  style={[styles.genderButton, genero === 'otro' && styles.genderButtonActive]}
+                  style={[
+                    styles.genderButton,
+                    genero === 'otro' && styles.genderButtonActive,
+                  ]}
                   onPress={() => setGenero('otro')}
                   disabled={loading}
                 >
                   <Ionicons name="transgender" size={18} color={genero === 'otro' ? '#0a4f5c' : '#fff'} style={styles.genderIcon} />
-                  <Text style={[styles.genderButtonText, genero === 'otro' && styles.genderButtonTextActive]}>Otro</Text>
+                  <Text
+                    style={[
+                      styles.genderButtonText,
+                      genero === 'otro' && styles.genderButtonTextActive,
+                    ]}
+                  >
+                    Otro
+                  </Text>
                 </TouchableOpacity>
               </View>
+
               <View style={styles.subLabelContainer}>
                 <Ionicons name="calendar-outline" size={14} color="#94a3b8" style={styles.subLabelIcon} />
                 <Text style={styles.subLabel}>Fecha de nacimiento</Text>
@@ -352,14 +368,21 @@ export default function Register() {
                   maxLength={10}
                   editable={!loading}
                 />
-                {fechaNacimiento.length === 10 ? <Ionicons name="calendar" size={18} color="#22d3ee" style={styles.inputIcon} /> : null}
+                {fechaNacimiento.length === 10 && (
+                  <Ionicons name="calendar" size={18} color="#22d3ee" style={styles.inputIcon} />
+                )}
               </View>
-              {edad ? (
+
+              {edad && (
                 <View style={styles.inputGroup}>
                   <Ionicons name="time-outline" size={18} color="#9CA3AF" style={styles.inputIcon} />
-                  <TextInput style={[styles.input, { color: '#22d3ee' }]} value={`${edad} años`} editable={false} />
+                  <TextInput
+                    style={[styles.input, { color: '#22d3ee' }]}
+                    value={`${edad} años`}
+                    editable={false}
+                  />
                 </View>
-              ) : null}
+              )}
             </View>
 
             <TouchableOpacity
@@ -367,7 +390,11 @@ export default function Register() {
               onPress={handleRegister}
               disabled={loading}
             >
-              {loading ? <ActivityIndicator color="#0a4f5c" /> : <Text style={styles.registerButtonText}>Registrarse</Text>}
+              {loading ? (
+                <ActivityIndicator color="#0a4f5c" />
+              ) : (
+                <Text style={styles.registerButtonText}>Registrarse</Text>
+              )}
             </TouchableOpacity>
 
             <View style={styles.divider}>
@@ -376,7 +403,11 @@ export default function Register() {
               <View style={styles.dividerLine} />
             </View>
 
-            <TouchableOpacity style={styles.googleButton} onPress={handleGoogleRegister} disabled={loading}>
+            <TouchableOpacity
+              style={styles.googleButton}
+              onPress={handleGoogleRegister}
+              disabled={loading}
+            >
               <Ionicons name="logo-google" size={18} color="#fff" style={styles.googleIcon} />
               <Text style={styles.googleButtonText}>Continuar con Google</Text>
             </TouchableOpacity>
@@ -389,7 +420,9 @@ export default function Register() {
             </View>
           </View>
 
-          <Text style={styles.copyright}>© 2025 SerenVoice — Todos los derechos reservados</Text>
+          <Text style={styles.copyright}>
+            © 2025 SerenVoice — Todos los derechos reservados.
+          </Text>
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>
@@ -397,11 +430,26 @@ export default function Register() {
 }
 
 const styles = StyleSheet.create({
-  gradient: { flex: 1 },
-  container: { flex: 1 },
-  scrollContent: { padding: 20, paddingTop: 30 },
-  card: { backgroundColor: 'rgba(30, 41, 59, 0.9)', borderRadius: 20, padding: 25, marginBottom: 20 },
-  header: { alignItems: 'center', marginBottom: 25 },
+  gradient: {
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingTop: 30,
+  },
+  card: {
+    backgroundColor: 'rgba(30, 41, 59, 0.9)',
+    borderRadius: 20,
+    padding: 25,
+    marginBottom: 20,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 25,
+  },
   iconCircle: {
     width: 80,
     height: 80,
@@ -416,14 +464,40 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  title: { fontSize: 28, fontWeight: 'bold', color: '#fff' },
-  section: { marginBottom: 20 },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
-  sectionIcon: { marginRight: 8 },
-  sectionTitle: { fontSize: 15, fontWeight: '600', color: '#fff' },
-  subLabelContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, marginTop: 5 },
-  subLabelIcon: { marginRight: 6 },
-  subLabel: { fontSize: 13, color: '#94a3b8' },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  section: {
+    marginBottom: 20,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  sectionIcon: {
+    marginRight: 8,
+  },
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  subLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    marginTop: 5,
+  },
+  subLabelIcon: {
+    marginRight: 6,
+  },
+  subLabel: {
+    fontSize: 13,
+    color: '#94a3b8',
+  },
   inputGroup: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -433,15 +507,38 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     height: 50,
   },
-  inputIcon: { marginRight: 8 },
-  input: { flex: 1, color: '#fff', fontSize: 15 },
-  eyeIcon: { padding: 5 },
-  photoButton: { backgroundColor: '#22d3ee', paddingVertical: 12, borderRadius: 10, alignItems: 'center', marginBottom: 8 },
-  photoButtonText: { color: '#0a4f5c', fontSize: 14, fontWeight: '600' },
-  photoNote: { fontSize: 11, color: '#64748b', textAlign: 'center' },
-  imagePreviewContainer: { alignItems: 'center', marginVertical: 8 },
-  imagePreview: { width: 80, height: 80, borderRadius: 40, borderWidth: 2, borderColor: '#22d3ee' },
-  genderRow: { flexDirection: 'row', marginBottom: 15 },
+  inputIcon: {
+    marginRight: 8,
+  },
+  input: {
+    flex: 1,
+    color: '#fff',
+    fontSize: 15,
+  },
+  eyeIcon: {
+    padding: 5,
+  },
+  photoButton: {
+    backgroundColor: '#22d3ee',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  photoButtonText: {
+    color: '#0a4f5c',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  photoNote: {
+    fontSize: 11,
+    color: '#64748b',
+    textAlign: 'center',
+  },
+  genderRow: {
+    flexDirection: 'row',
+    marginBottom: 15,
+  },
   genderButton: {
     flex: 1,
     flexDirection: 'row',
@@ -452,16 +549,50 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginHorizontal: 4,
   },
-  genderIcon: { marginRight: 5 },
-  genderButtonActive: { backgroundColor: '#22d3ee' },
-  genderButtonText: { color: '#fff', fontSize: 12, fontWeight: '600' },
-  genderButtonTextActive: { color: '#0a4f5c' },
-  registerButton: { backgroundColor: '#22d3ee', paddingVertical: 15, borderRadius: 12, alignItems: 'center', marginTop: 10 },
-  registerButtonText: { color: '#0a4f5c', fontSize: 16, fontWeight: 'bold' },
-  buttonDisabled: { backgroundColor: '#6ee7b7' },
-  divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 20 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: 'rgba(148, 163, 184, 0.3)' },
-  dividerText: { color: '#94a3b8', paddingHorizontal: 15, fontSize: 14 },
+  genderIcon: {
+    marginRight: 5,
+  },
+  genderButtonActive: {
+    backgroundColor: '#22d3ee',
+  },
+  genderButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  genderButtonTextActive: {
+    color: '#0a4f5c',
+  },
+  registerButton: {
+    backgroundColor: '#22d3ee',
+    paddingVertical: 15,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  registerButtonText: {
+    color: '#0a4f5c',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  buttonDisabled: {
+    backgroundColor: '#6ee7b7',
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(148, 163, 184, 0.3)',
+  },
+  dividerText: {
+    color: '#94a3b8',
+    paddingHorizontal: 15,
+    fontSize: 14,
+  },
   googleButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -470,10 +601,32 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
   },
-  googleIcon: { marginRight: 10 },
-  googleButtonText: { color: '#fff', fontSize: 15, fontWeight: '600' },
-  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
-  footerText: { color: '#94a3b8', fontSize: 14 },
-  linkText: { color: '#22d3ee', fontSize: 14, fontWeight: '600' },
-  copyright: { color: '#64748b', fontSize: 12, textAlign: 'center', marginTop: 10 },
+  googleIcon: {
+    marginRight: 10,
+  },
+  googleButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  footerText: {
+    color: '#94a3b8',
+    fontSize: 14,
+  },
+  linkText: {
+    color: '#22d3ee',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  copyright: {
+    color: '#64748b',
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 10,
+  },
 });

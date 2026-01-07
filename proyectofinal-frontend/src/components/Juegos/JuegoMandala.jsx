@@ -1,5 +1,6 @@
 // src/components/Juegos/JuegoMandala.jsx
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import "../../styles/Juegos.css";
 
 const JuegoMandala = ({ juego, onFinish, onExit }) => {
   const canvasRef = useRef(null);
@@ -54,12 +55,6 @@ const JuegoMandala = ({ juego, onFinish, onExit }) => {
     }
   }, [juegoIniciado, tiempoInicio]);
 
-  useEffect(() => {
-    if (canvasRef.current) {
-      dibujarMandala();
-    }
-  }, [dibujarMandala]);
-
   const iniciarJuego = (mandala) => {
     setMandalaSeleccionado(mandala);
     setJuegoIniciado(true);
@@ -87,6 +82,12 @@ const JuegoMandala = ({ juego, onFinish, onExit }) => {
     const path = new Path2D(mandalaSeleccionado.svg);
     ctx.stroke(path);
   }, [mandalaSeleccionado]);
+
+  useEffect(() => {
+    if (canvasRef.current) {
+      dibujarMandala();
+    }
+  }, [dibujarMandala]);
 
   const obtenerPosicionMouse = (e) => {
     const canvas = canvasRef.current;
@@ -191,26 +192,16 @@ const JuegoMandala = ({ juego, onFinish, onExit }) => {
 
   if (!juegoIniciado) {
     return (
-      <div className="card" style={{ maxWidth: 800, margin: "20px auto", padding: 40 }}>
-        <div style={{ textAlign: "center", marginBottom: 30 }}>
-          <div style={{ fontSize: "4rem", marginBottom: 10 }}>🎨</div>
+      <div className="juego-container size-xl">
+        <div className="juego-header">
+          <div className="juego-emoji">🎨</div>
           <h1>{juego.nombre}</h1>
-          <p style={{ color: "#666", fontSize: "1.1rem" }}>{juego.descripcion}</p>
+          <p>{juego.descripcion}</p>
         </div>
 
-        <div style={{ 
-          background: "#f0f9ff", 
-          padding: 30, 
-          borderRadius: 12, 
-          marginBottom: 30 
-        }}>
-          <h2 style={{ textAlign: "center", marginBottom: 20 }}>📋 Beneficios del Mandala</h2>
-          <ul style={{ 
-            textAlign: "left", 
-            maxWidth: 500, 
-            margin: "0 auto",
-            lineHeight: "2"
-          }}>
+        <div className="juego-instrucciones">
+          <h2>📋 Beneficios del Mandala</h2>
+          <ul>
             <li>🧘 Reduce el estrés y la ansiedad</li>
             <li>🎨 Estimula la creatividad</li>
             <li>💭 Mejora la concentración</li>
@@ -220,47 +211,19 @@ const JuegoMandala = ({ juego, onFinish, onExit }) => {
 
         <h2 style={{ textAlign: "center", marginBottom: 20 }}>Elige tu Mandala</h2>
 
-        <div style={{ 
-          display: "grid", 
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", 
-          gap: 20,
-          marginBottom: 30
-        }}>
+        <div className="juego-mandala-selection">
           {mandalas.map((mandala) => (
             <div
               key={mandala.id}
               onClick={() => iniciarJuego(mandala)}
-              style={{
-                border: "3px solid #E0E0E0",
-                borderRadius: 16,
-                padding: 20,
-                textAlign: "center",
-                cursor: "pointer",
-                transition: "all 0.3s",
-                background: "white"
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-5px)";
-                e.currentTarget.style.borderColor = "#4ECDC4";
-                e.currentTarget.style.boxShadow = "0 10px 30px rgba(78, 205, 196, 0.3)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.borderColor = "#E0E0E0";
-                e.currentTarget.style.boxShadow = "none";
-              }}
+              className="juego-mandala-item"
             >
               <svg width="150" height="150" viewBox="0 0 500 500">
-                <path d={mandala.svg} fill="none" stroke="#E0E0E0" strokeWidth="3" />
+                <path d={mandala.svg} fill="none" stroke="var(--color-text-secondary)" strokeWidth="3" />
               </svg>
-              <h3 style={{ marginTop: 15, color: "#333" }}>{mandala.nombre}</h3>
+              <h3>{mandala.nombre}</h3>
               <button
-                className="auth-button"
-                style={{ 
-                  width: "100%", 
-                  marginTop: 10,
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                }}
+                className="juego-btn juego-btn-primary"
                 onClick={(e) => {
                   e.stopPropagation();
                   iniciarJuego(mandala);
@@ -272,8 +235,8 @@ const JuegoMandala = ({ juego, onFinish, onExit }) => {
           ))}
         </div>
 
-        <div style={{ textAlign: "center" }}>
-          <button className="auth-button" style={{ background: "#9e9e9e" }} onClick={onExit}>
+        <div style={{ textAlign: "center", marginTop: 20 }}>
+          <button className="juego-btn juego-btn-secondary" onClick={onExit}>
             ← Volver
           </button>
         </div>
@@ -282,146 +245,86 @@ const JuegoMandala = ({ juego, onFinish, onExit }) => {
   }
 
   return (
-    <div className="card" style={{ maxWidth: 1200, margin: "20px auto", padding: 30 }}>
-      <div style={{ 
-        display: "grid", 
-        gridTemplateColumns: "1fr 350px", 
-        gap: 30,
-        alignItems: "start"
-      }}>
+    <div className="juego-container size-xl">
+      <div className="juego-mandala-layout">
         {/* Canvas de dibujo */}
-        <div>
-          <div style={{ 
-            border: "4px solid #E0E0E0", 
-            borderRadius: 16, 
-            overflow: "hidden",
-            boxShadow: "0 8px 30px rgba(0,0,0,0.1)",
-            background: "white"
-          }}>
-            <canvas
-              ref={canvasRef}
-              width={500}
-              height={500}
-              onMouseDown={iniciarDibujo}
-              onMouseMove={dibujar}
-              onMouseUp={terminarDibujo}
-              onMouseLeave={terminarDibujo}
-              onTouchStart={iniciarDibujo}
-              onTouchMove={dibujar}
-              onTouchEnd={terminarDibujo}
-              style={{ 
-                display: "block",
-                width: "100%",
-                height: "auto",
-                cursor: "crosshair",
-                touchAction: "none"
-              }}
-            />
-          </div>
+        <div className="juego-mandala-canvas-container">
+          <canvas
+            ref={canvasRef}
+            width={500}
+            height={500}
+            onMouseDown={iniciarDibujo}
+            onMouseMove={dibujar}
+            onMouseUp={terminarDibujo}
+            onMouseLeave={terminarDibujo}
+            onTouchStart={iniciarDibujo}
+            onTouchMove={dibujar}
+            onTouchEnd={terminarDibujo}
+            className="juego-mandala-canvas"
+          />
         </div>
 
         {/* Panel de controles */}
-        <div>
-          <div style={{ 
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            color: "white",
-            padding: 20,
-            borderRadius: 12,
-            marginBottom: 20
-          }}>
-            <h2 style={{ margin: 0, marginBottom: 10 }}>{mandalaSeleccionado.nombre}</h2>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.9rem" }}>
+        <div className="juego-mandala-panel">
+          <div className="juego-mandala-header">
+            <h2>{mandalaSeleccionado.nombre}</h2>
+            <div className="mandala-stats">
               <span>⏱️ {formatearTiempo(segundos)}</span>
               <span>🎨 {porcentajeCompletado}% completado</span>
             </div>
-            <div style={{ 
-              width: "100%", 
-              height: 8, 
-              background: "rgba(255,255,255,0.3)", 
-              borderRadius: 10,
-              overflow: "hidden",
-              marginTop: 10
-            }}>
-              <div style={{
-                width: `${porcentajeCompletado}%`,
-                height: "100%",
-                background: "white",
-                transition: "width 0.3s"
-              }} />
+            <div className="juego-progress">
+              <div 
+                className="progress-fill"
+                style={{ width: `${porcentajeCompletado}%` }}
+              />
             </div>
           </div>
 
           {/* Paleta de colores */}
-          <div style={{ marginBottom: 20 }}>
-            <h3 style={{ marginBottom: 15 }}>🎨 Colores</h3>
-            <div style={{ 
-              display: "grid", 
-              gridTemplateColumns: "repeat(4, 1fr)", 
-              gap: 10 
-            }}>
+          <div className="juego-mandala-colors">
+            <h3>🎨 Colores</h3>
+            <div className="juego-color-palette">
               {paleta.map((color) => (
                 <div
                   key={color}
                   onClick={() => setColorActual(color)}
-                  style={{
-                    width: "100%",
-                    aspectRatio: "1",
-                    background: color,
-                    border: colorActual === color ? "4px solid #333" : "2px solid #ddd",
-                    borderRadius: 8,
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                    boxShadow: colorActual === color ? "0 4px 12px rgba(0,0,0,0.3)" : "none"
-                  }}
+                  className={`color-swatch ${colorActual === color ? 'active' : ''}`}
+                  style={{ background: color }}
                 />
               ))}
             </div>
           </div>
 
           {/* Grosor del pincel */}
-          <div style={{ marginBottom: 20 }}>
-            <h3 style={{ marginBottom: 15 }}>✏️ Grosor del Pincel</h3>
+          <div className="juego-mandala-brush">
+            <h3>✏️ Grosor del Pincel</h3>
             <input
               type="range"
               min="1"
               max="10"
               value={grosorLinea}
               onChange={(e) => setGrosorLinea(Number(e.target.value))}
-              style={{ width: "100%" }}
+              className="brush-slider"
             />
-            <div style={{ textAlign: "center", marginTop: 5, color: "#666" }}>
-              {grosorLinea}px
-            </div>
+            <div className="brush-size">{grosorLinea}px</div>
           </div>
 
           {/* Botones de acción */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div className="juego-mandala-actions">
             <button
-              className="auth-button"
-              style={{ 
-                background: "#4CAF50",
-                width: "100%"
-              }}
+              className="juego-btn juego-btn-success"
               onClick={finalizarJuego}
             >
               ✅ Guardar y Finalizar
             </button>
             <button
-              className="auth-button"
-              style={{ 
-                background: "#FF9800",
-                width: "100%"
-              }}
+              className="juego-btn juego-btn-warning"
               onClick={limpiarCanvas}
             >
               🔄 Limpiar
             </button>
             <button
-              className="auth-button"
-              style={{ 
-                background: "#9e9e9e",
-                width: "100%"
-              }}
+              className="juego-btn juego-btn-secondary"
               onClick={onExit}
             >
               ⏸️ Salir

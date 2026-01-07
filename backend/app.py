@@ -333,13 +333,13 @@ def create_app():
         return {
             'status': 'ok' if db_status else 'error',
             'database': 'connected' if db_status else 'disconnected',
-            'message': 'MindVoice API funcionando correctamente'
+            'message': 'SerenVoice API funcionando correctamente'
         }, 200 if db_status else 500
 
     @app.route('/', methods=['GET'])
     def home():
         return {
-            'message': 'Bienvenido a MindVoice API',
+            'message': 'Bienvenido a SerenVoice API',
             'version': '2.0.0',
             'endpoints': {
                 'health': '/api/health',

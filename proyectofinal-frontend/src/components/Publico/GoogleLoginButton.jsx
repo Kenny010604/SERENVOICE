@@ -4,9 +4,16 @@ import { FaGoogle } from 'react-icons/fa';
 import authService from '../../services/authService';
 import { useNavigate } from 'react-router-dom';
 import secureLogger from '../../utils/secureLogger';
+import { GOOGLE_CLIENT_ID } from '../../config/api';
 
 const GoogleLoginButton = () => {
   const navigate = useNavigate();
+
+  // Si no hay client_id configurado, no renderizar el botón
+  if (!GOOGLE_CLIENT_ID) {
+    secureLogger.debug('[GOOGLE LOGIN] Client ID no configurado, botón oculto');
+    return null;
+  }
 
   const handleGoogleLogin = useGoogleLogin({
     scope: 'openid email profile https://www.googleapis.com/auth/user.birthday.read https://www.googleapis.com/auth/user.gender.read',

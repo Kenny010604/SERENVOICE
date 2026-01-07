@@ -1,54 +1,116 @@
 // src/utils/secureStorage.js
-// Almacenamiento seguro de tokens en memoria (no localStorage)
-// Esto previene ataques XSS que podrían robar tokens de localStorage
+// Almacenamiento seguro de tokens con soporte para persistencia
+// Soporta modo "Recuérdame" con localStorage y sesiones temporales con sessionStorage
 
 /**
- * SecureStorage - Almacena tokens sensibles en memoria en lugar de localStorage
+ * SecureStorage - Almacena tokens de forma segura
  * 
- * Ventajas:
- * - Los tokens no persisten en el navegador después de cerrar la pestaña
- * - No son accesibles via XSS attacks que lean localStorage
- * - Se combinan con httpOnly cookies para refresh tokens (manejado por backend)
- * 
- * Limitaciones:
- * - El usuario debe re-autenticarse al cerrar el navegador
- * - Se pierde el token al refrescar la página (usar refresh token endpoint)
+ * Modos:
+ * - Persistente (recordarme=true): Usa localStorage, persiste al cerrar navegador
+ * - Sesión (recordarme=false): Usa sessionStorage, se borra al cerrar navegador
  */
 
-// Closure para mantener tokens en memoria privada
+// Closure para mantener tokens
 const createSecureStorage = () => {
-  // Almacenamiento privado en closure (no accesible desde window/global)
+  // Estado privado
   let _accessToken = null;
   let _refreshToken = null;
   let _tokenExpiry = null;
+  let _isPersistent = false;
   
-  // Listeners para cambios de token
   const _listeners = new Set();
+  
+  // Claves de almacenamiento
+  const KEYS = {
+    ACCESS: 'sv_access',
+    REFRESH: 'sv_refresh',
+    EXPIRY: 'sv_expiry',
+    PERSISTENT: 'sv_persist'
+  };
 
-  // Notificar a todos los listeners cuando cambia el token
+  const getStorage = () => _isPersistent ? localStorage : sessionStorage;
+  
+  const save = () => {
+    try {
+      const s = getStorage();
+      if (_accessToken) s.setItem(KEYS.ACCESS, _accessToken);
+      if (_refreshToken) s.setItem(KEYS.REFRESH, _refreshToken);
+      if (_tokenExpiry) s.setItem(KEYS.EXPIRY, _tokenExpiry.toString());
+      s.setItem(KEYS.PERSISTENT, _isPersistent.toString());
+    } catch (e) {
+      console.warn('Error saving tokens:', e);
+    }
+  };
+  
+  const load = () => {
+    try {
+      // Primero intentar desde localStorage (sesiones persistentes)
+      let isPersist = localStorage.getItem(KEYS.PERSISTENT);
+      let s = localStorage;
+      
+      // Si no hay datos en localStorage, intentar sessionStorage
+      if (!localStorage.getItem(KEYS.ACCESS) && sessionStorage.getItem(KEYS.ACCESS)) {
+        isPersist = sessionStorage.getItem(KEYS.PERSISTENT) || 'false';
+        s = sessionStorage;
+      }
+      
+      _accessToken = s.getItem(KEYS.ACCESS);
+      _refreshToken = s.getItem(KEYS.REFRESH);
+      const exp = s.getItem(KEYS.EXPIRY);
+      _tokenExpiry = exp ? parseInt(exp, 10) : null;
+      _isPersistent = isPersist === 'true';
+      
+      // Verificar expiración
+      if (_tokenExpiry && Date.now() > _tokenExpiry) {
+        _accessToken = null;
+        _refreshToken = null;
+        _tokenExpiry = null;
+      }
+      
+      // Log de debug
+      if (_accessToken) {
+        console.log('[secureStorage] Tokens cargados:', {
+          hasAccess: !!_accessToken,
+          hasRefresh: !!_refreshToken,
+          isPersistent: _isPersistent,
+          from: s === localStorage ? 'localStorage' : 'sessionStorage'
+        });
+      }
+    } catch (e) {
+      console.warn('Error loading tokens:', e);
+    }
+  };
+
   const notifyListeners = () => {
     _listeners.forEach(listener => {
       try {
         listener(_accessToken);
       } catch (e) {
-        console.warn('SecureStorage listener error:', e);
+        console.warn('Listener error:', e);
       }
     });
   };
+  
+  load();
 
   return {
     /**
-     * Almacena el access token de forma segura
+     * Almacena el access token
      * @param {string|null} token - JWT access token
-     * @param {number} [expiresIn] - Tiempo en segundos hasta expiración
+     * @param {number} [expiresIn] - Segundos hasta expiración
+     * @param {boolean} [persistent] - Persistir al cerrar navegador
      */
-    setAccessToken(token, expiresIn = null) {
+    setAccessToken(token, expiresIn = null, persistent = false) {
       _accessToken = token;
+      _isPersistent = persistent;
+      
       if (token && expiresIn) {
         _tokenExpiry = Date.now() + (expiresIn * 1000);
       } else if (!token) {
         _tokenExpiry = null;
       }
+      
+      save();
       notifyListeners();
     },
 
@@ -66,11 +128,14 @@ const createSecureStorage = () => {
     },
 
     /**
-     * Almacena el refresh token (si no se usa httpOnly cookie)
+     * Almacena el refresh token
      * @param {string|null} token
+     * @param {boolean} [persistent] - Persistir al cerrar navegador
      */
-    setRefreshToken(token) {
+    setRefreshToken(token, persistent = false) {
       _refreshToken = token;
+      _isPersistent = persistent;
+      save();
     },
 
     /**
@@ -107,6 +172,20 @@ const createSecureStorage = () => {
       _accessToken = null;
       _refreshToken = null;
       _tokenExpiry = null;
+      _isPersistent = false;
+      
+      try {
+        [localStorage, sessionStorage].forEach(s => {
+          Object.values(KEYS).forEach(k => s.removeItem(k));
+        });
+        // Limpiar legacy
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('session_id');
+      } catch (e) {
+        console.warn('Error clearing storage:', e);
+      }
+      
       notifyListeners();
     },
 
@@ -129,8 +208,21 @@ const createSecureStorage = () => {
         hasToken: !!_accessToken,
         hasRefreshToken: !!_refreshToken,
         expiresAt: _tokenExpiry ? new Date(_tokenExpiry).toISOString() : null,
-        isExpiringSoon: this.isTokenExpiringSoon()
+        isExpiringSoon: this.isTokenExpiringSoon(),
+        isPersistent: _isPersistent
       };
+    },
+    
+    isPersistentMode() {
+      return _isPersistent;
+    },
+    
+    /**
+     * Recarga tokens desde storage (útil al inicializar la app)
+     */
+    reloadFromStorage() {
+      load();
+      notifyListeners();
     }
   };
 };

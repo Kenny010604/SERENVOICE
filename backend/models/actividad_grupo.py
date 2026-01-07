@@ -7,18 +7,18 @@ class ActividadGrupo:
     
     @staticmethod
     def create(id_grupo, id_creador, titulo, descripcion=None, tipo_actividad='tarea',
-               fecha_inicio=None, fecha_fin=None):
+               fecha_programada=None, duracion_estimada=None):
         """Crear una nueva actividad para un grupo"""
         query = """
             INSERT INTO actividades_grupo 
             (id_grupo, id_creador, titulo, descripcion, tipo_actividad, 
-             fecha_inicio, fecha_fin)
+             fecha_programada, duracion_estimada)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
         """
         return DatabaseConnection.execute_query(
             query, 
             (id_grupo, id_creador, titulo, descripcion, tipo_actividad, 
-             fecha_inicio, fecha_fin),
+             fecha_programada, duracion_estimada),
             fetch=False
         )
     
@@ -54,7 +54,7 @@ class ActividadGrupo:
         
         query += """
             GROUP BY ag.id_actividad
-            ORDER BY ag.fecha_inicio DESC, ag.id_actividad DESC
+            ORDER BY ag.fecha_programada DESC, ag.id_actividad DESC
         """
         return DatabaseConnection.execute_query(query, tuple(params))
     
@@ -68,8 +68,8 @@ class ActividadGrupo:
             WHERE ag.id_grupo = %s 
               AND ag.activo = 1 
               AND ag.completada = 0
-              AND ag.fecha_inicio >= CURDATE()
-            ORDER BY ag.fecha_inicio ASC
+              AND (ag.fecha_programada IS NULL OR ag.fecha_programada >= CURDATE())
+            ORDER BY ag.fecha_programada ASC
             LIMIT %s
         """
         return DatabaseConnection.execute_query(query, (id_grupo, limit))
@@ -78,7 +78,7 @@ class ActividadGrupo:
     def update(id_actividad, **kwargs):
         """Actualizar actividad"""
         allowed_fields = ['titulo', 'descripcion', 'tipo_actividad', 
-                 'fecha_inicio', 'fecha_fin', 'completada']
+                 'fecha_programada', 'duracion_estimada', 'completada']
         
         updates = []
         values = []
