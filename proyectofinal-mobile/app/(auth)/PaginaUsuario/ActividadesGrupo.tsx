@@ -1,24 +1,23 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert, ActivityIndicator } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useState, FormEvent } from 'react';
+import { useParams } from 'react-router-dom';
 import groupsService from '../../../constants/groupsService';
 
 // Definir el tipo de las actividades
 interface Actividad {
-  id?: string;
+  id?: string;  // El id es opcional para la creación de actividades
   titulo: string;
   descripcion: string;
 }
 
 export default function ActividadesGrupo() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const [actividades, setActividades] = useState<Actividad[]>([]);
+  const { id } = useParams<{ id: string }>(); // Definir el tipo del parámetro 'id' en la URL
+  const [actividades, setActividades] = useState<Actividad[]>([]); // Tipo para el estado de actividades
   const [nuevo, setNuevo] = useState<{ titulo: string; descripcion: string }>({ titulo: '', descripcion: '' });
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(true); // Estado de carga, tipo booleano
 
   // Función para cargar las actividades
   const cargar = async () => {
-    if (!id) return;
+    if (!id) return; // Asegurarse de que id no sea undefined
     try {
       const data = await groupsService.listarActividades(id);
       setActividades(data || []);
@@ -34,170 +33,62 @@ export default function ActividadesGrupo() {
   }, [id]);
 
   // Función para crear una nueva actividad
-  const crear = async () => {
-    if (!nuevo.titulo.trim()) {
-      Alert.alert('Error', 'El título es requerido');
-      return;
-    }
+  const crear = async (e: FormEvent) => {
+    e.preventDefault();
     try {
+      // Solo pasar titulo y descripcion al crear la actividad
       await groupsService.crearActividad(id!, {
-        titulo: nuevo.titulo,
-        descripcion: nuevo.descripcion,
-        id: ''
+          titulo: nuevo.titulo, descripcion: nuevo.descripcion,
+          id: ''
       });
       setNuevo({ titulo: '', descripcion: '' });
       cargar();
     } catch (e) {
       console.error(e);
-      Alert.alert('Error', 'No se pudo crear la actividad');
     }
   };
 
   // Función para eliminar una actividad
   const eliminar = async (actividadId: string) => {
-    Alert.alert(
-      'Confirmar',
-      '¿Eliminar esta actividad?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await groupsService.eliminarActividad(id!, actividadId);
-              cargar();
-            } catch (e) {
-              console.error(e);
-              Alert.alert('Error', 'No se pudo eliminar la actividad');
-            }
-          }
-        }
-      ]
-    );
+    if (!confirm('Eliminar actividad?')) return;
+    try {
+      await groupsService.eliminarActividad(id!, actividadId);
+      cargar();
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const renderActividad = ({ item }: { item: Actividad }) => (
-    <View style={styles.actividadItem}>
-      <View style={styles.actividadInfo}>
-        <Text style={styles.actividadTitulo}>{item.titulo}</Text>
-        <Text style={styles.actividadDesc}>{item.descripcion}</Text>
-      </View>
-      <TouchableOpacity 
-        style={styles.deleteBtn} 
-        onPress={() => eliminar(item.id!)}
-      >
-        <Text style={styles.deleteBtnText}>Eliminar</Text>
-      </TouchableOpacity>
-    </View>
-  );
-
   return (
-    <View style={styles.container}>
-      <Text style={styles.titulo}>Actividades del grupo</Text>
-      
-      <View style={styles.form}>
-        <TextInput
-          style={styles.input}
+    <div>
+      <h2>Actividades del grupo</h2>
+      <form onSubmit={crear} style={{ marginBottom: 12 }}>
+        <input
           placeholder="Título"
+          required
           value={nuevo.titulo}
-          onChangeText={(text) => setNuevo(n => ({ ...n, titulo: text }))}
+          onChange={e => setNuevo(n => ({ ...n, titulo: e.target.value }))}
         />
-        <TextInput
-          style={styles.input}
+        <input
           placeholder="Descripción"
           value={nuevo.descripcion}
-          onChangeText={(text) => setNuevo(n => ({ ...n, descripcion: text }))}
+          onChange={e => setNuevo(n => ({ ...n, descripcion: e.target.value }))}
         />
-        <TouchableOpacity style={styles.crearBtn} onPress={crear}>
-          <Text style={styles.crearBtnText}>Crear</Text>
-        </TouchableOpacity>
-      </View>
+        <button type="submit">Crear</button>
+      </form>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#4A90A4" />
+        <div>Cargando...</div>
       ) : (
-        <FlatList
-          data={actividades}
-          keyExtractor={(item) => item.id || Math.random().toString()}
-          renderItem={renderActividad}
-          ListEmptyComponent={
-            <Text style={styles.emptyText}>No hay actividades</Text>
-          }
-        />
+        <ul>
+          {actividades.map(a => (
+            <li key={a.id}>
+              <strong>{a.titulo}</strong> - {a.descripcion}{' '}
+              <button onClick={() => eliminar(a.id!)}>Eliminar</button>
+            </li>
+          ))}
+        </ul>
       )}
-    </View>
+    </div>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: '#fff',
-  },
-  titulo: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#333',
-  },
-  form: {
-    marginBottom: 20,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 10,
-    fontSize: 16,
-  },
-  crearBtn: {
-    backgroundColor: '#4A90A4',
-    padding: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  crearBtnText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  actividadItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  actividadInfo: {
-    flex: 1,
-  },
-  actividadTitulo: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  actividadDesc: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  deleteBtn: {
-    backgroundColor: '#e74c3c',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 6,
-  },
-  deleteBtnText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  emptyText: {
-    textAlign: 'center',
-    color: '#999',
-    marginTop: 20,
-  },
-});

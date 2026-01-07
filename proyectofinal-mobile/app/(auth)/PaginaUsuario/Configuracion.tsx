@@ -1,124 +1,112 @@
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
-import { useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import React, { useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { FaUser, FaBell } from "react-icons/fa";
+import { IconType } from "react-icons";
 
 // Tipo de cada opción
 interface ConfigOption {
   title: string;
   description: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: IconType;
   path: string;
 }
 
 const Configuracion: React.FC = () => {
-  const router = useRouter();
+  const navigate = useNavigate();
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const els = containerRef.current.querySelectorAll(".reveal");
+    els.forEach(el => el.classList.add("reveal-visible"));
+  }, []);
 
   const configOptions: ConfigOption[] = [
     {
       title: "Mi Perfil",
       description: "Ver y editar tu información personal",
-      icon: "person-outline",
+      icon: FaUser,
       path: "/perfil",
     },
     {
       title: "Notificaciones",
       description: "Configurar preferencias de notificaciones",
-      icon: "notifications-outline",
+      icon: FaBell,
       path: "/notificaciones/configuracion",
     },
   ];
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.titulo}>Configuración</Text>
-      <Text style={styles.subtitulo}>
+    <main
+      ref={containerRef}
+      style={{
+        padding: "2rem",
+        minHeight: "100vh",
+        backgroundColor: "#f4f6f8",
+      }}
+    >
+      <h2 style={{ marginBottom: "0.5rem" }}>Configuración</h2>
+      <p style={{ marginBottom: "1.5rem", color: "#555" }}>
         Administra tu perfil y preferencias
-      </Text>
+      </p>
 
-      <View style={styles.optionsContainer}>
-        {configOptions.map(option => (
-          <TouchableOpacity
-            key={option.path}
-            style={styles.card}
-            onPress={() => router.push(option.path as any)}
-          >
-            <Ionicons name={option.icon} size={36} color="#4f46e5" style={styles.icon} />
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+          gap: "1.5rem",
+        }}
+      >
+        {configOptions.map(option => {
+          const Icon = option.icon;
 
-            <View>
-              <Text style={styles.cardTitle}>{option.title}</Text>
-              <Text style={styles.cardDesc}>{option.description}</Text>
-            </View>
-
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => router.push(option.path as any)}
+          return (
+            <div
+              key={option.path}
+              className="reveal"
+              style={{
+                backgroundColor: "#ffffff",
+                padding: "1.5rem",
+                borderRadius: 14,
+                boxShadow: "0 6px 20px rgba(0,0,0,0.08)",
+                cursor: "pointer",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+              }}
+              onClick={() => navigate(option.path)}
             >
-              <Text style={styles.buttonText}>Ir a {option.title}</Text>
-            </TouchableOpacity>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </ScrollView>
+              <Icon size={36} style={{ marginBottom: "1rem", color: "#4f46e5" }} />
+
+              <div>
+                <h3 style={{ marginBottom: "0.4rem" }}>
+                  {option.title}
+                </h3>
+                <p style={{ color: "#666" }}>
+                  {option.description}
+                </p>
+              </div>
+
+              <button
+                style={{
+                  marginTop: "1.2rem",
+                  padding: "0.6rem",
+                  borderRadius: 8,
+                  border: "none",
+                  backgroundColor: "#4f46e5",
+                  color: "#fff",
+                  cursor: "pointer",
+                }}
+              >
+                Ir a {option.title}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </main>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: "#f4f6f8",
-  },
-  titulo: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 8,
-    color: "#333",
-  },
-  subtitulo: {
-    fontSize: 16,
-    color: "#555",
-    marginBottom: 24,
-  },
-  optionsContainer: {
-    gap: 16,
-  },
-  card: {
-    backgroundColor: "#ffffff",
-    padding: 20,
-    borderRadius: 14,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 4,
-    marginBottom: 16,
-  },
-  icon: {
-    marginBottom: 12,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 6,
-    color: "#333",
-  },
-  cardDesc: {
-    fontSize: 14,
-    color: "#666",
-  },
-  button: {
-    marginTop: 16,
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: "#4f46e5",
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 14,
-  },
-});
 
 export default Configuracion;

@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import axios from "axios";
-import { Config } from "../../constants";
 
 export default function HomeScreen() {
   const [mensaje, setMensaje] = useState("Conectando...");
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    const URL = `${Config.API_URL}/`;
+    const URL = "http://192.168.1.61:5000/";
 
     axios
       .get(URL)

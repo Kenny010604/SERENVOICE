@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Text, TextInput, TouchableOpacity, ScrollView, Alert } from "react-native";
+import { Text, TextInput, TouchableOpacity, ScrollView } from "react-native";
 import { useAuth } from "../../hooks/useAuth";
 import type { UserData } from "../../hooks/useAuth";
 
@@ -24,11 +24,11 @@ export default function Profile() {
     });
 
     if (!res.success) {
-      Alert.alert("Error", "Error al actualizar perfil");
+      alert("Error al actualizar perfil");
       return;
     }
 
-    Alert.alert("Éxito", "Perfil actualizado");
+    alert("Perfil actualizado");
   };
 
   if (loading || !form) return <Text>Cargando...</Text>;
