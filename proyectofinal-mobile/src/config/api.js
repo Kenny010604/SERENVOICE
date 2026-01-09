@@ -7,7 +7,7 @@
 // - En dispositivo físico: usa la IP de tu computadora
 
 // URL base del servidor
-const DEV_SERVER_URL = 'http://192.168.1.33:5000';
+const DEV_SERVER_URL = 'http://192.168.54.14:5000';
 const PROD_SERVER_URL = 'https://api.serenvoice.com';
 
 const getServerUrl = () => {

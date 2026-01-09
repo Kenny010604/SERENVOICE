@@ -1,5 +1,10 @@
+// Config.ts - Re-exporta las variables de env.ts para compatibilidad
+import { API_URL, GOOGLE_CLIENT_ID, ENVIRONMENT } from './env';
+
 const Config = {
-  API_URL: "http://192.168.1.56:5000", // ← Cambia a la IP correcta (sin /api)
+  API_URL,
+  GOOGLE_CLIENT_ID,
+  ENVIRONMENT,
 };
 
 export default Config;

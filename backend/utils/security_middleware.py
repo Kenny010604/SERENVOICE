@@ -127,6 +127,10 @@ def get_allowed_origins() -> list:
         "http://127.0.0.1:8082",
         "http://localhost:19006",
         "http://127.0.0.1:19006",
+        # IP del servidor para aplicación móvil
+        "http://192.168.54.14:5000",
+        "http://192.168.54.14:8081",
+        "http://192.168.54.14:19006",
     ]
     
     # Orígenes de producción desde variable de entorno

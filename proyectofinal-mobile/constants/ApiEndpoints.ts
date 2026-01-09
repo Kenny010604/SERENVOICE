@@ -23,7 +23,8 @@ const ApiEndpoints = {
 
   RECOMMENDATIONS: {
     LIST: "/api/recomendaciones",
-    APPLY: "/api/recomendaciones/:id/apply",
+    APPLY: "/api/recomendaciones/:id/aplicar",
+    UTIL: "/api/recomendaciones/:id/util",
   },
 
   HEALTH: "/api/health",

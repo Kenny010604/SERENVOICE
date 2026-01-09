@@ -2,5 +2,5 @@ export { default as ApiEndpoints } from './ApiEndpoints';
 export { default as ApiClient } from './ApiClient';
 export { default as Config } from './Config';
 
-// Export directo de API_URL para compatibilidad
-export const API_URL = "http://192.168.1.56:5000";
+// Re-exportar variables de entorno para compatibilidad
+export { API_URL, GOOGLE_CLIENT_ID, ENVIRONMENT } from './env';

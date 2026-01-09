@@ -290,6 +290,14 @@ def create_app():
     except Exception as e:
         print(f"[ROUTES] grupos_bp NO cargado: {e}")
 
+    # Sesiones Grupales - Actividades con análisis de voz grupal
+    try:
+        from routes.sesion_grupal_routes import bp as sesion_grupal_bp
+        app.register_blueprint(sesion_grupal_bp)
+        print("[ROUTES] sesion_grupal_bp OK - /api/sesiones-grupales")
+    except Exception as e:
+        print(f"[ROUTES] sesion_grupal_bp NO cargado: {e}")
+
     if HAS_JUEGOS and juegos_bp:
         app.register_blueprint(juegos_bp)
         print("[ROUTES] juegos_bp OK")

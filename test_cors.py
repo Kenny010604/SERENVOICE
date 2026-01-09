@@ -3,7 +3,7 @@ import requests
 # Test OPTIONS (preflight)
 print("Testing OPTIONS preflight request...")
 r = requests.options(
-    'http://192.168.54.16:5000/api/health',
+    'http://192.168.54.14:5000/api/health',
     headers={
         'Origin': 'http://localhost:8081',
         'Access-Control-Request-Method': 'GET'
@@ -20,7 +20,7 @@ print(f"  Access-Control-Allow-Credentials: {r.headers.get('Access-Control-Allow
 # Test GET request
 print("\n\nTesting GET request...")
 r2 = requests.get(
-    'http://192.168.54.16:5000/api/health',
+    'http://192.168.54.14:5000/api/health',
     headers={'Origin': 'http://localhost:8081'}
 )
 

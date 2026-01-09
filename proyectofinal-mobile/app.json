@@ -12,6 +12,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.serenvoice.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -44,6 +45,15 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "apiUrl": "http://localhost:5000",
+      "googleClientId": "11587771642-015ng6us09ecc6d38lgsc4qhq8d4bjub.apps.googleusercontent.com",
+      "environment": "development",
+      "router": {},
+      "eas": {
+        "projectId": "0fc31c2d-1da4-4ef6-b5e5-d5fd736c8a3a"
+      }
     }
   }
 }

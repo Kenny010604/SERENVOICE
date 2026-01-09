@@ -14,6 +14,7 @@ import {
   Mic,
   AlertTriangle,
 } from "lucide-react-native";
+import { useRouter } from "expo-router";
 
 import { useAnalisis } from "../../../hooks/useAnalisis";
 import { useAuth } from "../../../hooks/useAuth";
@@ -29,17 +30,16 @@ interface HistorialItem {
 }
 
 const Historial: React.FC = () => {
+  const router = useRouter();
   const { user } = useAuth(); // 👈 usuario logueado
   const { getHistory, loading } = useAnalisis();
 
   const [history, setHistory] = useState<HistorialItem[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user) {
-      cargarHistorial();
-    }
-  }, [user]);
+  // Helper type-guard to validate numeric values used across the component
+  const isValidNumber = (v: unknown): v is number =>
+    typeof v === "number" && !isNaN(v as number) && isFinite(v as number);
 
   const cargarHistorial = async () => {
     try {
@@ -66,6 +66,26 @@ const Historial: React.FC = () => {
       console.error("❌ Error historial:", err.message);
       setError("No se pudo cargar el historial del usuario.");
     }
+  };
+
+  useEffect(() => {
+    if (user) {
+      cargarHistorial();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  // Función para formatear fecha
+  const formatearFecha = (fecha: string): string => {
+    if (!fecha) return "—";
+    const date = new Date(fecha);
+    return date.toLocaleDateString('es-ES', { 
+      day: 'numeric', 
+      month: 'long', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   // =============================
@@ -109,14 +129,12 @@ const Historial: React.FC = () => {
 
       {/* ANÁLISIS BREVE */}
       {history.length > 0 && (() => {
-        // Solo tomar valores numéricos válidos
-        const isValidNumber = v => typeof v === 'number' && !isNaN(v) && isFinite(v);
         const analizados = history.filter(h => isValidNumber(h.estres) && isValidNumber(h.ansiedad));
         const promEstres = analizados.length
-          ? analizados.reduce((sum, h) => sum + Number(h.estres), 0) / analizados.length
+          ? analizados.reduce((sum: number, h: HistorialItem) => sum + (h.estres as number), 0) / analizados.length
           : null;
         const promAnsiedad = analizados.length
-          ? analizados.reduce((sum, h) => sum + Number(h.ansiedad), 0) / analizados.length
+          ? analizados.reduce((sum: number, h: HistorialItem) => sum + (h.ansiedad as number), 0) / analizados.length
           : null;
         return (
           <View style={styles.summaryCard}>
@@ -149,7 +167,7 @@ const Historial: React.FC = () => {
       ) : (
         history.map((item, index) => (
           <View key={item.id ? `item-${item.id}` : `item-${index}`} style={styles.card}>
-            <Text style={styles.date}>{item.fecha}</Text>
+            <Text style={styles.date}>{formatearFecha(item.fecha)}</Text>
 
             <View style={styles.row}>
               <Mic size={18} color="#6B7280" />
@@ -168,7 +186,6 @@ const Historial: React.FC = () => {
             </View>
 
             {(() => {
-              const isValidNumber = v => typeof v === 'number' && !isNaN(v) && isFinite(v);
               if (isValidNumber(item.estres) && isValidNumber(item.ansiedad)) {
                 return (
                   <View style={styles.results}>
@@ -192,7 +209,10 @@ const Historial: React.FC = () => {
               }
             })()}
 
-            <TouchableOpacity style={styles.button}>
+            <TouchableOpacity 
+              style={styles.button}
+              onPress={() => router.push(`/(auth)/PaginaUsuario/resultado-detallado/${item.id}`)}
+            >
               <Eye size={18} color="#FFF" />
               <Text style={styles.buttonText}>Ver detalle</Text>
             </TouchableOpacity>
