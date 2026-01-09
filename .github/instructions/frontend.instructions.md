@@ -1,12 +1,8 @@
----
-applyTo: '**'
----
-
 # SerenVoice Frontend - GitHub Copilot Instructions
 
 > **Versión**: 2.0.0  
 > **Última actualización**: Enero 2026  
-> **Aplica a**: `**`
+> **Aplica a**: `proyectofinal-frontend/**`
 
 ---
 
