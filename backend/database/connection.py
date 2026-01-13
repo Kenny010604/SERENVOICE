@@ -24,7 +24,8 @@ class DatabaseConnection:
         try:
             DatabaseConnection.pool = pooling.MySQLConnectionPool(
                 pool_name="serenvoice_pool",
-                pool_size=10,
+                pool_size=32,  # Aumentado para soportar más conexiones concurrentes
+                pool_reset_session=True,  # Resetear sesión al devolver al pool
                 host=os.getenv('DB_HOST', 'localhost'),
                 user=os.getenv('DB_USER', 'root'),
                 password=os.getenv('DB_PASSWORD', ''),
@@ -33,8 +34,10 @@ class DatabaseConnection:
                 charset='utf8mb4',
                 collation='utf8mb4_unicode_ci',
                 use_unicode=True,
+                connection_timeout=10,  # Timeout de conexión
+                autocommit=True,  # Auto-commit para lecturas
             )
-            print("[DB] Pool de conexiones inicializado correctamente (UTF-8)")
+            print("[DB] Pool de conexiones inicializado correctamente (UTF-8, pool_size=32)")
         except Error as e:
             print(f"[DB] Error al crear pool: {e}")
             raise

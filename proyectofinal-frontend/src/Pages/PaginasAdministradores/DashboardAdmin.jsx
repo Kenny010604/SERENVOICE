@@ -10,9 +10,6 @@ import {
   FaHistory,
   FaCheckCircle,
   FaServer,
-  FaArrowUp,
-  FaArrowDown,
-  FaClipboardList,
   FaClock,
   FaExclamationTriangle,
 } from "react-icons/fa";
@@ -33,28 +30,36 @@ const DashboardAdmin = () => {
   const [gruposActivos, setGruposActivos] = useState(0);
   const [analisisHoy, setAnalisisHoy] = useState(0);
   const [recentActivity, setRecentActivity] = useState([]);
+  const [alertasPendientes, setAlertasPendientes] = useState(0);
 
-  // Fetch de datos
+  // Fetch de datos - optimizado para evitar saturar el pool de conexiones
   const fetchDashboard = async () => {
     try {
-      const [statsRes, profileRes, gruposRes, analisisRes] = await Promise.all([
-        apiClient.get(api.endpoints.usuarios.statistics),
-        apiClient.get(api.endpoints.users.me),
-        apiClient.get(api.endpoints.grupos.estadisticas).catch(() => ({ data: { data: { activos: 0 } } })),
-        apiClient.get(api.endpoints.analisis.today).catch(() => ({ data: { data: { total: 0 } } })),
+      // Primeras llamadas críticas (stats y perfil)
+      const [statsRes, profileRes] = await Promise.all([
+        apiClient.get(api.endpoints.usuarios.statistics).catch(err => ({ data: { success: false }, error: err })),
+        apiClient.get(api.endpoints.users.me).catch(err => ({ data: { success: false }, error: err })),
       ]);
 
-      if (statsRes.data.success) {
+      if (statsRes.data?.success) {
         setStatistics(statsRes.data.data);
-      } else {
-        throw new Error(statsRes.data.message || "Error al cargar estadísticas");
       }
 
-      if (profileRes.data.success) {
+      if (profileRes.data?.success) {
         setAdminData(profileRes.data.data);
-      } else {
-        throw new Error(profileRes.data.message || "Error al cargar perfil");
       }
+
+      // Si ambas llamadas críticas fallaron, lanzar error
+      if (!statsRes.data?.success && !profileRes.data?.success) {
+        throw new Error("Error al cargar datos principales del dashboard");
+      }
+
+      // Segundas llamadas (datos secundarios) - con catch individual
+      const [gruposRes, analisisRes, alertasRes] = await Promise.all([
+        apiClient.get(api.endpoints.grupos.estadisticas).catch(() => ({ data: { data: { activos: 0 } } })),
+        apiClient.get(api.endpoints.analisis.today).catch(() => ({ data: { data: { total: 0 } } })),
+        apiClient.get(api.endpoints.alertas.active).catch(() => ({ data: { data: [] } })),
+      ]);
 
       // Grupos activos
       let activos = 0;
@@ -95,12 +100,97 @@ const DashboardAdmin = () => {
       }
       setAnalisisHoy(analisisTotal || 0);
 
-      setRecentActivity([
-        { type: "user", text: "Nuevo usuario registrado", time: "Hace 5 min", icon: FaUsers, color: "#5ad0d2" },
-        { type: "analysis", text: "12 análisis de voz completados", time: "Hace 15 min", icon: FaChartLine, color: "#2196f3" },
-        { type: "alert", text: "Alerta crítica resuelta", time: "Hace 30 min", icon: FaCheckCircle, color: "#4caf50" },
-        { type: "game", text: "Sesión de juego finalizada", time: "Hace 1 hora", icon: FaGamepad, color: "#9c27b0" },
-      ]);
+      // Formatear tiempo relativo
+      const formatTimeAgo = (dateStr) => {
+        if (!dateStr) return 'Hace un momento';
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+        
+        if (diffMins < 1) return 'Hace un momento';
+        if (diffMins < 60) return `Hace ${diffMins} min`;
+        if (diffHours < 24) return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+        return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
+      };
+
+      // Recopilar actividad real de las fuentes disponibles
+      const actividadReal = [];
+
+      // 1. Análisis de voz (basado en el total de hoy)
+      if (analisisTotal > 0) {
+        actividadReal.push({
+          type: 'analysis',
+          text: `${analisisTotal} análisis de voz completado${analisisTotal > 1 ? 's' : ''} hoy`,
+          time: 'Hoy',
+          date: new Date(),
+          icon: FaChartLine,
+          color: '#2196f3',
+        });
+      }
+
+      // 2. Alertas activas
+      const alertasData = alertasRes?.data?.data || alertasRes?.data || [];
+      const alertasArray = Array.isArray(alertasData) ? alertasData : [];
+      // Contador de alertas pendientes (usar para el card)
+      setAlertasPendientes(Array.isArray(alertasArray) ? alertasArray.length : 0);
+      const alertasRecientes = alertasArray
+        .sort((a, b) => new Date(b.fecha_creacion || b.created_at) - new Date(a.fecha_creacion || a.created_at))
+        .slice(0, 3);
+      
+      alertasRecientes.forEach(alerta => {
+        actividadReal.push({
+          type: 'alert',
+          text: alerta.mensaje || alerta.descripcion || 'Alerta del sistema',
+          time: formatTimeAgo(alerta.fecha_creacion || alerta.created_at),
+          date: new Date(alerta.fecha_creacion || alerta.created_at),
+          icon: alerta.nivel === 'critico' ? FaExclamationTriangle : FaCheckCircle,
+          color: alerta.nivel === 'critico' ? '#f44336' : '#4caf50',
+        });
+      });
+
+      // 3. Grupos activos (información general)
+      if (activos > 0) {
+        actividadReal.push({
+          type: 'group',
+          text: `${activos} grupo${activos > 1 ? 's' : ''} activo${activos > 1 ? 's' : ''} en el sistema`,
+          time: 'Ahora',
+          date: new Date(),
+          icon: FaUserFriends,
+          color: '#9c27b0',
+        });
+      }
+
+      // 4. Info de usuarios del sistema (de las estadísticas)
+      if (statsRes.data?.data?.totalUsuarios > 0) {
+        actividadReal.push({
+          type: 'user',
+          text: `${statsRes.data.data.totalUsuarios} usuarios registrados en el sistema`,
+          time: 'Total',
+          date: new Date(Date.now() - 1000), // Ligeramente antes para ordenar
+          icon: FaUsers,
+          color: '#5ad0d2',
+        });
+      }
+
+      // Ordenar por fecha más reciente y tomar los primeros 4
+      actividadReal.sort((a, b) => (b.date || 0) - (a.date || 0));
+      const actividadFinal = actividadReal.slice(0, 4);
+
+      // Si no hay actividad, mostrar mensaje informativo
+      if (actividadFinal.length === 0) {
+        actividadFinal.push({
+          type: 'info',
+          text: 'No hay actividad reciente registrada',
+          time: 'Ahora',
+          icon: FaCheckCircle,
+          color: '#4caf50',
+        });
+      }
+
+      setRecentActivity(actividadFinal);
 
     } catch (err) {
       console.error("Error cargando datos del dashboard:", err);
@@ -184,9 +274,9 @@ const DashboardAdmin = () => {
       changeType: "positive",
     },
     {
-      title: "Reportes Pendientes",
-      value: statistics?.reportesRespuesta ?? statistics?.reportes_respuesta ?? statistics?.reportes ?? 0,
-      icon: FaClipboardList,
+      title: "Alertas Pendientes",
+      value: alertasPendientes || (statistics?.alertasPendientes ?? statistics?.alertas_pendientes ?? statistics?.alertas ?? 0),
+      icon: FaExclamationTriangle,
       color: "#f44336",
       bgColor: "rgba(244, 67, 54, 0.15)",
     },

@@ -1,14 +1,58 @@
-import React from 'react';
+import React, { useState, useMemo, useCallback, memo } from 'react';
 import PropTypes from 'prop-types';
-import { AlertTriangle, Eye } from 'lucide-react';
+import { AlertTriangle, Eye, Filter } from 'lucide-react';
+import ChartWrapper from './ChartWrapper';
+import { generateAlertasInsights } from './insightsUtils';
 
 /**
  * Componente de tabla para mostrar alertas críticas recientes
- * @param {Object} props - Props del componente
- * @param {Array} props.data - Array de objetos con datos de alertas
- * @param {Function} props.onViewDetails - Callback para ver detalles de alerta
+ * Con filtros LOCALES que no recargan la página
  */
-const AlertasTable = ({ data = [], onViewDetails }) => {
+const AlertasTable = memo(({ data = [], onViewDetails }) => {
+  // Estado LOCAL de filtros
+  const [filters, setFilters] = useState({
+    tipoAlerta: 'todos',
+    nivelMinimo: 0,
+    ordenarPor: 'fecha',
+  });
+
+  // Filtrar y ordenar datos localmente
+  const filteredData = useMemo(() => {
+    if (!data || data.length === 0) return [];
+    
+    let result = [...data];
+    
+    // Filtrar por tipo
+    if (filters.tipoAlerta !== 'todos') {
+      result = result.filter(a => a.tipo_alerta === filters.tipoAlerta);
+    }
+    
+    // Filtrar por nivel mínimo
+    if (filters.nivelMinimo > 0) {
+      result = result.filter(a => (a.nivel_ansiedad || 0) >= filters.nivelMinimo);
+    }
+    
+    // Ordenar
+    if (filters.ordenarPor === 'fecha') {
+      result.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+    } else if (filters.ordenarPor === 'nivel') {
+      result.sort((a, b) => (b.nivel_ansiedad || 0) - (a.nivel_ansiedad || 0));
+    }
+    
+    return result;
+  }, [data, filters]);
+
+  // Generar insights
+  const insights = useMemo(() => {
+    return generateAlertasInsights(data);
+  }, [data]);
+
+  // Obtener tipos únicos de alertas
+  const tiposUnicos = useMemo(() => {
+    if (!data || data.length === 0) return [];
+    return [...new Set(data.map(a => a.tipo_alerta).filter(Boolean))];
+  }, [data]);
+
   const getTipoAlertaBadge = (tipo) => {
     const styles = {
       'riesgo_alto': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
@@ -19,7 +63,7 @@ const AlertasTable = ({ data = [], onViewDetails }) => {
 
     return (
       <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[tipo] || styles.inactividad}`}>
-        {tipo.replace('_', ' ')}
+        {tipo?.replace('_', ' ')}
       </span>
     );
   };
@@ -42,38 +86,84 @@ const AlertasTable = ({ data = [], onViewDetails }) => {
     });
   };
 
+  // Componente de filtros
+  const filtersComponent = (
+    <div className="flex flex-wrap gap-4 items-end">
+      <div>
+        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+          Tipo de alerta
+        </label>
+        <select
+          value={filters.tipoAlerta}
+          onChange={(e) => setFilters(prev => ({ ...prev, tipoAlerta: e.target.value }))}
+          className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600"
+        >
+          <option value="todos">Todos los tipos</option>
+          {tiposUnicos.map(tipo => (
+            <option key={tipo} value={tipo}>{tipo?.replace('_', ' ')}</option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+          Nivel mínimo
+        </label>
+        <select
+          value={filters.nivelMinimo}
+          onChange={(e) => setFilters(prev => ({ ...prev, nivelMinimo: Number(e.target.value) }))}
+          className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600"
+        >
+          <option value={0}>Sin mínimo</option>
+          <option value={40}>≥ 40% (Moderado+)</option>
+          <option value={60}>≥ 60% (Alto+)</option>
+          <option value={80}>≥ 80% (Muy Alto)</option>
+        </select>
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+          Ordenar por
+        </label>
+        <select
+          value={filters.ordenarPor}
+          onChange={(e) => setFilters(prev => ({ ...prev, ordenarPor: e.target.value }))}
+          className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600"
+        >
+          <option value="fecha">Más recientes</option>
+          <option value="nivel">Mayor nivel</option>
+        </select>
+      </div>
+    </div>
+  );
+
   if (!data || data.length === 0) {
     return (
-      <div>
-        <div className="flex items-center gap-2 mb-4">
-          <AlertTriangle className="w-5 h-5 text-orange-500" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Alertas Críticas Recientes
-          </h3>
-        </div>
+      <ChartWrapper
+        title="Alertas Críticas Recientes"
+        description="Usuarios que requieren atención inmediata"
+        filters={filtersComponent}
+        insights={['[OK] No hay alertas críticas en este momento.']}
+        helpText="Esta tabla muestra las alertas generadas por el sistema cuando se detectan patrones de preocupación en los análisis de usuarios."
+      >
         <div className="flex items-center justify-center h-48">
-          <p className="text-gray-500 dark:text-gray-400">
-            No hay alertas críticas en este momento
-          </p>
+          <div className="text-center">
+            <AlertTriangle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+            <p className="text-gray-500 dark:text-gray-400">
+              No hay alertas críticas en este momento
+            </p>
+          </div>
         </div>
-      </div>
+      </ChartWrapper>
     );
   }
 
   return (
-    <div>
-      <div className="mb-4">
-        <div className="flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5 text-red-500" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Alertas Críticas Recientes
-          </h3>
-          <span className="ml-auto bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 px-3 py-1 rounded-full text-sm font-medium">
-            {data.length} {data.length === 1 ? 'alerta' : 'alertas'}
-          </span>
-        </div>
-      </div>
-
+    <ChartWrapper
+      title="Alertas Críticas Recientes"
+      description={`${filteredData.length} alertas encontradas`}
+      filters={filtersComponent}
+      insights={insights}
+      helpText="Muestra usuarios con patrones de ansiedad o estrés que requieren seguimiento. Usa los filtros para enfocarte en tipos específicos o niveles de severidad."
+    >
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-50 dark:bg-gray-700/50">
@@ -99,7 +189,7 @@ const AlertasTable = ({ data = [], onViewDetails }) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-            {data.map((alerta) => (
+            {filteredData.map((alerta) => (
               <tr 
                 key={alerta.id_alerta}
                 className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
@@ -143,9 +233,17 @@ const AlertasTable = ({ data = [], onViewDetails }) => {
           </tbody>
         </table>
       </div>
-    </div>
+      
+      {filteredData.length === 0 && data.length > 0 && (
+        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+          No hay alertas que coincidan con los filtros seleccionados
+        </div>
+      )}
+    </ChartWrapper>
   );
-};
+});
+
+AlertasTable.displayName = 'AlertasTable';
 
 AlertasTable.propTypes = {
   data: PropTypes.arrayOf(

@@ -1,3 +1,38 @@
+# Frontend - SerenVoice (proyectofinal-frontend)
+
+Resumen rápido
+- Aplicación web construida con React 19 + Vite 7 y MUI 7. Consume la API del backend para autenticación, carga de audio y análisis.
+
+Requisitos
+- Node.js 18+ y npm
+
+Instalación y desarrollo
+```bash
+cd proyectofinal-frontend
+npm install
+npm run dev
+```
+
+Build de producción
+```bash
+npm run build
+# los archivos resultantes quedan en dist/
+```
+
+Variables de entorno
+- `VITE_API_URL` (URL base del backend)
+- `VITE_GOOGLE_CLIENT_ID` (si usa OAuth con Google)
+
+Lint y tests
+- `npm run lint` (ESLint)
+- Agregar Vitest + React Testing Library en `src/__tests__/` como tarea pendiente.
+
+Docker (producción)
+- `Dockerfile` incluido para construir imagen estática.
+
+Notas y pendientes
+- Integrar `secureStorage` para tokens (no `localStorage`).
+- Añadir pruebas unitarias y de integración.
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.

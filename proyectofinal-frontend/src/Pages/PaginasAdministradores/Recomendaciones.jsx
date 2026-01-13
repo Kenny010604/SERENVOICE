@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import apiClient from "../../services/apiClient";
 import api from "../../config/api";
-import { FaLightbulb, FaFilter, FaChartPie, FaDownload, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import { FaLightbulb, FaFilter, FaChartPie, FaDownload, FaCheckCircle, FaTimesCircle, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import PageCard from "../../components/Shared/PageCard";
 import "../../global.css";
 import "../../styles/StylesAdmin/AdminPages.css";
@@ -13,6 +13,10 @@ const Recomendaciones = () => {
   const [msg, setMsg] = useState("");
   const [filter, setFilter] = useState({ tipo: "todos", prioridad: "todas", aplicada: "todas" });
   const [stats, setStats] = useState({});
+  
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
 
   useEffect(() => {
     cargarRecomendaciones();
@@ -54,7 +58,20 @@ const Recomendaciones = () => {
     }
 
     setFilteredRecs(filtered);
+    setCurrentPage(1); // Reset a página 1 cuando cambian los filtros
   }, [filter, recomendaciones]);
+
+  // Calcular datos paginados
+  const totalPages = Math.ceil(filteredRecs.length / perPage);
+  const paginatedRecs = useMemo(() => {
+    const start = (currentPage - 1) * perPage;
+    return filteredRecs.slice(start, start + perPage);
+  }, [filteredRecs, currentPage, perPage]);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(Math.min(Math.max(1, page), totalPages));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const exportRecomendaciones = () => {
     const csv = [
@@ -102,8 +119,7 @@ const Recomendaciones = () => {
   };
 
   return (
-    <div className="admin-recomendaciones-page">
-      <div className="admin-page-content">
+    <div className="page-content">
         {/* Card con título y filtros */}
         <PageCard size="xl">
           <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
@@ -196,7 +212,7 @@ const Recomendaciones = () => {
         </div>
 
         <p className="admin-text-muted admin-mb-2">
-          Mostrando {filteredRecs.length} de {recomendaciones.length} recomendaciones
+          Mostrando {paginatedRecs.length > 0 ? `${(currentPage - 1) * perPage + 1}-${Math.min(currentPage * perPage, filteredRecs.length)}` : '0'} de {filteredRecs.length} recomendaciones (Total: {recomendaciones.length})
         </p>
 
         {msg && <div className="admin-message admin-message-success">{msg}</div>}
@@ -213,8 +229,9 @@ const Recomendaciones = () => {
             <p>No hay recomendaciones que coincidan con los filtros.</p>
           </div>
         ) : (
-          <div className="admin-cards-grid" style={{ gridTemplateColumns: "1fr" }}>
-            {filteredRecs.map((rec) => (
+          <>
+            <div className="admin-cards-grid" style={{ gridTemplateColumns: "1fr" }}>
+              {paginatedRecs.map((rec) => (
               <div
                 key={rec.id_recomendacion}
                 className="admin-card"
@@ -266,8 +283,90 @@ const Recomendaciones = () => {
               </div>
             ))}
           </div>
+
+          {/* Controles de paginación */}
+          {totalPages > 1 && (
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center', 
+              gap: '0.5rem', 
+              marginTop: '1.5rem',
+              flexWrap: 'wrap'
+            }}>
+              <button 
+                className="admin-btn admin-btn-secondary" 
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                style={{ padding: '0.5rem 1rem' }}
+              >
+                <FaChevronLeft />
+              </button>
+              
+              {/* Números de página */}
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+                return pageNum;
+              }).map(pageNum => (
+                <button
+                  key={pageNum}
+                  className={`admin-btn ${currentPage === pageNum ? 'admin-btn-primary' : 'admin-btn-secondary'}`}
+                  onClick={() => handlePageChange(pageNum)}
+                  style={{ 
+                    padding: '0.5rem 0.75rem',
+                    minWidth: '40px',
+                    fontWeight: currentPage === pageNum ? 600 : 400
+                  }}
+                >
+                  {pageNum}
+                </button>
+              ))}
+              
+              <button 
+                className="admin-btn admin-btn-secondary" 
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                style={{ padding: '0.5rem 1rem' }}
+              >
+                <FaChevronRight />
+              </button>
+
+              {/* Selector de items por página */}
+              <div style={{ marginLeft: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>Por página:</span>
+                <select 
+                  value={perPage} 
+                  onChange={(e) => {
+                    setPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  style={{ 
+                    padding: '0.5rem', 
+                    borderRadius: '8px', 
+                    border: '1px solid var(--color-border)',
+                    background: 'var(--color-card)',
+                    color: 'var(--color-text)'
+                  }}
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+            </div>
+          )}
+        </>
         )}
-      </div>
     </div>
   );
 };

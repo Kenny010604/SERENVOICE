@@ -116,8 +116,7 @@ const Notificaciones = () => {
   };
 
   return (
-    <div className="admin-notificaciones-page">
-      <div className="admin-page-content">
+    <div className="page-content">
         {/* Header */}
         <div className="admin-page-header">
           <h2><FaBell /> Gestión de Notificaciones</h2>
@@ -320,7 +319,6 @@ const Notificaciones = () => {
             </div>
           </div>
         )}
-      </div>
     </div>
   );
 };
