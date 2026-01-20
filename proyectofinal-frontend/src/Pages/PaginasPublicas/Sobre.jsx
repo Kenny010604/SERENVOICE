@@ -7,6 +7,12 @@ import {
   FaUsers,
   FaLightbulb,
   FaArrowLeft,
+  FaGamepad,
+  FaChartBar,
+  FaBell,
+  FaBrain,
+  FaInfinity,
+  FaChartLine,
 } from "react-icons/fa";
 import NavbarPublic from "../../components/Publico/NavbarPublic";
 import { ThemeContext } from "../../context/themeContextDef";
@@ -32,7 +38,8 @@ const Sobre = () => {
           minHeight: "100vh",
         }}
       >
-        <div className="card" style={{ width: "100%", maxWidth: "1000px" }}>
+        <div style={{ maxWidth: "1300px", margin: "0 auto", padding: "0 2rem", width: "100%", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+        <div className="card wide-card" style={{ textAlign: "center" }}>
           <h2>Sobre SerenVoice</h2>
           <p style={{ fontSize: "1.1rem", lineHeight: "1.8" }}>
             SerenVoice es una plataforma innovadora dedicada a mejorar el
@@ -42,7 +49,7 @@ const Sobre = () => {
           </p>
         </div>
 
-        <div className="card" style={{ width: "100%", maxWidth: "1000px" }}>
+        <div className="card wide-card" style={{ textAlign: "center" }}>
           <h3 style={{ color: "var(--color-primary)", marginBottom: "1rem" }}>
             <FaHeart style={{ marginRight: "0.5rem" }} />
             Nuestra Misión
@@ -55,7 +62,7 @@ const Sobre = () => {
           </p>
         </div>
 
-        <div className="card" style={{ width: "100%", maxWidth: "1000px" }}>
+        <div className="card wide-card" style={{ textAlign: "center" }}>
           <h3 style={{ color: "var(--color-primary)", marginBottom: "1rem" }}>
             <FaLightbulb style={{ marginRight: "0.5rem" }} />
             Nuestra Visión
@@ -70,128 +77,242 @@ const Sobre = () => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
             gap: "1.5rem",
             width: "100%",
-            maxWidth: "1000px",
           }}
         >
-          <div className="card">
-            <FaShieldAlt
-              size={40}
-              style={{ color: "var(--color-primary)", marginBottom: "1rem" }}
-            />
-            <h4
-              style={{
-                color: "var(--color-text-main)",
-                marginBottom: "0.5rem",
-              }}
-            >
-              Privacidad
-            </h4>
+          <div className="card" style={{ textAlign: "center" }}>
+            <div style={{ textAlign: "center" }}>
+              <FaShieldAlt
+                size={40}
+                style={{ color: "#9c27b0", marginBottom: "1rem" }}
+              />
+              <h4
+                style={{
+                  color: "var(--color-text-main)",
+                  marginBottom: "0.5rem",
+                }}
+              >
+                Privacidad
+              </h4>
+            </div>
             <p>
-              Tu privacidad es fundamental. Utilizamos encriptación de nivel
-              bancario y protegemos tus datos con los más altos estándares de
-              seguridad.
+              Tu información es solo tuya. Protegemos tus datos y grabaciones 
+              para que te sientas seguro al usar nuestra plataforma.
             </p>
           </div>
 
-          <div className="card">
-            <FaLightbulb
-              size={40}
-              style={{ color: "var(--color-primary)", marginBottom: "1rem" }}
-            />
-            <h4
-              style={{
-                color: "var(--color-text-main)",
-                marginBottom: "0.5rem",
-              }}
-            >
-              Precisión
-            </h4>
+          <div className="card" style={{ textAlign: "center" }}>
+            <div style={{ textAlign: "center" }}>
+              <FaLightbulb
+                size={40}
+                style={{ color: "#ff9800", marginBottom: "1rem" }}
+              />
+              <h4
+                style={{
+                  color: "var(--color-text-main)",
+                  marginBottom: "0.5rem",
+                }}
+              >
+                Precisión
+              </h4>
+            </div>
             <p>
-              Nuestros algoritmos de IA analizan miles de variables vocales para
-              proporcionar resultados precisos y confiables.
+              Analizamos tu voz con tecnología avanzada para darte resultados 
+              confiables que realmente reflejen cómo te sientes.
             </p>
           </div>
 
-          <div className="card">
-            <FaUsers
-              size={40}
-              style={{ color: "var(--color-primary)", marginBottom: "1rem" }}
-            />
-            <h4
-              style={{
-                color: "var(--color-text-main)",
-                marginBottom: "0.5rem",
-              }}
-            >
-              Accesibilidad
-            </h4>
+          <div className="card" style={{ textAlign: "center" }}>
+            <div style={{ textAlign: "center" }}>
+              <FaUsers
+                size={40}
+                style={{ color: "#4caf50", marginBottom: "1rem" }}
+              />
+              <h4
+                style={{
+                  color: "var(--color-text-main)",
+                  marginBottom: "0.5rem",
+                }}
+              >
+                Accesibilidad
+              </h4>
+            </div>
             <p>
-              Creemos que todos merecen acceso a herramientas de bienestar
-              emocional. SerenVoice está diseñado para ser accesible para todos.
+              Creemos que todos merecen cuidar su bienestar emocional. 
+              Por eso SerenVoice es gratuito y fácil de usar.
             </p>
           </div>
         </div>
 
-        <div className="card" style={{ width: "100%", maxWidth: "1000px" }}>
+        {/* Nueva sección: Funcionalidades */}
+        <div className="card wide-card" style={{ textAlign: "center" }}>
+          <h3 style={{ color: "var(--color-primary)" }}>
+            Nuestras Funcionalidades
+          </h3>
+        </div>
+        
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gap: "1.5rem",
+            width: "100%",
+          }}
+        >
+          <div className="card" style={{ textAlign: "center", padding: "1.5rem" }}>
+            <FaBrain
+              size={36}
+              style={{ color: "#2196f3", marginBottom: "0.75rem" }}
+            />
+            <h4 style={{ marginBottom: "0.5rem", color: "var(--color-text-main)" }}>
+              Análisis Emocional
+            </h4>
+            <p style={{ fontSize: "0.9rem", color: "var(--color-text-secondary)" }}>
+              Descubre cómo te sientes a través del análisis de tu voz.
+            </p>
+          </div>
+
+          <div className="card" style={{ textAlign: "center", padding: "1.5rem" }}>
+            <FaGamepad
+              size={36}
+              style={{ color: "#ff9800", marginBottom: "0.75rem" }}
+            />
+            <h4 style={{ marginBottom: "0.5rem", color: "var(--color-text-main)" }}>
+              5 Juegos Terapéuticos
+            </h4>
+            <p style={{ fontSize: "0.9rem", color: "var(--color-text-secondary)" }}>
+              Relájate con actividades diseñadas para reducir el estrés.
+            </p>
+          </div>
+
+          <div className="card" style={{ textAlign: "center", padding: "1.5rem" }}>
+            <FaUsers
+              size={36}
+              style={{ color: "#4caf50", marginBottom: "0.75rem" }}
+            />
+            <h4 style={{ marginBottom: "0.5rem", color: "var(--color-text-main)" }}>
+              Grupos de Apoyo
+            </h4>
+            <p style={{ fontSize: "0.9rem", color: "var(--color-text-secondary)" }}>
+              Conecta con personas que comparten tus objetivos.
+            </p>
+          </div>
+
+          <div className="card" style={{ textAlign: "center", padding: "1.5rem" }}>
+            <FaChartBar
+              size={36}
+              style={{ color: "#9c27b0", marginBottom: "0.75rem" }}
+            />
+            <h4 style={{ marginBottom: "0.5rem", color: "var(--color-text-main)" }}>
+              Reportes Detallados
+            </h4>
+            <p style={{ fontSize: "0.9rem", color: "var(--color-text-secondary)" }}>
+              Visualiza tu progreso con gráficos claros y fáciles de entender.
+            </p>
+          </div>
+
+          <div className="card" style={{ textAlign: "center", padding: "1.5rem" }}>
+            <FaLightbulb
+              size={36}
+              style={{ color: "#00bcd4", marginBottom: "0.75rem" }}
+            />
+            <h4 style={{ marginBottom: "0.5rem", color: "var(--color-text-main)" }}>
+              Recomendaciones Personalizadas
+            </h4>
+            <p style={{ fontSize: "0.9rem", color: "var(--color-text-secondary)" }}>
+              Recibe consejos adaptados a cómo te sientes.
+            </p>
+          </div>
+
+          <div className="card" style={{ textAlign: "center", padding: "1.5rem" }}>
+            <FaBell
+              size={36}
+              style={{ color: "#f44336", marginBottom: "0.75rem" }}
+            />
+            <h4 style={{ marginBottom: "0.5rem", color: "var(--color-text-main)" }}>
+              Alertas Inteligentes
+            </h4>
+            <p style={{ fontSize: "0.9rem", color: "var(--color-text-secondary)" }}>
+              Te avisamos cuando debas prestar atención a tu bienestar.
+            </p>
+          </div>
+        </div>
+
+        <div className="card wide-card">
           <h3 style={{ color: "var(--color-primary)", marginBottom: "1rem" }}>
             Nuestra Historia
           </h3>
-          <p style={{ lineHeight: "1.8", marginBottom: "1rem" }}>
-            SerenVoice nació de una observación simple: la voz cambia cuando
-            estamos estresados o ansiosos. Un equipo de psicólogos, ingenieros y
-            especialistas en IA se unió para crear una solución que pudiera
-            detectar estos cambios y ayudar a las personas a entender mejor su
-            salud emocional.
+          <p style={{ lineHeight: "1.8", marginBottom: "1rem", textAlign: "center" }}>
+            SerenVoice nace de una idea simple: tu voz puede decir mucho sobre 
+            cómo te sientes. Este proyecto surge como respuesta a una necesidad 
+            real en el ámbito del bienestar emocional.
           </p>
-          <p style={{ lineHeight: "1.8" }}>
-            Desde nuestro inicio, hemos trabajado incansablemente para mejorar
-            nuestros algoritmos y expandir nuestro impacto. Hoy, miles de
-            usuarios confían en SerenVoice para monitorear su bienestar.
+          <p style={{ lineHeight: "1.8", marginBottom: "1rem", textAlign: "center" }}>
+            Muchas personas no tienen acceso fácil a profesionales de salud mental, 
+            ya sea por distancia, costo o disponibilidad. SerenVoice busca ser un 
+            <strong> primer paso accesible</strong> para que cualquiera pueda 
+            entender mejor sus emociones y cuidar su bienestar día a día.
+          </p>
+          <p style={{ lineHeight: "1.8", textAlign: "center" }}>
+            Importante: SerenVoice es una herramienta de apoyo, <strong>nunca un 
+            reemplazo</strong> de la atención profesional. Si necesitas ayuda, 
+            siempre recomendamos consultar con un especialista.
           </p>
         </div>
 
-        <div className="card" style={{ width: "100%", maxWidth: "1000px" }}>
+        <div className="card wide-card">
           <h3 style={{ color: "var(--color-primary)", marginBottom: "1.5rem" }}>
-            Nuestro Impacto
+            Lo que ofrecemos
           </h3>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-              gap: "2rem",
-            }}
-          >
-            <div style={{ textAlign: "center" }}>
-              <h2 style={{ color: "var(--color-primary)", fontSize: "2.5rem" }}>
-                10,000+
+          <div className="features-grid">
+            <div style={{ textAlign: "center", padding: "1rem" }}>
+              <h2 style={{ color: "#2196f3", fontSize: "2.5rem" }}>
+                6
               </h2>
               <p style={{ color: "var(--color-text-secondary)" }}>
-                Usuarios Activos
+                Emociones Detectadas
               </p>
             </div>
-            <div style={{ textAlign: "center" }}>
-              <h2 style={{ color: "var(--color-primary)", fontSize: "2.5rem" }}>
-                95%
+            <div style={{ textAlign: "center", padding: "1rem" }}>
+              <h2 style={{ color: "#ff9800", fontSize: "2.5rem" }}>
+                5
               </h2>
               <p style={{ color: "var(--color-text-secondary)" }}>
-                Satisfacción
+                Juegos Terapéuticos
               </p>
             </div>
-            <div style={{ textAlign: "center" }}>
-              <h2 style={{ color: "var(--color-primary)", fontSize: "2.5rem" }}>
-                24/7
+            <div style={{ textAlign: "center", padding: "1rem" }}>
+              <FaInfinity size={40} style={{ color: "#4caf50" }} />
+              <p style={{ color: "var(--color-text-secondary)", marginTop: "0.5rem" }}>
+                Grupos de Apoyo
+              </p>
+            </div>
+            <div style={{ textAlign: "center", padding: "1rem" }}>
+              <h2 style={{ color: "#9c27b0", fontSize: "2.5rem" }}>
+                4
               </h2>
               <p style={{ color: "var(--color-text-secondary)" }}>
-                Soporte Disponible
+                Recomendaciones por Análisis
+              </p>
+            </div>
+            <div style={{ textAlign: "center", padding: "1rem" }}>
+              <FaChartLine size={40} style={{ color: "#00bcd4" }} />
+              <p style={{ color: "var(--color-text-secondary)", marginTop: "0.5rem" }}>
+                Reportes de Progreso
+              </p>
+            </div>
+            <div style={{ textAlign: "center", padding: "1rem" }}>
+              <FaBell size={40} style={{ color: "#f44336" }} />
+              <p style={{ color: "var(--color-text-secondary)", marginTop: "0.5rem" }}>
+                Alertas Personalizadas
               </p>
             </div>
           </div>
         </div>
 
-        <div className="card" style={{ width: "100%", maxWidth: "1000px" }}>
+        <div className="card wide-card" style={{ textAlign: "center" }}>
           <h3>¿Listo para unirte?</h3>
           <p>
             Comienza tu viaje hacia un bienestar emocional mejorado hoy mismo.
@@ -199,6 +320,7 @@ const Sobre = () => {
           <Link to="/registro">
             <button>Registrarse Ahora</button>
           </Link>
+        </div>
         </div>
       </main>
 

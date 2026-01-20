@@ -4,6 +4,7 @@ import Spinner from "../../components/Publico/Spinner";
 import PageCard from "../../components/Shared/PageCard";
 import "../../styles/StylesUsuarios/audio-player-custom.css";
 import AudioPlayer from "../../components/Publico/AudioPlayer";
+import secureStorage from "../../utils/secureStorage";
 import {
   FaMicrophone,
   FaStop,
@@ -30,6 +31,7 @@ import { FaUserMd, FaDumbbell, FaPray, FaPause, FaCoffee, FaLeaf } from "react-i
 import { useNavigate } from "react-router-dom";
 import apiClient from '../../services/apiClient';
 import api from '../../config/api';
+import authService from '../../services/authService';
 
 const AnalizarVoz = () => {
   const navigate = useNavigate();
@@ -283,7 +285,7 @@ const AnalizarVoz = () => {
 
   const handleDownload = () => {
     let fileUrl;
-    const token = localStorage.getItem("token") || "";
+    const token = secureStorage.getAccessToken() || localStorage.getItem("token") || "";
     const analisisId = analysis?.analisis_id || analysis?.data?.analisis_id;
     if (analysis && analisisId) {
       fileUrl = `${api.baseURL}${api.endpoints.analisis.audio(analisisId)}?token=${encodeURIComponent(token)}`;
@@ -319,11 +321,15 @@ const AnalizarVoz = () => {
       const formData = new FormData();
       formData.append("audio", blob, `analisis_${Date.now()}.webm`);
       formData.append("duration", String(recTime || 0));
-      const userId = localStorage.getItem("userId");
+      
+      // Obtener user_id desde authService
+      const userData = authService.getUser();
+      const userId = userData?.id_usuario || userData?.id || userData?.user_id || localStorage.getItem("userId");
       if (userId) {
-        formData.append("user_id", userId);
+        formData.append("user_id", String(userId));
       } else {
-        const t = localStorage.getItem("token");
+        // Fallback: intentar extraer del token
+        const t = secureStorage.getAccessToken() || localStorage.getItem("token");
         if (t) {
           try {
             const parts = t.split(".");
@@ -340,7 +346,8 @@ const AnalizarVoz = () => {
         }
       }
 
-      const token = localStorage.getItem("token");
+      // Verificar autenticación usando secureStorage
+      const token = secureStorage.getAccessToken() || localStorage.getItem("token");
       if (!token) {
         setError("No estás autenticado. Por favor inicia sesión.");
         navigate("/login");
@@ -508,7 +515,7 @@ const AnalizarVoz = () => {
           </div>
 
           {(() => {
-            const token = localStorage.getItem("token") || "";
+            const token = secureStorage.getAccessToken() || localStorage.getItem("token") || "";
             const fileUrl = (analysis && analysis.analisis_id)
               ? `${api.baseURL}${api.endpoints.analisis.audio(analysis.analisis_id)}?token=${encodeURIComponent(token)}`
               : wavURL;

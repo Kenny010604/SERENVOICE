@@ -1,5 +1,5 @@
 import React, { useState, useContext } from "react";
-import { FaUser, FaEnvelope, FaPaperPlane, FaExclamationTriangle, FaPhone, FaClock } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaPaperPlane, FaExclamationTriangle, FaPhone } from "react-icons/fa";
 import "../../global.css";
 import NavbarPublic from "../../components/Publico/NavbarPublic";
 import { contactService } from "../../services/contactService";
@@ -54,7 +54,7 @@ const Contacto = () => {
         className="container"
         style={{
           paddingTop: "2rem",
-          paddingBottom: "4rem",
+          paddingBottom: "3rem",
           backgroundImage: `url(${isDark ? PaisajeOscuro : PaisajeClaro})`,
           backgroundRepeat: "no-repeat",
           backgroundPosition: "center center",
@@ -63,8 +63,9 @@ const Contacto = () => {
           minHeight: "100vh",
         }}
       >
+        <div style={{ maxWidth: "1300px", margin: "0 auto", padding: "0 2rem", width: "100%", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
         {/* Encabezado */}
-        <div className="card" style={{ width: "100%", maxWidth: "1000px" }}>
+        <div className="card wide-card" style={{ textAlign: "center" }}>
           <h2>Contacto</h2>
           <p style={{ fontSize: "1.1rem" }}>
             ¿Tienes preguntas o sugerencias? Nos encantaría escucharte. Ponte en
@@ -75,18 +76,16 @@ const Contacto = () => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: "2rem",
+            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+            gap: "1.5rem",
             width: "100%",
-            maxWidth: "1000px",
-            marginBottom: "2rem",
           }}
         >
           {/* Email */}
-          <div className="card">
+          <div className="card contact-card" style={{ textAlign: "center" }}>
             <FaEnvelope
               size={30}
-              style={{ color: "var(--color-primary)", marginBottom: "1rem" }}
+              style={{ color: "#2196f3", marginBottom: "1rem" }}
             />
             <h4
               style={{
@@ -98,14 +97,14 @@ const Contacto = () => {
             </h4>
             <p style={{ marginBottom: "1rem" }}>
               <a
-                href="mailto:contacto@serenvoice.com"
+                href="mailto:serenvoice2025@gmail.com"
                 style={{
                   color: "var(--color-primary)",
                   textDecoration: "none",
                   fontWeight: "500",
                 }}
               >
-                contacto@serenvoice.com
+                serenvoice2025@gmail.com
               </a>
             </p>
             <p
@@ -114,15 +113,15 @@ const Contacto = () => {
                 color: "var(--color-text-secondary)",
               }}
             >
-              Responderemos dentro de 24 horas
+              Responderemos lo antes posible
             </p>
           </div>
 
           {/* Teléfono */}
-          <div className="card">
+          <div className="card contact-card" style={{ textAlign: "center" }}>
             <FaPhone
               size={30}
-              style={{ color: "var(--color-primary)", marginBottom: "1rem" }}
+              style={{ color: "#4caf50", marginBottom: "1rem" }}
             />
             <h4
               style={{
@@ -134,14 +133,14 @@ const Contacto = () => {
             </h4>
             <p style={{ marginBottom: "1rem" }}>
               <a
-                href="tel:+1234567890"
+                href="tel:+5930987033134"
                 style={{
                   color: "var(--color-primary)",
                   textDecoration: "none",
                   fontWeight: "500",
                 }}
               >
-                +1 (234) 567-890
+                +593 0987033134
               </a>
             </p>
             <p
@@ -150,38 +149,14 @@ const Contacto = () => {
                 color: "var(--color-text-secondary)",
               }}
             >
-              Lunes a Viernes, 9 AM - 6 PM
-            </p>
-          </div>
-
-          {/* Horario */}
-          <div className="card">
-            <FaClock
-              size={30}
-              style={{ color: "var(--color-primary)", marginBottom: "1rem" }}
-            />
-            <h4
-              style={{
-                color: "var(--color-text-main)",
-                marginBottom: "0.5rem",
-              }}
-            >
-              Horario de Atención
-            </h4>
-            <p style={{ fontSize: "0.9rem" }}>
-              Lunes - Viernes: 9:00 AM - 6:00 PM
-              <br />
-              Sábado: 10:00 AM - 2:00 PM
-              <br />
-              Domingo: Cerrado
+              Contáctanos por WhatsApp o llamada
             </p>
           </div>
         </div>
 
         {/* Formulario - Debajo */}
         <div
-          className="auth-card"
-          style={{ width: "100%", maxWidth: "1000px" }}
+          className="auth-card wide-card"
         >
           <h3
             style={{ color: "var(--color-text-main)", marginBottom: "1.5rem" }}
@@ -267,7 +242,7 @@ const Contacto = () => {
         </div>
 
         {/* Preguntas Frecuentes */}
-        <div className="card" style={{ width: "100%", maxWidth: "1000px" }}>
+        <div className="card wide-card">
           <h3 style={{ color: "var(--color-primary)", marginBottom: "1.5rem" }}>
             Preguntas Frecuentes
           </h3>
@@ -318,6 +293,7 @@ const Contacto = () => {
               </p>
             </div>
           </div>
+        </div>
         </div>
       </main>
 

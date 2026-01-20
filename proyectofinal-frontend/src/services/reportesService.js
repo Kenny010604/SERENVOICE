@@ -52,6 +52,22 @@ const reportesService = {
 
 export default reportesService;
 
+// Compatibilidad con nombres usados en la app móvil / componentes en español
+reportesService.obtenerReporteCompleto = async () => {
+  try {
+    const response = await apiClient.get('/reportes/mi-reporte-completo');
+    // mobile API shape: { success: true, data: { ... } }
+    if (response.data && response.data.success) return response.data.data;
+    return response.data;
+  } catch (err) {
+    throw new Error(err.response?.data?.message || err.message || 'Error al obtener reporte completo');
+  }
+};
+
+reportesService.generarReporte = reportesService.generateReport;
+reportesService.misReportes = reportesService.getMyReports;
+reportesService.obtenerReportePorId = reportesService.getReportById;
+
 // --- ADMIN / REPORTES HELPERS (moved from src/utils/api.js)
 export const fetchReporteGeneral = async (filtros = {}) => {
   const response = await apiClient.get(api.endpoints.admin.reportes.resumenGeneral, { params: filtros });

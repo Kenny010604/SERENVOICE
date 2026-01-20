@@ -37,9 +37,13 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredRole && user.role !== requiredRole) {
-    logger.debug(`[DEBUG] Rol incorrecto → redirigiendo a /`);
-    return <Navigate to="/" replace />;
+  if (requiredRole) {
+    const userRole = (user.role || '').toString().toLowerCase();
+    const reqRole = (requiredRole || '').toString().toLowerCase();
+    if (userRole !== reqRole) {
+      logger.debug(`[DEBUG] Rol incorrecto → redirigiendo a /`);
+      return <Navigate to="/" replace />;
+    }
   }
 
   return children;

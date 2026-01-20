@@ -1,16 +1,20 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Spinner from "../../components/Publico/Spinner";
 import analisisService from "../../services/analisisService";
 import "../../global.css";
 import PageCard from "../../components/Shared/PageCard";
+import Pagination from "../../components/Shared/Pagination";
 import { FaHistory, FaPlay, FaDownload, FaEye } from "react-icons/fa";
+
+const ITEMS_PER_PAGE = 10;
 
 const Historial = () => {
   const navigate = useNavigate();
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const cardRef = useRef(null);
 
   useEffect(() => {
@@ -99,6 +103,18 @@ const Historial = () => {
     navigate(`/resultado-detallado/${idAnalisis}`);
   };
 
+  // Calcular datos paginados
+  const totalPages = Math.ceil(history.length / ITEMS_PER_PAGE);
+  const paginatedHistory = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return history.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [history, currentPage]);
+
+  // Reset a página 1 cuando cambian los datos
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [history.length]);
+
   return (
     <div className="historial-content page-content">
       {loading && <Spinner message="Cargando historial..." />}
@@ -164,7 +180,7 @@ const Historial = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {history.map((item) => (
+                    {paginatedHistory.map((item) => (
                       <tr
                         key={item.id_analisis}
                         style={{
@@ -259,6 +275,15 @@ const Historial = () => {
                     ))}
                   </tbody>
                 </table>
+
+                {/* Componente de paginación */}
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  totalItems={history.length}
+                  itemsPerPage={ITEMS_PER_PAGE}
+                />
               </div>
             )}
           </div>

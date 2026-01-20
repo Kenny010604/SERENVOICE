@@ -23,7 +23,7 @@ const NavbarPublic = () => {
       </button>
 
       <div className={`nav-links ${open ? "open" : ""}`}>
-        <Link to="/" className="nav-link" onClick={() => setOpen(false)}>
+        <Link to="/Inicio" className="nav-link" onClick={() => setOpen(false)}>
           <FaHome /> <span>Inicio</span>
         </Link>
 

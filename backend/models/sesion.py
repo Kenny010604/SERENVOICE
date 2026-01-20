@@ -1,9 +1,25 @@
 # backend/models/sesion.py
 from database.connection import DatabaseConnection
-from datetime import datetime
+from datetime import datetime, timedelta
 
 class Sesion:
     """Modelo para la tabla Sesion"""
+    
+    @staticmethod
+    def serialize_session(sesion):
+        """Serializa una sesión convirtiendo timedelta a string"""
+        if not sesion:
+            return sesion
+        result = dict(sesion)
+        if 'duracion' in result and result['duracion'] is not None:
+            if isinstance(result['duracion'], timedelta):
+                total_seconds = int(result['duracion'].total_seconds())
+                hours, remainder = divmod(total_seconds, 3600)
+                minutes, seconds = divmod(remainder, 60)
+                result['duracion'] = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+            else:
+                result['duracion'] = str(result['duracion'])
+        return result
     
     @staticmethod
     def create(id_usuario, estado='activa', ip_address=None, dispositivo=None, navegador=None, sistema_operativo=None, ultimo_acceso=None):
@@ -50,7 +66,8 @@ class Sesion:
             ORDER BY fecha_inicio DESC 
             LIMIT %s
         """
-        return DatabaseConnection.execute_query(query, (id_usuario, limit))
+        results = DatabaseConnection.execute_query(query, (id_usuario, limit))
+        return [Sesion.serialize_session(s) for s in results] if results else []
     
     @staticmethod
     def get_active_sessions(id_usuario):
@@ -59,7 +76,8 @@ class Sesion:
             SELECT * FROM sesion 
             WHERE id_usuario = %s AND estado = 'activa' AND activo = 1
         """
-        return DatabaseConnection.execute_query(query, (id_usuario,))
+        results = DatabaseConnection.execute_query(query, (id_usuario,))
+        return [Sesion.serialize_session(s) for s in results] if results else []
     
     @staticmethod
     def close_session(id_sesion):

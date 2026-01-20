@@ -535,10 +535,66 @@ def analyze_voice():
         # --------------------------------------------------------
         # 7) Respuesta final
         # --------------------------------------------------------
+        # Normalizar las 8 emociones para que sumen 100%
+        # Las 6 emociones base del modelo + Estrés y Ansiedad derivados
+        emotions_raw = results.get("emotions", []) or []
+        
+        # Crear diccionario de emociones base
+        emo_dict = {}
+        for e in emotions_raw:
+            name = (e.get("name") or "").strip()
+            val = float(e.get("value") or 0.0)
+            if name:
+                emo_dict[name] = val
+        
+        # Si el modelo no devolvió Estrés/Ansiedad, calcularlos
+        if "Estrés" not in emo_dict:
+            emo_dict["Estrés"] = max(
+                emo_dict.get("Enojo", 0) * 0.6,
+                emo_dict.get("Sorpresa", 0) * 0.4
+            )
+        if "Ansiedad" not in emo_dict:
+            emo_dict["Ansiedad"] = max(
+                emo_dict.get("Miedo", 0) * 0.6,
+                emo_dict.get("Tristeza", 0) * 0.4
+            )
+        
+        # Lista de las 8 emociones en orden preferido
+        preferred_order = [
+            "Enojo", "Tristeza", "Miedo", "Felicidad",
+            "Sorpresa", "Neutral", "Estrés", "Ansiedad"
+        ]
+        
+        # Calcular suma total para normalizar
+        total = sum(emo_dict.get(name, 0) for name in preferred_order)
+        factor = 100.0 / total if total > 0 else 1.0
+        
+        # Construir lista normalizada de emociones
+        color_map = {
+            "Felicidad": "#ffb703",
+            "Tristeza": "#4361ee",
+            "Enojo": "#e63946",
+            "Estrés": "#e76f51",
+            "Ansiedad": "#9b5de5",
+            "Neutral": "#6c757d",
+            "Miedo": "#7e22ce",
+            "Sorpresa": "#2a9d8f",
+        }
+        
+        normalized_emotions = []
+        for name in preferred_order:
+            raw_val = emo_dict.get(name, 0)
+            normalized_val = round(raw_val * factor, 1)
+            normalized_emotions.append({
+                "name": name,
+                "value": normalized_val,
+                "color": color_map.get(name, "#6c757d")
+            })
+        
         response_data = {
             "success": True,
             "mode": "authenticated" if user_id else "guest_test",
-            "emotions": results["emotions"],
+            "emotions": normalized_emotions,
             "confidence": results["confidence"],
             "duration": duration,
             "audio_id": audio_db_id,

@@ -286,7 +286,8 @@ const Registro = () => {
           minHeight: "100vh",
         }}
       >
-        <div className="auth-card">
+        <div style={{ maxWidth: "1300px", margin: "0 auto", padding: "0 2rem", width: "100%", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+        <div className="auth-card wide-card">
           <div className="auth-header">
             <FaUser size={40} className="auth-icon" />
             <h2>Crear Cuenta</h2>
@@ -438,7 +439,7 @@ const Registro = () => {
             </div>
 
             {/* Seguridad */}
-            <div className="auth-form-section">
+            <div className="auth-form-section" style={{ position: 'relative', zIndex: 10 }}>
               <div className="input-labels">
                 <label>
                   <FaLock /> Seguridad
@@ -540,7 +541,7 @@ const Registro = () => {
             </div>
 
             {/* Información adicional */}
-            <div className="auth-form-section">
+            <div className="auth-form-section" style={{ position: 'relative', zIndex: 1 }}>
               <div className="input-labels">
                 <label>
                   <FaVenusMars /> Información adicional
@@ -654,6 +655,7 @@ const Registro = () => {
               ¿Ya tienes una cuenta? <Link to="/login">Inicia sesión</Link>
             </p>
           </form>
+        </div>
         </div>
       </main>
 

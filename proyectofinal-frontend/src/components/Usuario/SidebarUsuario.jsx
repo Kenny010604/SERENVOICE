@@ -24,7 +24,7 @@ const SidebarUsuario = ({ isCollapsed, onToggle, isMobileOpen }) => {
   useEffect(() => {
     if (location.pathname.startsWith("/grupos")) {
       setOpenSubmenu("grupos");
-    } else if (location.pathname.startsWith("/configuracion") || location.pathname.startsWith("/actualizar-perfil") || location.pathname.startsWith("/notificaciones/configuracion")) {
+    } else if (location.pathname.startsWith("/configuracion") || location.pathname.startsWith("/actualizar-perfil") || location.pathname.startsWith("/notificaciones/configuracion") || location.pathname.startsWith("/sesiones")) {
       setOpenSubmenu("config");
     }
   }, [location.pathname]);
@@ -72,17 +72,18 @@ const SidebarUsuario = ({ isCollapsed, onToggle, isMobileOpen }) => {
     },
     {
       type: "submenu",
-      id: "grupos",
+        id: "grupos",
       icon: <FaUsers />,
       label: "Grupos",
       items: [
-        { to: "/grupos", label: "Mis Grupos" },
+        { to: "/grupos?owner=me", label: "Mis Grupos" },
+        { to: "/buscar-grupos", label: "Buscar Grupos" },
         { to: "/grupos/nuevo", label: "Crear Grupo" },
       ],
     },
     {
       type: "link",
-      to: "/reportes-personales",
+      to: "/reportes",
       icon: <FaChartBar />,
       label: "Mis Reportes",
     },

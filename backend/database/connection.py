@@ -121,6 +121,10 @@ class DatabaseConnection:
         try:
             conn = DatabaseConnection.get_connection()
             cursor = conn.cursor(dictionary=True)
+            
+            # Asegurar que la conexión use UTF-8
+            cursor.execute("SET NAMES utf8mb4")
+            cursor.execute("SET CHARACTER SET utf8mb4")
 
             cursor.execute(query, params)
 

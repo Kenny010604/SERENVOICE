@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { FaTag, FaAlignLeft, FaList, FaCalendarAlt, FaClock } from 'react-icons/fa';
+import { FaTag, FaAlignLeft, FaList, FaCalendarAlt, FaClock, FaUsers, FaCheck, FaPlay } from 'react-icons/fa';
 import groupsService from '../../services/groupsService';
 
 export default function GroupActivitiesPanel({ grupoId, onQueueAdd, onQueueUpdate, queuedActivities = [] }){
@@ -9,6 +9,8 @@ export default function GroupActivitiesPanel({ grupoId, onQueueAdd, onQueueUpdat
   const [errorMsg, setErrorMsg] = useState('');
   const [editingIndex, setEditingIndex] = useState(null);
   const [editingId, setEditingId] = useState(null);
+  const [participaciones, setParticipaciones] = useState({}); // { actividadId: { participando, completada, id_participacion } }
+  const [loadingParticipacion, setLoadingParticipacion] = useState({});
 
   const cargar = useCallback(async () => {
     if (!grupoId) {
@@ -18,7 +20,29 @@ export default function GroupActivitiesPanel({ grupoId, onQueueAdd, onQueueUpdat
     setLoading(true);
     try{
       const data = await groupsService.listarActividades(grupoId);
-      setActividades(data || []);
+      const actividadesList = data || [];
+      setActividades(actividadesList);
+      
+      // Cargar estado de participación para cada actividad
+      const participacionesMap = {};
+      for (const act of actividadesList) {
+        const actId = act.id_actividad || act.id;
+        try {
+          const res = await groupsService.obtenerMiParticipacion(actId);
+          if (res.success && res.participacion) {
+            participacionesMap[actId] = {
+              participando: true,
+              completada: res.participacion.completada || res.participacion.estado === 'completada',
+              id_participacion: res.participacion.id_participacion || res.participacion.id
+            };
+          } else {
+            participacionesMap[actId] = { participando: false, completada: false, id_participacion: null };
+          }
+        } catch {
+          participacionesMap[actId] = { participando: false, completada: false, id_participacion: null };
+        }
+      }
+      setParticipaciones(participacionesMap);
     }catch(e){ console.error('[GroupActivitiesPanel] cargar', e); }
     finally{ setLoading(false); }
   }, [grupoId]);
@@ -142,6 +166,51 @@ export default function GroupActivitiesPanel({ grupoId, onQueueAdd, onQueueUpdat
   const eliminar = async (actividadId) => {
     if(!confirm('Eliminar actividad?')) return;
     try{ await groupsService.eliminarActividad(grupoId, actividadId); cargar(); }catch(e){console.error('[GroupActivitiesPanel] eliminar',e)}
+  };
+
+  // Participar en una actividad
+  const participar = async (actividadId) => {
+    setLoadingParticipacion(prev => ({ ...prev, [actividadId]: true }));
+    try {
+      const res = await groupsService.participarActividad(actividadId);
+      if (res.success || res.id_participacion) {
+        setParticipaciones(prev => ({
+          ...prev,
+          [actividadId]: {
+            participando: true,
+            completada: false,
+            id_participacion: res.id_participacion || res.data?.id_participacion
+          }
+        }));
+      }
+    } catch (e) {
+      console.error('[GroupActivitiesPanel] participar', e);
+      setErrorMsg('Error al unirse a la actividad');
+    } finally {
+      setLoadingParticipacion(prev => ({ ...prev, [actividadId]: false }));
+    }
+  };
+
+  // Marcar participación como completada
+  const completarParticipacion = async (actividadId) => {
+    const participacion = participaciones[actividadId];
+    if (!participacion?.id_participacion) return;
+    
+    setLoadingParticipacion(prev => ({ ...prev, [actividadId]: true }));
+    try {
+      const res = await groupsService.completarParticipacion(participacion.id_participacion);
+      if (res.success) {
+        setParticipaciones(prev => ({
+          ...prev,
+          [actividadId]: { ...prev[actividadId], completada: true }
+        }));
+      }
+    } catch (e) {
+      console.error('[GroupActivitiesPanel] completar', e);
+      setErrorMsg('Error al completar la actividad');
+    } finally {
+      setLoadingParticipacion(prev => ({ ...prev, [actividadId]: false }));
+    }
   };
 
   return (
@@ -302,6 +371,47 @@ export default function GroupActivitiesPanel({ grupoId, onQueueAdd, onQueueUpdat
                 <div style={{flex:1}}><strong>Inicio:</strong> {formatDate(a.fecha_inicio || a.fechaInicio || a.start_date || a.start)}</div>
                 <div style={{flex:1}}><strong>Fin:</strong> {formatDate(a.fecha_fin || a.fechaFin || a.end_date || a.end)}</div>
               </div>
+              
+              {/* Participación del usuario */}
+              {(() => {
+                const actId = a.id_actividad || a.id || a._id;
+                const part = participaciones[actId] || {};
+                const isLoading = loadingParticipacion[actId];
+                
+                return (
+                  <div className="activity-participation" style={{marginTop:8,padding:'8px 0',borderTop:'1px solid var(--border-color, #e0e0e0)'}}>
+                    {part.completada ? (
+                      <div style={{display:'flex',alignItems:'center',gap:8,color:'var(--success-color, #4caf50)'}}>
+                        <FaCheck /> <span>¡Completada!</span>
+                      </div>
+                    ) : part.participando ? (
+                      <div style={{display:'flex',alignItems:'center',gap:8}}>
+                        <span style={{color:'var(--primary-color, #3f51b5)'}}>
+                          <FaUsers /> Participando
+                        </span>
+                        <button 
+                          onClick={() => completarParticipacion(actId)}
+                          disabled={isLoading}
+                          className="auth-button success"
+                          style={{marginLeft:'auto',fontSize:'0.85rem'}}
+                        >
+                          {isLoading ? 'Procesando...' : <><FaCheck /> Marcar completada</>}
+                        </button>
+                      </div>
+                    ) : (
+                      <button 
+                        onClick={() => participar(actId)}
+                        disabled={isLoading}
+                        className="auth-button primary"
+                        style={{width:'100%'}}
+                      >
+                        {isLoading ? 'Procesando...' : <><FaPlay /> Unirme a esta actividad</>}
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
+              
               <div className="activity-actions row" style={{marginTop:8}}>
                 <button onClick={() => {
                   setErrorMsg('');

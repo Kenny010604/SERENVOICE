@@ -50,7 +50,7 @@ class ParticipacionActividad:
         """Obtener participaciones de un usuario"""
         query = """
             SELECT pa.*, ag.titulo, ag.descripcion, ag.tipo_actividad,
-                   ag.fecha_programada, g.nombre_grupo
+                   ag.fecha_inicio, ag.fecha_fin, g.nombre_grupo
             FROM participacion_actividad pa
             JOIN actividades_grupo ag ON pa.id_actividad = ag.id_actividad
             JOIN grupos g ON ag.id_grupo = g.id_grupo
@@ -62,7 +62,7 @@ class ParticipacionActividad:
             query += " AND pa.completada = %s"
             params.append(completada)
         
-        query += " ORDER BY ag.fecha_programada DESC"
+        query += " ORDER BY ag.fecha_inicio DESC"
         return DatabaseConnection.execute_query(query, tuple(params))
     
     @staticmethod

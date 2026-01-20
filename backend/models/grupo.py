@@ -9,7 +9,7 @@ class Grupo:
     
     @staticmethod
     def create(nombre_grupo, id_facilitador, descripcion=None, tipo_grupo='apoyo', 
-               privacidad='privado', max_participantes=None, fecha_inicio=None, fecha_fin=None):
+               privacidad='privado', max_participantes=None):
         """Crear un nuevo grupo terapéutico"""
         # Generar código de acceso único
         codigo_acceso = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
@@ -17,13 +17,13 @@ class Grupo:
         query = """
             INSERT INTO grupos 
             (nombre_grupo, descripcion, codigo_acceso, id_facilitador, tipo_grupo, 
-             privacidad, max_participantes, fecha_inicio, fecha_fin)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+             privacidad, max_participantes)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
         """
         return DatabaseConnection.execute_query(
             query, 
             (nombre_grupo, descripcion, codigo_acceso, id_facilitador, tipo_grupo, 
-             privacidad, max_participantes, fecha_inicio, fecha_fin),
+             privacidad, max_participantes),
             fetch=False
         )
     
@@ -72,6 +72,25 @@ class Grupo:
         return DatabaseConnection.execute_query(query)
     
     @staticmethod
+    def get_public_groups(user_id):
+        """Obtener grupos públicos con info adicional para el usuario"""
+        query = """
+            SELECT 
+                g.*,
+                u.nombre as nombre_facilitador,
+                (SELECT COUNT(*) FROM grupo_miembros gm WHERE gm.id_grupo = g.id_grupo AND gm.activo = 1 AND gm.estado = 'activo') as total_miembros,
+                CASE WHEN EXISTS(
+                    SELECT 1 FROM grupo_miembros gm 
+                    WHERE gm.id_grupo = g.id_grupo AND gm.id_usuario = %s AND gm.activo = 1
+                ) THEN 1 ELSE 0 END as es_miembro
+            FROM grupos g
+            LEFT JOIN usuario u ON g.id_facilitador = u.id_usuario
+            WHERE g.activo = 1 AND g.privacidad = 'publico'
+            ORDER BY g.fecha_creacion DESC
+        """
+        return DatabaseConnection.execute_query(query, (user_id,))
+    
+    @staticmethod
     def get_estadisticas(id_grupo=None):
         """Obtener estadísticas usando la vista optimizada"""
         if id_grupo:
@@ -86,7 +105,7 @@ class Grupo:
     def update(id_grupo, **kwargs):
         """Actualizar grupo"""
         allowed_fields = ['nombre_grupo', 'descripcion', 'tipo_grupo', 'privacidad', 
-                         'max_participantes', 'fecha_inicio', 'fecha_fin']
+                 'max_participantes']
         
         updates = []
         values = []

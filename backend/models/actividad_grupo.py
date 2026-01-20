@@ -7,18 +7,18 @@ class ActividadGrupo:
     
     @staticmethod
     def create(id_grupo, id_creador, titulo, descripcion=None, tipo_actividad='tarea',
-               fecha_programada=None, duracion_estimada=None):
+               fecha_inicio=None, fecha_fin=None):
         """Crear una nueva actividad para un grupo"""
         query = """
             INSERT INTO actividades_grupo 
             (id_grupo, id_creador, titulo, descripcion, tipo_actividad, 
-             fecha_programada, duracion_estimada)
+             fecha_inicio, fecha_fin)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
         """
         return DatabaseConnection.execute_query(
             query, 
             (id_grupo, id_creador, titulo, descripcion, tipo_actividad, 
-             fecha_programada, duracion_estimada),
+             fecha_inicio, fecha_fin),
             fetch=False
         )
     
@@ -54,7 +54,7 @@ class ActividadGrupo:
         
         query += """
             GROUP BY ag.id_actividad
-            ORDER BY ag.fecha_programada DESC, ag.id_actividad DESC
+            ORDER BY ag.fecha_inicio DESC, ag.id_actividad DESC
         """
         return DatabaseConnection.execute_query(query, tuple(params))
     
@@ -66,10 +66,10 @@ class ActividadGrupo:
             FROM actividades_grupo ag
             JOIN usuario u ON ag.id_creador = u.id_usuario
             WHERE ag.id_grupo = %s 
-              AND ag.activo = 1 
-              AND ag.completada = 0
-              AND (ag.fecha_programada IS NULL OR ag.fecha_programada >= CURDATE())
-            ORDER BY ag.fecha_programada ASC
+                AND ag.activo = 1 
+                AND ag.completada = 0
+                AND (ag.fecha_inicio IS NULL OR ag.fecha_inicio >= CURDATE())
+            ORDER BY ag.fecha_inicio ASC
             LIMIT %s
         """
         return DatabaseConnection.execute_query(query, (id_grupo, limit))
@@ -78,7 +78,7 @@ class ActividadGrupo:
     def update(id_actividad, **kwargs):
         """Actualizar actividad"""
         allowed_fields = ['titulo', 'descripcion', 'tipo_actividad', 
-                 'fecha_programada', 'duracion_estimada', 'completada']
+             'fecha_inicio', 'fecha_fin', 'completada']
         
         updates = []
         values = []
@@ -144,6 +144,12 @@ class ParticipacionActividad:
         """
         results = DatabaseConnection.execute_query(query, (id_actividad, id_usuario))
         return results[0] if results else None
+    
+    # Alias para compatibilidad
+    @staticmethod
+    def check_participation(id_actividad, id_usuario):
+        """Verificar si un usuario ya participa en una actividad (alias de get_user_participation)"""
+        return ParticipacionActividad.get_user_participation(id_actividad, id_usuario)
     
     @staticmethod
     def get_activity_participants(id_actividad):

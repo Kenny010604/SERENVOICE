@@ -692,6 +692,17 @@ main {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
+/* Wide variant: allow full width inside wide page wrappers */
+.card.wide-card {
+  max-width: 100%;
+  text-align: center;
+}
+
+/* Contact cards (email / teléfono) should center their small text */
+.card.contact-card p {
+  text-align: center;
+}
+
 /* Card size variants - use these instead of inline styles */
 .card.card-sm {
   max-width: 600px;
@@ -747,10 +758,9 @@ main {
 /* Dashboard grid for quick access cards */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1.5rem;
   width: 100%;
-  max-width: 1000px;
 }
 
 .dashboard-grid .card {
@@ -809,6 +819,8 @@ main {
   line-height: 1.6;
   font-size: 1rem;
   margin-bottom: 1.5rem;
+  text-align: inherit;
+  width: 100%;
 }
 
 .card p a {
@@ -1377,7 +1389,7 @@ button:hover {
   box-shadow: 0 4px 20px var(--color-shadow);
   padding: 2.5rem;
   width: 100%;
-  max-width: 1000px;
+  max-width: 1300px;
   text-align: center;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -1903,16 +1915,15 @@ input[type="password"]::-webkit-clear-button {
 /* Password tooltip */
 .password-tooltip {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 0.5rem);
   left: 0;
   right: 0;
-  margin-top: 0.5rem;
   padding: 1rem;
   background: var(--color-panel-solid);
   border: 2px solid var(--color-primary);
   border-radius: 8px;
-  box-shadow: 0 4px 12px var(--color-shadow);
-  z-index: 1000;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  z-index: 99999;
   font-size: 0.85rem;
 }
 
@@ -2694,5 +2705,110 @@ input[type="password"]::-webkit-clear-button {
 @media (max-width: 768px) {
   .admin-page-content {
     padding: 0.5rem;
+  }
+}
+
+/* =====================================================
+   Features Grid - Responsive 3x2 layout
+   ===================================================== */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .features-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =====================================================
+   Benefit Cards Carousel - Responsive
+   ===================================================== */
+.benefit-carousel {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.benefit-carousel-btn {
+  background: transparent;
+  border: none;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--color-primary);
+  padding: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.2s;
+}
+
+.benefit-carousel-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.3;
+}
+
+.benefit-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  flex: 1;
+}
+
+.benefit-card {
+  padding: 1.5rem;
+  border-radius: 12px;
+  background: var(--color-panel);
+  box-shadow: 0 2px 8px var(--color-shadow);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  text-align: center;
+}
+
+.benefit-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px var(--color-shadow);
+}
+
+.benefit-card h4 {
+  color: var(--color-text-main);
+  margin: 0.5rem 0;
+}
+
+.benefit-card p {
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .benefit-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .benefit-carousel {
+    flex-direction: column;
+  }
+  
+  .benefit-carousel-btn {
+    display: none;
+  }
+  
+  .benefit-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .benefit-card {
+    padding: 1rem;
   }
 }

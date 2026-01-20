@@ -1,13 +1,35 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaUser, FaBell } from "react-icons/fa";
+import { FaUser, FaBell, FaDesktop, FaHistory } from "react-icons/fa";
 import "../../global.css";
 import PageCard from "../../components/Shared/PageCard";
+import sesionesService from "../../services/sesionesService";
 
 
 const Configuracion = () => {
   const navigate = useNavigate();
   const cardRef = useRef(null);
+  const [sessionsCount, setSessionsCount] = useState({ active: 0, total: 0 });
+  const [loadingSessions, setLoadingSessions] = useState(false);
+
+  // Cargar resumen de sesiones del usuario
+  const loadSessionsSummary = useCallback(async () => {
+    setLoadingSessions(true);
+    try {
+      const result = await sesionesService.getMySessions(10);
+      const sessions = result.data || result || [];
+      const activeCount = sessions.filter(s => s.estado === "activa").length;
+      setSessionsCount({ active: activeCount, total: sessions.length });
+    } catch (err) {
+      console.error("Error cargando sesiones:", err);
+    } finally {
+      setLoadingSessions(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadSessionsSummary();
+  }, [loadSessionsSummary]);
 
   useEffect(() => {
     if (!cardRef.current) return;
@@ -29,6 +51,14 @@ const Configuracion = () => {
       description: "Configurar preferencias de notificaciones",
       icon: <FaBell />,
       path: "/notificaciones/configuracion"
+    },
+    {
+      title: "Sesiones",
+      description: loadingSessions 
+        ? "Cargando..." 
+        : `${sessionsCount.active} activa${sessionsCount.active !== 1 ? 's' : ''} de ${sessionsCount.total} registrada${sessionsCount.total !== 1 ? 's' : ''}`,
+      icon: <FaDesktop />,
+      path: "/sesiones"
     }
   ];
 

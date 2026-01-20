@@ -10,6 +10,11 @@ const groupsService = {
     return res.data;
   },
 
+  listarPublicos: async () => {
+    const res = await apiClient.get(`${base}/publicos`);
+    return res.data?.data || res.data || [];
+  },
+
   obtener: async (id) => {
     const res = await apiClient.get(`${base}/${id}`);
     return res.data;
@@ -27,6 +32,12 @@ const groupsService = {
 
   eliminar: async (id) => {
     const res = await apiClient.delete(`${base}/${id}`);
+    return res.data;
+  },
+
+  unirse: async (grupoId, codigoAcceso = null) => {
+    const payload = codigoAcceso ? { codigo_acceso: codigoAcceso } : {};
+    const res = await apiClient.post(`${base}/${grupoId}/unirse`, payload);
     return res.data;
   },
 
@@ -69,6 +80,22 @@ const groupsService = {
 
   eliminarActividad: async (grupoId, actividadId) => {
     const res = await apiClient.delete(`${base}/${grupoId}/actividades/${actividadId}`);
+    return res.data;
+  },
+
+  // Participaciones
+  participarActividad: async (actividadId, payload = {}) => {
+    const res = await apiClient.post(`${base}/actividades/${actividadId}/participar`, payload);
+    return res.data;
+  },
+
+  completarParticipacion: async (participacionId, payload = {}) => {
+    const res = await apiClient.put(`${base}/participacion/${participacionId}/completar`, payload);
+    return res.data;
+  },
+
+  obtenerMiParticipacion: async (actividadId) => {
+    const res = await apiClient.get(`${base}/actividades/${actividadId}/mi-participacion`);
     return res.data;
   },
 };

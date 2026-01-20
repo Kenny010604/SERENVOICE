@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../global.css";
 import PageCard from "../../components/Shared/PageCard";
+import Pagination from "../../components/Shared/Pagination";
 import Spinner from "../../components/Publico/Spinner";
 import { 
   FaHeart, 
@@ -23,12 +24,15 @@ import {
 import apiClient from '../../services/apiClient';
 import api from '../../config/api';
 
+const ITEMS_PER_PAGE = 10;
+
 const Recomendaciones = () => {
   const navigate = useNavigate();
   const [recs, setRecs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [markingId, setMarkingId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const cardRef = useRef(null);
 
   useEffect(() => {
@@ -126,6 +130,18 @@ const Recomendaciones = () => {
     return labels[t] || tipo || 'General';
   };
 
+  // Calcular datos paginados
+  const totalPages = Math.ceil(recs.length / ITEMS_PER_PAGE);
+  const paginatedRecs = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return recs.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [recs, currentPage]);
+
+  // Reset a página 1 cuando cambian los datos
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [recs.length]);
+
   return (
     <div className="recomendaciones-content page-content">
       {loading && <Spinner overlay={true} message="Cargando recomendaciones..." />}
@@ -169,7 +185,7 @@ const Recomendaciones = () => {
             </div>
           )}
 
-          {recs.map((r) => {
+          {paginatedRecs.map((r) => {
             const Icon = getTipoIcon(r.tipo_recomendacion);
             const prioridad = r.prioridad || 'media';
             const isAplicada = r.aplica === 1 || r.aplica === true;
@@ -277,6 +293,17 @@ const Recomendaciones = () => {
               </div>
             );
           })}
+
+          {/* Componente de paginación */}
+          {recs.length > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              totalItems={recs.length}
+              itemsPerPage={ITEMS_PER_PAGE}
+            />
+          )}
         </div>
       </PageCard>
     </div>

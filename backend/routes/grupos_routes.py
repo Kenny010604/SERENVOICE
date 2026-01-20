@@ -15,6 +15,31 @@ bp = Blueprint('grupos', __name__, url_prefix='/api/grupos')
 # GRUPOS - CRUD
 # ============================================================
 
+@bp.route('/publicos', methods=['GET'])
+@jwt_required()
+def get_public_groups():
+    """Obtener todos los grupos públicos disponibles para unirse"""
+    try:
+        identity = get_jwt_identity()
+        try:
+            current_user_id = int(identity)
+        except Exception:
+            current_user_id = identity.get('id_usuario') if isinstance(identity, dict) else identity
+
+        # Obtener los grupos públicos
+        grupos_publicos = Grupo.get_public_groups(current_user_id)
+        
+        return jsonify({
+            'success': True,
+            'data': grupos_publicos
+        }), 200
+        
+    except Exception as e:
+        tb = traceback.format_exc()
+        print("[GRUPOS] Error en get_public_groups:\n", tb)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @bp.route('/', methods=['GET'])
 @jwt_required()
 def get_all_groups():
@@ -29,7 +54,7 @@ def get_all_groups():
 
         # Obtener los grupos del usuario
         grupos_usuario = GrupoMiembro.get_user_groups(current_user_id)
-        
+        print(f"[GRUPOS] get_all_groups - usuario={current_user_id} grupos_found={len(grupos_usuario) if grupos_usuario else 0}")
         return jsonify(grupos_usuario), 200
         
     except Exception as e:
@@ -65,9 +90,7 @@ def create_group():
             descripcion=descripcion,
             tipo_grupo=data.get('tipo_grupo', 'apoyo'),
             privacidad=data.get('privacidad', 'privado'),
-            max_participantes=data.get('max_participantes'),
-            fecha_inicio=data.get('fecha_inicio'),
-            fecha_fin=data.get('fecha_fin')
+            max_participantes=data.get('max_participantes')
         )
         
         # Si el método devolvió un dict con metadata, extraer el id
@@ -181,6 +204,56 @@ def delete_group(id_grupo):
 # ============================================================
 # MIEMBROS - GESTIÓN
 # ============================================================
+
+@bp.route('/<int:id_grupo>/unirse', methods=['POST'])
+@jwt_required()
+def join_group_by_id(id_grupo):
+    """Unirse a un grupo público por ID"""
+    try:
+        identity = get_jwt_identity()
+        try:
+            current_user_id = int(identity)
+        except Exception:
+            current_user_id = identity.get('id_usuario') if isinstance(identity, dict) else identity
+        
+        grupo = Grupo.get_by_id(id_grupo)
+        
+        if not grupo:
+            return jsonify({'success': False, 'message': 'Grupo no encontrado'}), 404
+        
+        # Verificar si el grupo es público o si se proporcionó código de acceso
+        data = request.get_json() or {}
+        codigo_acceso = data.get('codigo_acceso')
+        
+        if grupo.get('privacidad') != 'publico':
+            if not codigo_acceso:
+                return jsonify({'success': False, 'message': 'Este grupo requiere un código de acceso'}), 400
+            if codigo_acceso != grupo.get('codigo_acceso'):
+                return jsonify({'success': False, 'message': 'Código de acceso incorrecto'}), 403
+        
+        # Verificar si ya es miembro
+        es_miembro = GrupoMiembro.is_member(id_grupo, current_user_id)
+        if es_miembro:
+            return jsonify({'success': False, 'message': 'Ya eres miembro de este grupo'}), 400
+        
+        # Verificar límite de participantes
+        if not Grupo.verify_max_participantes(id_grupo):
+            return jsonify({'success': False, 'message': 'El grupo ha alcanzado su límite de participantes'}), 400
+        
+        # Agregar miembro
+        GrupoMiembro.add_member(id_grupo, current_user_id)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Te has unido al grupo exitosamente',
+            'grupo': grupo
+        }), 200
+        
+    except Exception as e:
+        tb = traceback.format_exc()
+        print("[GRUPOS] Error en join_group_by_id:\n", tb)
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 
 @bp.route('/codigo/<codigo>', methods=['POST'])
 @jwt_required()
@@ -475,29 +548,20 @@ def create_activity(id_grupo):
             print(f"[WARN] No se pudo parsear fecha '{v}'")
             return None
 
-        # Aceptar fecha_programada o fecha_inicio como alias
-        fecha_programada = parse_date_field('fecha_programada') or parse_date_field('fecha_inicio')
-        
-        # Parsear duración
-        duracion_estimada = data.get('duracion_estimada')
-        if duracion_estimada == '' or duracion_estimada == 'undefined':
-            duracion_estimada = None
-        elif duracion_estimada is not None:
-            try:
-                duracion_estimada = int(duracion_estimada)
-            except (ValueError, TypeError):
-                duracion_estimada = None
+        # Aceptar fecha_programada o fecha_inicio como alias -> normalizamos a fecha_inicio
+        fecha_inicio = parse_date_field('fecha_programada') or parse_date_field('fecha_inicio')
+        fecha_fin = parse_date_field('fecha_fin')
 
         # Crear actividad
-        print(f"[DEBUG] create_activity - Creando con: id_grupo={id_grupo}, id_creador={current_user_id}, titulo={data['titulo']}, tipo={data.get('tipo_actividad', 'tarea')}, fecha={fecha_programada}, duracion={duracion_estimada}")
+        print(f"[DEBUG] create_activity - Creando con: id_grupo={id_grupo}, id_creador={current_user_id}, titulo={data['titulo']}, tipo={data.get('tipo_actividad', 'tarea')}, fecha_inicio={fecha_inicio}, fecha_fin={fecha_fin}")
         id_actividad = ActividadGrupo.create(
             id_grupo=id_grupo,
             id_creador=current_user_id,
             titulo=data['titulo'],
             descripcion=data.get('descripcion'),
             tipo_actividad=data.get('tipo_actividad', 'tarea'),
-            fecha_programada=fecha_programada,
-            duracion_estimada=duracion_estimada
+            fecha_inicio=fecha_inicio,
+            fecha_fin=fecha_fin
         )
         print(f"[DEBUG] create_activity - Resultado: {id_actividad}")
         
@@ -583,6 +647,34 @@ def get_activity(id_actividad):
             return jsonify({'error': 'Actividad no encontrada'}), 404
         
         return jsonify(actividad), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/actividades/<int:id_actividad>/mi-participacion', methods=['GET'])
+@jwt_required()
+def get_my_participation(id_actividad):
+    """Obtener mi participación en una actividad"""
+    try:
+        identity = get_jwt_identity()
+        try:
+            current_user_id = int(identity)
+        except Exception:
+            current_user_id = identity.get('id_usuario') if isinstance(identity, dict) else identity
+        
+        participacion = ParticipacionActividad.check_participation(id_actividad, current_user_id)
+        
+        if participacion:
+            return jsonify({
+                'participando': True,
+                'participacion': participacion
+            }), 200
+        else:
+            return jsonify({
+                'participando': False,
+                'participacion': None
+            }), 200
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500

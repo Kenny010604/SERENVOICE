@@ -20,6 +20,7 @@ import Dashboard from "./Pages/PaginasUsuarios/Dashboard.jsx";
 import ActualizarPerfil from "./Pages/PaginasUsuarios/ActualizarPerfil.jsx";
 import Configuracion from "./Pages/PaginasUsuarios/Configuracion.jsx";
 import ConfiguracionNotificaciones from "./Pages/PaginasUsuarios/ConfiguracionNotificaciones.jsx";
+import Sesiones from "./Pages/PaginasUsuarios/Sesiones.jsx";
 import Notificaciones from "./Pages/PaginasUsuarios/Notificaciones.jsx";
 import Historial from "./Pages/PaginasUsuarios/Historial.jsx";
 import Recomendaciones from "./Pages/PaginasUsuarios/Recomendaciones.jsx";
@@ -50,9 +51,12 @@ import JuegosAdmin from "./Pages/PaginasAdministradores/JuegosAdmin.jsx";
 import AnalisisAdmin from "./Pages/PaginasAdministradores/AnalisisAdmin.jsx";
 import PreferenciasNotificacion from "./Pages/PaginasAdministradores/PreferenciasNotificacion.jsx";
 import Grupos from "./Pages/PaginasUsuarios/Grupos.jsx";
+import BuscarGrupos from "./Pages/PaginasUsuarios/BuscarGrupos.jsx";
+import DetalleGrupo from "./Pages/PaginasUsuarios/DetalleGrupo.jsx";
 import GrupoForm from "./Pages/PaginasUsuarios/GrupoForm.jsx";
 import Miembros from "./Pages/PaginasUsuarios/Miembros.jsx";
 import ActividadesGrupo from "./Pages/PaginasUsuarios/ActividadesGrupo.jsx";
+import ReportesUsuarioPage from "./Pages/PaginasUsuarios/Reportes.jsx";
 
 // Layout
 import LayoutUsuario from "./layouts/LayoutUsuario.jsx";
@@ -230,6 +234,19 @@ function App() {
 						/>
 
 						<Route
+							path="/sesiones"
+							element={
+								<ProtectedRoute requiredRole="usuario">
+									<PageWithTitle title="Mis Sesiones">
+										<LayoutUsuario>
+											<Sesiones />
+										</LayoutUsuario>
+									</PageWithTitle>
+								</ProtectedRoute>
+							}
+						/>
+
+						<Route
 							path="/notificaciones"
 							element={
 								<ProtectedRoute requiredRole="usuario">
@@ -309,6 +326,32 @@ function App() {
 						/>
 
 						<Route
+							path="/buscar-grupos"
+							element={
+								<ProtectedRoute requiredRole="usuario">
+									<PageWithTitle title="Explorar Grupos">
+										<LayoutUsuario>
+											<BuscarGrupos />
+										</LayoutUsuario>
+									</PageWithTitle>
+								</ProtectedRoute>
+							}
+						/>
+
+						<Route
+							path="/reportes"
+							element={
+								<ProtectedRoute requiredRole="usuario">
+									<PageWithTitle title="Mis Reportes">
+										<LayoutUsuario>
+											<ReportesUsuarioPage />
+										</LayoutUsuario>
+									</PageWithTitle>
+								</ProtectedRoute>
+							}
+						/>
+
+						<Route
 							path="/grupos/nuevo"
 							element={
 								<ProtectedRoute requiredRole="usuario">
@@ -325,14 +368,27 @@ function App() {
 							path="/grupos/:id"
 							element={
 								<ProtectedRoute requiredRole="usuario">
-									<PageWithTitle title="Editar Grupo">
-										<LayoutUsuario>
-											<GrupoForm />
-										</LayoutUsuario>
-									</PageWithTitle>
-								</ProtectedRoute>
-							}
-						/>
+								<PageWithTitle title="Detalle del Grupo">
+									<LayoutUsuario>
+										<DetalleGrupo />
+									</LayoutUsuario>
+								</PageWithTitle>
+							</ProtectedRoute>
+						}
+					/>
+
+					<Route
+						path="/grupos/:id/editar"
+						element={
+							<ProtectedRoute requiredRole="usuario">
+								<PageWithTitle title="Editar Grupo">
+									<LayoutUsuario>
+										<GrupoForm />
+									</LayoutUsuario>
+								</PageWithTitle>
+							</ProtectedRoute>
+						}
+					/>
 
 						<Route
 							path="/grupos/:id/miembros"

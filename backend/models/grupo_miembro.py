@@ -29,9 +29,26 @@ class GrupoMiembro:
     
     @staticmethod
     def get_group_members(id_grupo, estado='activo'):
-        """Obtener todos los miembros de un grupo"""
+        """Obtener todos los miembros de un grupo con su último estado emocional"""
         query = """
-            SELECT gm.*, u.nombre, u.apellido, u.correo, u.foto_perfil
+            SELECT gm.*, u.nombre, u.apellido, u.correo, u.foto_perfil, u.genero,
+                   u.fecha_nacimiento,
+                   (
+                       SELECT ra.emocion_dominante 
+                       FROM resultado_analisis ra 
+                       JOIN analisis an ON ra.id_analisis = an.id_analisis
+                       JOIN audio au ON an.id_audio = au.id_audio
+                       WHERE au.id_usuario = gm.id_usuario AND ra.activo = 1
+                       ORDER BY ra.fecha_resultado DESC LIMIT 1
+                   ) as ultimo_estado_emocional,
+                   (
+                       SELECT ra.confianza_modelo 
+                       FROM resultado_analisis ra 
+                       JOIN analisis an ON ra.id_analisis = an.id_analisis
+                       JOIN audio au ON an.id_audio = au.id_audio
+                       WHERE au.id_usuario = gm.id_usuario AND ra.activo = 1
+                       ORDER BY ra.fecha_resultado DESC LIMIT 1
+                   ) as confianza_emocion
             FROM grupo_miembros gm
             JOIN usuario u ON gm.id_usuario = u.id_usuario
             WHERE gm.id_grupo = %s AND gm.activo = 1

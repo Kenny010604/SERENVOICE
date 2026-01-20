@@ -24,7 +24,14 @@ class EmailService:
         configuration.api_key['api-key'] = brevo_api_key
         
         self.api_instance = sib_api_v3_sdk.TransactionalEmailsApi(sib_api_v3_sdk.ApiClient(configuration))
-        self.sender = {"name": "SerenVoice", "email": os.getenv('SENDER_EMAIL', 'sebas.games52@gmail.com')}
+        # Sender email configured via environment variable. Prefer a verified domain email.
+        configured_sender = os.getenv('SENDER_EMAIL', 'sebas.games52@gmail.com')
+        self.sender = {"name": "SerenVoice", "email": configured_sender}
+
+        # Helpful runtime logging for troubleshooting deliverability
+        print(f"[EMAIL INFO] Brevo API configured. Sender: {self.sender['email']}")
+        if configured_sender.endswith('@gmail.com') or configured_sender.endswith('@yahoo.com'):
+            print("[EMAIL WARNING] Estás usando un remitente de correo público (gmail/yahoo). Para buena entregabilidad verifica el remitente o usa un dominio propio verificado en Brevo.")
     
     def generar_token(self):
         """Genera un token seguro de 32 caracteres"""
@@ -127,11 +134,20 @@ class EmailService:
             )
             
             api_response = self.api_instance.send_transac_email(send_smtp_email)
-            print(f"[EMAIL] Verificación enviada a {destinatario_email}: {api_response}")
+            # Brevo returns an object with message id when accepted by the API
+            msg_id = getattr(api_response, 'message_id', None)
+            print(f"[EMAIL] Solicitud enviada a Brevo para {destinatario_email}. message_id: {msg_id}")
             return True
-            
+
         except ApiException as e:
-            print(f"[EMAIL ERROR] Error enviando verificación: {e}")
+            # Devuelve más detalles para diagnóstico (body, status)
+            body = getattr(e, 'body', None)
+            status = getattr(e, 'status', None)
+            print(f"[EMAIL ERROR] Error enviando verificación a {destinatario_email}: {e}")
+            if status:
+                print(f"[EMAIL ERROR] HTTP status: {status}")
+            if body:
+                print(f"[EMAIL ERROR] Brevo response body: {body}")
             return False
     
     def enviar_email_recuperacion(self, destinatario_email, destinatario_nombre, token_reset):

@@ -201,42 +201,14 @@ const ProbarVoz = () => {
     }
   };
 
-  // ------------------------------------------------------------
-  // 🔥 CALCULAR NIVELES DE ESTRÉS Y ANSIEDAD
-  // ------------------------------------------------------------
-  const calcularIndicadores = () => {
-    if (!analysis) return null;
-
-    let nivelEstres = 0;
-    let nivelAnsiedad = 0;
-
-    analysis.emotions.forEach((emo) => {
-      if (["Enojo", "Miedo", "Asustado"].includes(emo.name)) nivelEstres += emo.value;
-      if (["Miedo", "Asustado"].includes(emo.name)) nivelAnsiedad += emo.value;
-    });
-
-    const calcNivel = (valor) => {
-      if (valor >= 70) return "ALTO";
-      if (valor >= 40) return "MEDIO";
-      return "BAJO";
-    };
-
-    return {
-      estres: { porcentaje: nivelEstres, nivel: calcNivel(nivelEstres) },
-      ansiedad: { porcentaje: nivelAnsiedad, nivel: calcNivel(nivelAnsiedad) },
-    };
-  };
-
-  const indicadores = calcularIndicadores();
-
   // Navegación del carrusel
   const benefitCards = [
-    { icon: FaLock, title: "Privacidad Garantizada", description: "Tus grabaciones se guardan de forma segura en tu cuenta personal." },
-    { icon: FaChartLine, title: "Análisis Avanzado", description: "Acceso a análisis detallado y patrones emocionales en el tiempo." },
-    { icon: FaUser, title: "Perfil Personal", description: "Mantén tu historial y seguimiento personalizado de bienestar." },
-    { icon: FaGamepad, title: "Juegos Terapéuticos", description: "Accede a juegos diseñados para mejorar tu bienestar emocional." },
-    { icon: FaUsers, title: "Grupos de Apoyo", description: "Únete a comunidades de apoyo y comparte experiencias." },
-    { icon: FaLightbulb, title: "Recomendaciones IA", description: "Recibe sugerencias personalizadas basadas en tus análisis." },
+    { icon: FaLock, title: "Privacidad Garantizada", description: "Tus grabaciones y datos emocionales se guardan de forma segura con encriptación de nivel bancario." },
+    { icon: FaChartLine, title: "Reportes Detallados", description: "Visualiza tendencias diarias y mensuales de estrés, ansiedad y 7 emociones detectadas." },
+    { icon: FaUser, title: "Perfil Personal", description: "Mantén tu historial completo con acceso a todos tus análisis anteriores." },
+    { icon: FaGamepad, title: "5 Juegos Terapéuticos", description: "Respiración guiada, memoria, mandalas, puzzles y mindfulness para reducir el estrés." },
+    { icon: FaUsers, title: "Grupos de Apoyo", description: "Únete a comunidades, participa en actividades grupales y conecta con facilitadores." },
+    { icon: FaLightbulb, title: "Recomendaciones IA", description: "Sugerencias personalizadas con inteligencia artificial basadas en tu historial emocional." },
   ];
 
   const handlePrevCard = () => {
@@ -293,9 +265,10 @@ const ProbarVoz = () => {
           minHeight: "100vh",
         }}
       >
-        <div className="card" style={{ maxWidth: 900 }}>
+        <div style={{ maxWidth: "1300px", margin: "0 auto", padding: "0 2rem", width: "100%", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+        <div className="card wide-card" style={{ textAlign: "center" }}>
           <h2>Análisis Emocional por Voz</h2>
-          <p>Graba al menos 5 segundos de tu voz hablando naturalmente. La IA analizará tus emociones.</p>
+          <p>Graba al menos 5 segundos de tu voz hablando naturalmente. Analizaremos cómo te sientes.</p>
 
           {/* Instrucción para lectura en voz alta */}
           <div style={{ marginTop: 12, marginBottom: 8 }}>
@@ -348,11 +321,12 @@ const ProbarVoz = () => {
 
         {/* Card de Resultados del Análisis */}
         {analysis && analysis.emotions && (
-          <div className="card" style={{ maxWidth: 900, width: "100%", marginTop: 24 }}>
+          <div className="card wide-card">
             <h3 style={{ marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
               <FaChartLine style={{ color: "var(--color-primary)" }} /> Resultados del Análisis
             </h3>
             <div className="emotion-cards-grid" style={{ marginTop: 16 }}>
+              {/* Mostrar las 8 emociones normalizadas del backend */}
               {analysis.emotions.slice(0, 8).map((emotion, idx) => {
                 const Icon = getEmotionIcon(emotion.name);
                 const color = getEmotionColor(emotion.name);
@@ -367,37 +341,13 @@ const ProbarVoz = () => {
                   </div>
                 );
               })}
-              
-              {/* Estrés */}
-              {indicadores && (
-                <div className="emotion-card" style={{ border: `3px solid #e76f51` }}>
-                  <FaFrownOpen className="emotion-card-icon" style={{ color: "#e76f51" }} />
-                  <p className="emotion-card-label" style={{ color: "#e76f51" }}>Estrés</p>
-                  <span className="emotion-card-value">{Math.round(indicadores.estres.porcentaje)}%</span>
-                  <div className="emotion-card-bar">
-                    <div className="emotion-card-bar-fill" style={{ width: `${Math.max(0, Math.min(100, indicadores.estres.porcentaje))}%`, background: "#e76f51" }}></div>
-                  </div>
-                </div>
-              )}
-
-              {/* Ansiedad */}
-              {indicadores && (
-                <div className="emotion-card" style={{ border: `3px solid #9b5de5` }}>
-                  <FaMeh className="emotion-card-icon" style={{ color: "#9b5de5" }} />
-                  <p className="emotion-card-label" style={{ color: "#9b5de5" }}>Ansiedad</p>
-                  <span className="emotion-card-value">{Math.round(indicadores.ansiedad.porcentaje)}%</span>
-                  <div className="emotion-card-bar">
-                    <div className="emotion-card-bar-fill" style={{ width: `${Math.max(0, Math.min(100, indicadores.ansiedad.porcentaje))}%`, background: "#9b5de5" }}></div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         )}
 
         {/* Card de mensaje de registro */}
         {analysis && (
-          <div className="card" style={{ maxWidth: 900, width: "100%", marginTop: 24 }}>
+          <div className="card wide-card" style={{ textAlign: "center" }}>
             <h2 style={{ color: "var(--color-text-main)", marginBottom: 16 }}>
               Desbloquea el Potencial Completo
             </h2>
@@ -406,46 +356,26 @@ const ProbarVoz = () => {
               grabaciones y reportes personalizados.
             </p>
 
-            <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "2rem" }}>
+            <div className="benefit-carousel">
               <button
                 onClick={handlePrevCard}
                 disabled={carouselIndex === 0}
                 aria-label="Anterior"
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  fontSize: 26,
-                  fontWeight: 700,
-                  color: "var(--color-primary)",
-                  cursor: carouselIndex === 0 ? "not-allowed" : "pointer",
-                  opacity: carouselIndex === 0 ? 0.3 : 1,
-                  padding: 8,
-                }}
+                className="benefit-carousel-btn"
               >
                 {'<'}
               </button>
 
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gap: "1.5rem",
-                flex: 1,
-              }}>
+              <div className="benefit-cards-grid">
                 {benefitCards.slice(carouselIndex, carouselIndex + 3).map((card, idx) => {
                   const Icon = card.icon;
                   return (
-                    <div key={idx} style={{
-                      padding: "1.5rem",
-                      borderRadius: "12px",
-                      background: "var(--color-panel)",
-                      boxShadow: "0 2px 8px var(--color-shadow)",
-                      transition: "all 0.3s ease",
-                    }}>
+                    <div key={idx} className="benefit-card">
                       <Icon size={32} style={{ color: "var(--color-primary)", marginBottom: 8 }} />
-                      <h4 style={{ color: "var(--color-text-main)" }}>
+                      <h4>
                         {card.title}
                       </h4>
-                      <p style={{ color: "var(--color-text-secondary)", fontSize: "0.9rem" }}>
+                      <p>
                         {card.description}
                       </p>
                     </div>
@@ -457,16 +387,7 @@ const ProbarVoz = () => {
                 onClick={handleNextCard}
                 disabled={carouselIndex >= benefitCards.length - 3}
                 aria-label="Siguiente"
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  fontSize: 26,
-                  fontWeight: 700,
-                  color: "var(--color-primary)",
-                  cursor: carouselIndex >= benefitCards.length - 3 ? "not-allowed" : "pointer",
-                  opacity: carouselIndex >= benefitCards.length - 3 ? 0.3 : 1,
-                  padding: 8,
-                }}
+                className="benefit-carousel-btn"
               >
                 {'>'}
               </button>
@@ -502,6 +423,7 @@ const ProbarVoz = () => {
             </button>
           </div>
         )}
+        </div>
       </main>
       <footer className="footer">
         © {new Date().getFullYear()} SerenVoice — Todos los derechos reservados.

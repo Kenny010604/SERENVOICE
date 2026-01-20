@@ -15,12 +15,14 @@ import ModalSeleccionRol from "../../components/Publico/ModalSeleccionRol";
 import GoogleLoginButton from "../../components/Publico/GoogleLoginButton";
 import authService from "../../services/authService";
 import { ThemeContext } from "../../context/themeContextDef";
+import AuthContext from "../../context/authContextDef";
 import PaisajeClaro from "../../assets/PaisajeClaro.svg";
 import PaisajeOscuro from "../../assets/PaisajeOscuro.svg";
 
 const Login = () => {
   const navigate = useNavigate();
   const { isDark } = useContext(ThemeContext);
+  const { login: authContextLogin } = useContext(AuthContext);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -43,6 +45,17 @@ const Login = () => {
       // Extraer roles del backend (varias formas posibles). Fallbacks para respuestas inconsistentes.
       const resp = data || {};
       const respUser = resp.user || null;
+
+      // IMPORTANTE: Actualizar estado de React con AuthContext.login()
+      if (respUser && resp.token) {
+        authContextLogin({
+          token: resp.token,
+          refreshToken: resp.refresh_token,
+          roles: respUser.roles || ['usuario'],
+          user: respUser,
+          recordarme: recordarme
+        });
+      }
 
       // intentos de extracción: data.user.roles, data.roles, o desde localStorage (authService guarda user)
       let rolesFromResp = respUser?.roles ?? resp.roles ?? null;

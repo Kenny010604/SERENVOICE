@@ -138,7 +138,15 @@ export default function GroupMembersPanel({ grupoId, onQueueAdd, queuedMembers =
                 loading={searching}
                 animate={Boolean(debounced && debounced.length >= 2)}
                 onSelect={async (u) => {
-                const payload = { nombre: u.nombre || u.name, correo: u.correo || u.email, usuario_id: u.id || u.usuario_id || u._id };
+                const payload = { 
+                  nombre: u.nombre || u.name, 
+                  apellido: u.apellido || u.apellidos || '',
+                  correo: u.correo || u.email, 
+                  usuario_id: u.id || u.usuario_id || u._id,
+                  foto_perfil: u.foto_perfil || u.fotoPerfil || u.avatar || null,
+                  genero: u.genero || u.gender || null,
+                  fecha_nacimiento: u.fecha_nacimiento || u.fechaNacimiento || null
+                };
                 if (!grupoId) {
                   if (onQueueAdd) onQueueAdd(payload);
                 } else {
